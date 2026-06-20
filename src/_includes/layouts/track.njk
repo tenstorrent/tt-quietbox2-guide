@@ -1,6 +1,9 @@
 ---
-layout: base.njk
+layout: layouts/base.njk
 ---
+{% if personaId and not persona %}
+{% set persona = personas | findPersona(personaId) %}
+{% endif %}
 <div class="track-layout" data-persona="{{ persona.id }}">
   <nav class="chapter-nav">
     <div class="chapter-nav-label">{{ persona.name }}</div>

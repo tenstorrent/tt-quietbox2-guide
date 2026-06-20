@@ -1,0 +1,34 @@
+---
+layout: layouts/base.njk
+title: First Timer
+personaId: first-timer
+permalink: /first-timer/
+---
+{% set persona = personas | findPersona(personaId) %}
+<div class="site-main" data-persona="{{ persona.id }}">
+  <div style="border-left: 3px solid {{ persona.color }}; padding-left: 16px; margin-bottom: 2em;">
+    <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Path</div>
+    <h1>{{ persona.name }}</h1>
+    <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
+  </div>
+  <div style="display:flex; gap:12px; margin-bottom:2em;">
+    <a href="/{{ persona.id }}/{{ persona.chapters[0].slug }}/"
+       style="background:{{ persona.color }};color:#0F2A35;font-weight:700;padding:10px 22px;border-radius:var(--radius);text-decoration:none;font-size:14px;">
+      Start Reading →
+    </a>
+    <a href="/read/{{ persona.id }}/"
+       style="background:var(--bg1);color:var(--text2);padding:10px 22px;border-radius:var(--radius);text-decoration:none;font-size:14px;border:1px solid var(--bg2);">
+      Read it all
+    </a>
+  </div>
+  <div>
+    {% for ch in persona.chapters %}
+    <a href="/{{ persona.id }}/{{ ch.slug }}/"
+       style="display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg1);text-decoration:none;color:var(--text);">
+      <span style="color:{{ persona.color }};font-weight:700;font-size:13px;min-width:20px;">{{ loop.index }}</span>
+      <span>{{ ch.title }}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted);">{{ ch.time }} min</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>

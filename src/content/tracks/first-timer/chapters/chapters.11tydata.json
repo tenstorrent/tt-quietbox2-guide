@@ -1,0 +1,5 @@
+{
+  "layout": "layouts/track.njk",
+  "tags": ["first-timer-chapter"],
+  "personaId": "first-timer"
+}
