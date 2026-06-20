@@ -159,7 +159,7 @@ blockquote {
   border-left: 3px solid transparent;
 }
 .chapter-nav-item:hover { color: var(--text); background: var(--bg1); }
-.chapter-nav-item.active { color: var(--teal); border-left-color: var(--teal); background: rgba(79,209,197,0.06); font-weight: 600; }
+.chapter-nav-item.active { color: var(--persona-color, var(--teal)); border-left-color: var(--persona-color, var(--teal)); background: rgba(79,209,197,0.06); font-weight: 600; }
 .track-content { flex: 1; padding: 40px 40px 80px; max-width: 760px; }
 
 /* ── Persona colors via data-persona ─────────────────────────────────────── */
@@ -167,7 +167,6 @@ blockquote {
 [data-persona="ml-practitioner"] { --persona-color: var(--pink); }
 [data-persona="builder-hacker"]  { --persona-color: var(--gold); }
 [data-persona="tinkerer"]        { --persona-color: var(--green); }
-.chapter-nav-item.active { border-left-color: var(--persona-color, var(--teal)); color: var(--persona-color, var(--teal)); }
 
 /* ── Landing hero ────────────────────────────────────────────────────────── */
 .hero { text-align: center; padding: 60px 24px 40px; }
