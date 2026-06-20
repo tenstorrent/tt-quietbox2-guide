@@ -1,0 +1,31 @@
+---
+layout: layouts/base.njk
+title: Builder / Hacker
+personaId: builder-hacker
+permalink: /builder-hacker/
+---
+{% set persona = personas | findPersona(personaId) %}
+<div class="site-main" data-persona="{{ persona.id }}">
+  <div style="border-left:3px solid {{ persona.color }};padding-left:16px;margin-bottom:2em;">
+    <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Path</div>
+    <h1>{{ persona.name }}</h1>
+    <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
+  </div>
+  <div class="callout callout--warn">
+    <span class="callout-icon illustrated-only">🚧</span>
+    This track is coming soon. The chapter outline is below — content ships in v2.
+  </div>
+  <div style="margin-top:2em;">
+    {% for ch in persona.chapters %}
+    <div style="display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg1);">
+      <span style="color:{{ persona.color }};font-weight:700;font-size:13px;min-width:20px;">{{ loop.index }}</span>
+      <span style="color:var(--text2);">{{ ch.title }}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted);">{{ ch.time }} min</span>
+    </div>
+    {% endfor %}
+  </div>
+  <div style="margin-top:2em;padding:16px;background:var(--bg1);border-radius:var(--radius);">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">While you wait —</div>
+    <a href="/first-timer/" style="color:var(--teal);font-size:13px;">Take the First Timer track first →</a>
+  </div>
+</div>
