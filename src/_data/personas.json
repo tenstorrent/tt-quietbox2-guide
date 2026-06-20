@@ -1,0 +1,79 @@
+[
+  {
+    "id": "first-timer",
+    "name": "First Timer",
+    "color": "#4FD1C5",
+    "colorVar": "--teal",
+    "couplet": [
+      "Your first walk with a Quietbox doesn't have to be long to go somewhere new.",
+      "This guide keeps pace with you."
+    ],
+    "vennCx": 38,
+    "vennCy": 38,
+    "chapters": [
+      { "slug": "01-what-just-arrived", "title": "What Just Arrived", "time": 5 },
+      { "slug": "02-first-boot", "title": "First Boot", "time": 8 },
+      { "slug": "03-is-this-thing-on", "title": "Is This Thing On?", "time": 6 },
+      { "slug": "04-installing-the-stack", "title": "Installing the Stack", "time": 10 },
+      { "slug": "05-your-first-model", "title": "Your First Model", "time": 8 },
+      { "slug": "06-what-comes-next", "title": "What Comes Next", "time": 4 }
+    ]
+  },
+  {
+    "id": "ml-practitioner",
+    "name": "ML Practitioner",
+    "color": "#EC96B8",
+    "colorVar": "--pink",
+    "couplet": [
+      "You've run models before.",
+      "You haven't run them like this — not at this speed, not on silicon you can actually touch."
+    ],
+    "vennCx": 62,
+    "vennCy": 38,
+    "chapters": [
+      { "slug": "01-coming-from-cuda", "title": "Coming From CUDA", "time": 8 },
+      { "slug": "02-model-zoo", "title": "The Model Zoo", "time": 6 },
+      { "slug": "03-vllm-on-qb2", "title": "vLLM on QB2", "time": 10 },
+      { "slug": "04-performance-tuning", "title": "Performance Tuning", "time": 8 },
+      { "slug": "05-going-deeper", "title": "Going Deeper", "time": 4 }
+    ]
+  },
+  {
+    "id": "builder-hacker",
+    "name": "Builder / Hacker",
+    "color": "#F4C471",
+    "colorVar": "--gold",
+    "couplet": [
+      "The architecture goes all the way down, and you're the one going with it.",
+      "Bring something to build."
+    ],
+    "vennCx": 38,
+    "vennCy": 62,
+    "chapters": [
+      { "slug": "01-tt-metal-architecture", "title": "The TT-Metal Architecture", "time": 10 },
+      { "slug": "02-first-kernel", "title": "Your First Kernel", "time": 12 },
+      { "slug": "03-ttlang-intro", "title": "TT-Lang Introduction", "time": 10 },
+      { "slug": "04-profiling", "title": "Profiling & Optimization", "time": 10 },
+      { "slug": "05-going-deep", "title": "Going Deep", "time": 5 }
+    ]
+  },
+  {
+    "id": "tinkerer",
+    "name": "Curious Tinkerer",
+    "color": "#27AE60",
+    "colorVar": "--green",
+    "couplet": [
+      "There's more to configure, illuminate, and break here than most machines will ever admit to having.",
+      "Start anywhere."
+    ],
+    "vennCx": 62,
+    "vennCy": 62,
+    "chapters": [
+      { "slug": "01-led-customization", "title": "LED Customization", "time": 6 },
+      { "slug": "02-fun-demos", "title": "Fun Demos", "time": 8 },
+      { "slug": "03-ubuntu-customization", "title": "Ubuntu Customization", "time": 8 },
+      { "slug": "04-break-and-fix", "title": "Breaking & Fixing Things", "time": 10 },
+      { "slug": "05-community", "title": "Community & Contribution", "time": 4 }
+    ]
+  }
+]

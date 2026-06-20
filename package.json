@@ -1,0 +1,14 @@
+{
+  "name": "qb2-guide",
+  "version": "0.1.0",
+  "description": "Interactive guide to the Tenstorrent Quietbox 2",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve --incremental"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.6",
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
+    "markdown-it-container": "^3.0.0"
+  }
+}
