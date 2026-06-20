@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="340" viewBox="0 0 520 340">
+  <!-- Decorative background dots — Tenstorrent grid motif -->
+  <defs>
+    <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.8" fill="rgba(79,209,197,0.08)"/>
+    </pattern>
+  </defs>
+  <rect width="520" height="340" fill="url(#dots)"/>
+</svg>

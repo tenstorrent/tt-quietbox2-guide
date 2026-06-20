@@ -1,0 +1,60 @@
+---
+layout: layouts/base.njk
+title: QB2 Guide
+isHome: true
+description: "Choose your path through the Tenstorrent Quietbox 2 — from first boot to first model and beyond."
+---
+
+<section class="hero">
+  <h1 class="hero-title">Your <span>Quietbox</span>.<br>Your terms.</h1>
+  <div class="hero-couplet" id="hero-couplet">
+    <p>Four paths. One machine. Infinite patience.</p>
+    <p>Hover a circle to preview your journey. Click to begin.</p>
+  </div>
+</section>
+
+<div class="venn-wrap">
+  <svg class="venn-svg" viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four overlapping paths through the QB2 Guide">
+    <title>QB2 Guide Paths — choose your adventure</title>
+    <!-- Four overlapping circles, each centered at persona vennCx/vennCy * 5.2 -->
+    {% for p in personas %}
+    <circle
+      class="venn-circle"
+      data-persona="{{ p.id }}"
+      data-couplet-1="{{ p.couplet[0] }}"
+      data-couplet-2="{{ p.couplet[1] }}"
+      cx="{{ p.vennCx * 5.2 }}"
+      cy="{{ p.vennCy * 5.2 }}"
+      r="110"
+      role="button"
+      tabindex="0"
+      aria-label="Enter {{ p.name }} path"
+    />
+    {% endfor %}
+
+    <!-- Intersection zone labels -->
+    <text class="venn-intersection-label" x="260" y="176">Install Stack</text>
+    <text class="venn-intersection-label" x="200" y="200">tt-smi</text>
+    <text class="venn-intersection-label" x="320" y="200">Run Models</text>
+    <text class="venn-intersection-label" x="260" y="230">First Model</text>
+
+    <!-- Persona name labels -->
+    {% for p in personas %}
+    <text class="venn-label"
+      x="{{ p.vennCx * 5.2 + (p.vennCx < 50 and -55 or 55) }}"
+      y="{{ p.vennCy * 5.2 + (p.vennCy < 50 and -80 or 80) }}"
+      style="fill: {{ p.color }}">{{ p.name }}</text>
+    {% endfor %}
+  </svg>
+</div>
+
+<div class="persona-cards">
+  {% for p in personas %}
+  <a href="/{{ p.id }}/" class="persona-card" data-persona="{{ p.id }}" style="--persona-color: {{ p.color }}">
+    <div class="persona-card-name">{{ p.name }}</div>
+    <div class="persona-card-couplet">{{ p.couplet[0] }}</div>
+    <div class="persona-card-meta">{{ p.chapters | length }} chapters · {{ p.chapters | readTime }}</div>
+    <span class="persona-card-enter">Enter →</span>
+  </a>
+  {% endfor %}
+</div>
