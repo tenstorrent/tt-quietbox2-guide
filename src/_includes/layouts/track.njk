@@ -1,0 +1,21 @@
+---
+layout: base.njk
+---
+<div class="track-layout" data-persona="{{ persona.id }}">
+  <nav class="chapter-nav">
+    <div class="chapter-nav-label">{{ persona.name }}</div>
+    <a href="/" class="chapter-nav-back">← All Paths</a>
+    {% for ch in persona.chapters %}
+    <a href="/{{ persona.id }}/{{ ch.slug }}/"
+       class="chapter-nav-item{% if ch.slug == currentChapter %} active{% endif %}">
+      {{ loop.index }}. {{ ch.title }}
+    </a>
+    {% endfor %}
+    <div style="padding: 16px; margin-top: auto;">
+      <a href="/read/{{ persona.id }}/" style="font-size:11px; color: var(--muted);">Read it all →</a>
+    </div>
+  </nav>
+  <main class="track-content">
+    {{ content | safe }}
+  </main>
+</div>

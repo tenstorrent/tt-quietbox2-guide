@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="illustrated">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "QB2 Guide" }} — Tenstorrent Quietbox 2</title>
+  <meta name="description" content="{{ description or 'Your guide to the Tenstorrent Quietbox 2 — from first boot to first model and beyond.' }}">
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="topbar-logo">⚡ <span>QB2</span> Guide</a>
+    <nav style="display:flex;gap:16px;align-items:center">
+      {% if persona %}
+      <a href="/{{ persona.id }}/" class="topbar-home">← {{ persona.name }}</a>
+      {% elif not isHome %}
+      <a href="/" class="topbar-home">← Home</a>
+      {% endif %}
+    </nav>
+    <div class="topbar-spacer"></div>
+    <button class="mode-toggle" id="mode-toggle" aria-label="Toggle personality mode">
+      <div class="mode-toggle-pip"></div>
+      <span class="mode-toggle-label-illustrated">Illustrated</span>
+      <span class="mode-toggle-label-facts">Just the Facts</span>
+    </button>
+  </header>
+
+  {{ content | safe }}
+
+  <script src="/assets/main.js"></script>
+</body>
+</html>
