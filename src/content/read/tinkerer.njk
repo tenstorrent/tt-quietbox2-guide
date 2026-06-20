@@ -1,0 +1,11 @@
+---
+layout: layouts/read.njk
+title: "Curious Tinkerer — Complete Guide"
+personaId: tinkerer
+permalink: /read/tinkerer/
+---
+{% set persona = personas | findPersona(personaId) %}
+<div class="site-main">
+  <h1>{{ persona.name }} — Complete Guide</h1>
+  <p style="color:var(--muted);">This track is coming in v2. <a href="/tinkerer/">Back to outline →</a></p>
+</div>

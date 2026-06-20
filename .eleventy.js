@@ -61,6 +61,21 @@ module.exports = function (eleventyConfig) {
   });
 
   // ---------------------------------------------------------------------------
+  // Collections
+  // ---------------------------------------------------------------------------
+
+  /**
+   * firstTimerChapters — returns all pages tagged "first-timer-chapter" sorted
+   * by inputPath (alphabetically) so chapters appear in the correct 01→06 order
+   * on the /read/first-timer/ long-form page.
+   */
+  eleventyConfig.addCollection("firstTimerChapters", function (collectionApi) {
+    return collectionApi
+      .getFilteredByTag("first-timer-chapter")
+      .sort((a, b) => a.inputPath.localeCompare(b.inputPath));
+  });
+
+  // ---------------------------------------------------------------------------
   // Filters
   // ---------------------------------------------------------------------------
 
