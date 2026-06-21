@@ -49,7 +49,7 @@ Sleep 400ms
 Enter
 Sleep 800ms
 
-Type "# Now points into ~/tt-metal/python_env/bin/"
+Type "# ~/tt-metal/python_env/bin/python3 — the TTNN venv"
 Sleep 400ms
 Enter
 Sleep 300ms
@@ -78,6 +78,7 @@ Sleep 400ms
 Enter
 Sleep 1200ms
 
+
 Type "which python3"
 Sleep 400ms
 Enter
@@ -102,7 +103,7 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "df -h ~"
+Type "df -h ~/models"
 Sleep 400ms
 Enter
 Sleep 1000ms
