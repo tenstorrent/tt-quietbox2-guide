@@ -1,0 +1,5 @@
+{
+  "layout": "layouts/track.njk",
+  "tags": ["builder-hacker-chapter"],
+  "personaId": "builder-hacker"
+}

@@ -1,13 +1,30 @@
 ## tt-studio
 
-[tt-studio](https://github.com/tenstorrent/tt-studio) is a web UI for running models on Tenstorrent hardware without writing code. It handles model downloading, container management, and inference in a browser interface.
+[tt-studio](https://github.com/tenstorrent/tt-studio) is a web interface for running models on QB2 without writing a line of code. It handles model selection, container lifecycle, and inference end-to-end — open a browser, pick a model, get tokens back.
 
-To start tt-studio:
+Start it with a single command on the QB2:
 
 ```bash
 tt-studio
 ```
 
-Open `http://localhost:7860` in your browser. Select a model, click Run, and wait. The first run downloads the model weights — subsequent runs are fast.
+Then open `http://localhost:7860` in your browser. Select a model from the library, adjust parameters if you want, and click Run. The first launch for any model compiles weights for Blackhole — that takes a few minutes. Subsequent runs skip compilation and load fast from the on-disk cache.
 
-For a list of supported models, visit the [tt-awesome model catalog](https://tenstorrent.github.io/tt-awesome/).
+**What's happening under the hood:** tt-studio is a UI sitting on top of [tt-inference-server](https://github.com/tenstorrent/tt-inference-server). When you select a model and click Run, tt-studio spins up a Docker container running the TT fork of vLLM on port 8000. Your browser talks to tt-studio; tt-studio talks to that container. [tt-local-generator](https://docs.tenstorrent.com/tt-local-generator) routes through the same container — both are UIs sitting on top of tt-inference-server, just with different front ends.
+
+To access tt-studio from your laptop while the QB2 is on your network, forward the port over SSH:
+
+```bash
+ssh -L 7860:localhost:7860 user@qb2-hostname
+```
+
+Then open `http://localhost:7860` on your local machine as if you were sitting in front of the QB2.
+
+For a deeper look at how the inference server is wired up, the [tt-vscode-toolkit lesson on tt-inference-server](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/) walks through the architecture interactively — Docker flags, model download, port mapping, and what logs to watch on first boot.
+
+<div class="callout callout--info">
+<span class="callout-icon illustrated-only">ℹ</span>
+<strong>Two UIs, one server:</strong> tt-studio and tt-local-generator are both front ends for tt-inference-server. You can switch between them freely — they talk to the same running container on port 8000.
+</div>
+
+<!-- VIDEO -->

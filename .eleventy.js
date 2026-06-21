@@ -6,7 +6,7 @@ module.exports = function (eleventyConfig) {
   // ---------------------------------------------------------------------------
   // Passthrough copies
   // ---------------------------------------------------------------------------
-  eleventyConfig.addPassthroughCopy("src/assets");
+  eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
   eleventyConfig.addPassthroughCopy({ "llms.txt": "llms.txt" });
   eleventyConfig.addPassthroughCopy({ "agents.md": "agents.md" });
 
@@ -60,6 +60,34 @@ module.exports = function (eleventyConfig) {
     return md.render(raw);
   });
 
+  /**
+   * tensixviz shortcode — embeds a Tensix Grid Visualizer widget.
+   * Usage: {% tensixviz "blackhole", [{"step":"highlight",...}] %}
+   * arch: "wormhole" | "blackhole"
+   * script: JSON array of animation steps
+   */
+  eleventyConfig.addShortcode("tensixviz", function (arch, script) {
+    const ARCH_LABELS = { wormhole: "Wormhole (N150/N300)", blackhole: "Blackhole (P100/P150/P300c / QB2)" };
+    const archLabel = ARCH_LABELS[arch] || arch;
+    const scriptJson = JSON.stringify(script || []);
+    const escaped = scriptJson.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    return `<div class="tensix-viz-wrapper illustrated-only">
+  <div class="tensix-viz-header">
+    <span class="tensix-viz-title">⬡ Tensix Grid — ${archLabel}</span>
+  </div>
+  <div class="tensix-viz-body">
+    <div class="tensix-viz-container" data-arch="${arch}" data-script="${escaped}">
+      <canvas class="tensix-viz-canvas" width="520" height="320"></canvas>
+      <div class="tensix-viz-controls">
+        <button class="tv-play">▶</button>
+        <button class="tv-step">⏭</button>
+      </div>
+      <div class="tv-legend"></div>
+    </div>
+  </div>
+</div>`;
+  });
+
   // ---------------------------------------------------------------------------
   // Collections
   // ---------------------------------------------------------------------------
@@ -72,6 +100,24 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addCollection("firstTimerChapters", function (collectionApi) {
     return collectionApi
       .getFilteredByTag("first-timer-chapter")
+      .sort((a, b) => a.inputPath.localeCompare(b.inputPath));
+  });
+
+  eleventyConfig.addCollection("mlPractitionerChapters", function (collectionApi) {
+    return collectionApi
+      .getFilteredByTag("ml-practitioner-chapter")
+      .sort((a, b) => a.inputPath.localeCompare(b.inputPath));
+  });
+
+  eleventyConfig.addCollection("builderHackerChapters", function (collectionApi) {
+    return collectionApi
+      .getFilteredByTag("builder-hacker-chapter")
+      .sort((a, b) => a.inputPath.localeCompare(b.inputPath));
+  });
+
+  eleventyConfig.addCollection("tinkererChapters", function (collectionApi) {
+    return collectionApi
+      .getFilteredByTag("tinkerer-chapter")
       .sort((a, b) => a.inputPath.localeCompare(b.inputPath));
   });
 

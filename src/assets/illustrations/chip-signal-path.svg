@@ -1,0 +1,121 @@
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four Blackhole chips connected via PCIe to the CPU">
+  <title>QB2 Signal Path — 4× Blackhole P300c on PCIe</title>
+  <defs>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="rgba(79,209,197,0.6)"/>
+    </marker>
+    <!-- Buchla-style panel texture -->
+    <pattern id="dots" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.7" fill="rgba(79,209,197,0.08)"/>
+    </pattern>
+  </defs>
+
+  <!-- Panel background -->
+  <rect width="640" height="200" rx="6" fill="#0a1e28"/>
+  <rect width="640" height="200" rx="6" fill="url(#dots)"/>
+
+  <!-- CPU module -->
+  <rect x="16" y="60" width="88" height="80" rx="4" fill="#1A3C47" stroke="rgba(79,209,197,0.4)" stroke-width="1.5"/>
+  <text x="60" y="88" text-anchor="middle" fill="#81E6D9" font-size="9" font-family="monospace" letter-spacing="1">CPU</text>
+  <text x="60" y="102" text-anchor="middle" fill="#607D8B" font-size="7.5" font-family="monospace">Ubuntu 24.04</text>
+  <text x="60" y="115" text-anchor="middle" fill="#607D8B" font-size="7.5" font-family="monospace">PCIe root</text>
+  <!-- jack dots -->
+  <circle cx="104" cy="84" r="4" fill="#0a1e28" stroke="rgba(79,209,197,0.5)" stroke-width="1.2"/>
+  <circle cx="104" cy="100" r="4" fill="#0a1e28" stroke="rgba(79,209,197,0.5)" stroke-width="1.2"/>
+  <circle cx="104" cy="116" r="4" fill="#0a1e28" stroke="rgba(79,209,197,0.5)" stroke-width="1.2"/>
+  <circle cx="104" cy="132" r="4" fill="#0a1e28" stroke="rgba(79,209,197,0.5)" stroke-width="1.2"/>
+
+  <!-- PCIe bus backbone -->
+  <rect x="118" y="94" width="6" height="12" rx="1" fill="rgba(79,209,197,0.15)" stroke="rgba(79,209,197,0.3)" stroke-width="0.8"/>
+  <line x1="108" y1="84" x2="148" y2="46" stroke="rgba(79,209,197,0.35)" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+  <line x1="108" y1="100" x2="148" y2="90" stroke="rgba(79,209,197,0.35)" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+  <line x1="108" y1="116" x2="148" y2="134" stroke="rgba(79,209,197,0.35)" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+  <line x1="108" y1="132" x2="148" y2="178" stroke="rgba(79,209,197,0.35)" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+
+  <!-- label PCIe cables -->
+  <text x="126" y="68" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="7" font-family="monospace">GEN4</text>
+  <text x="129" y="110" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="7" font-family="monospace">GEN4</text>
+  <text x="126" y="148" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="7" font-family="monospace">GEN4</text>
+  <text x="126" y="186" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="7" font-family="monospace">GEN4</text>
+
+  <!-- Chip 0 -->
+  <rect x="152" y="18" width="100" height="56" rx="4" fill="#1A3C47" stroke="#4FD1C5" stroke-width="1.5"/>
+  <text x="202" y="36" text-anchor="middle" fill="#4FD1C5" font-size="8" font-family="monospace" letter-spacing="1">BLACKHOLE #0</text>
+  <text x="202" y="49" text-anchor="middle" fill="#81E6D9" font-size="7" font-family="monospace">P300c</text>
+  <text x="202" y="62" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">140 Tensix cores</text>
+  <!-- DRAM bar -->
+  <rect x="156" y="66" width="92" height="5" rx="2" fill="rgba(45,49,66,0.8)" stroke="rgba(79,209,197,0.2)" stroke-width="0.8"/>
+  <text x="202" y="71" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="6" font-family="monospace">DRAM</text>
+
+  <!-- Chip 1 -->
+  <rect x="152" y="84" width="100" height="56" rx="4" fill="#1A3C47" stroke="#4FD1C5" stroke-width="1.5"/>
+  <text x="202" y="102" text-anchor="middle" fill="#4FD1C5" font-size="8" font-family="monospace" letter-spacing="1">BLACKHOLE #1</text>
+  <text x="202" y="115" text-anchor="middle" fill="#81E6D9" font-size="7" font-family="monospace">P300c</text>
+  <text x="202" y="128" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">140 Tensix cores</text>
+  <rect x="156" y="132" width="92" height="5" rx="2" fill="rgba(45,49,66,0.8)" stroke="rgba(79,209,197,0.2)" stroke-width="0.8"/>
+  <text x="202" y="137" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="6" font-family="monospace">DRAM</text>
+
+  <!-- Chip 2 -->
+  <rect x="152" y="118" width="100" height="56" rx="4" fill="#1A3C47" stroke="#4FD1C5" stroke-width="1.5"/>
+  <text x="202" y="136" text-anchor="middle" fill="#4FD1C5" font-size="8" font-family="monospace" letter-spacing="1">BLACKHOLE #2</text>
+  <text x="202" y="149" text-anchor="middle" fill="#81E6D9" font-size="7" font-family="monospace">P300c</text>
+  <text x="202" y="162" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">140 Tensix cores</text>
+  <rect x="156" y="166" width="92" height="5" rx="2" fill="rgba(45,49,66,0.8)" stroke="rgba(79,209,197,0.2)" stroke-width="0.8"/>
+  <text x="202" y="171" text-anchor="middle" fill="rgba(79,209,197,0.4)" font-size="6" font-family="monospace">DRAM</text>
+
+  <!-- Chip 3 -->
+  <rect x="152" y="152" width="100" height="56" rx="4" fill="#1A3C47" stroke="#4FD1C5" stroke-width="1.5"/>
+  <text x="202" y="170" text-anchor="middle" fill="#4FD1C5" font-size="8" font-family="monospace" letter-spacing="1">BLACKHOLE #3</text>
+  <text x="202" y="183" text-anchor="middle" fill="#81E6D9" font-size="7" font-family="monospace">P300c</text>
+  <text x="202" y="190" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">140 Tensix cores</text>
+
+  <!-- Divider -->
+  <line x1="270" y1="20" x2="270" y2="180" stroke="rgba(79,209,197,0.08)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Software stack panel -->
+  <text x="290" y="30" fill="#607D8B" font-size="8" font-family="monospace" letter-spacing="1.5">SOFTWARE STACK</text>
+
+  <!-- Stack layers -->
+  <rect x="284" y="38" width="160" height="22" rx="3" fill="rgba(79,209,197,0.06)" stroke="rgba(79,209,197,0.25)" stroke-width="1"/>
+  <text x="364" y="53" text-anchor="middle" fill="#81E6D9" font-size="8.5" font-family="monospace">vLLM (TT fork)</text>
+
+  <rect x="284" y="66" width="160" height="22" rx="3" fill="rgba(79,209,197,0.06)" stroke="rgba(79,209,197,0.25)" stroke-width="1"/>
+  <text x="364" y="81" text-anchor="middle" fill="#81E6D9" font-size="8.5" font-family="monospace">TTNN</text>
+
+  <rect x="284" y="94" width="160" height="22" rx="3" fill="rgba(79,209,197,0.06)" stroke="rgba(79,209,197,0.2)" stroke-width="1"/>
+  <text x="364" y="109" text-anchor="middle" fill="#81E6D9" font-size="8.5" font-family="monospace">TT-Metalium runtime</text>
+
+  <rect x="284" y="122" width="160" height="22" rx="3" fill="rgba(45,49,66,0.5)" stroke="rgba(79,209,197,0.15)" stroke-width="1"/>
+  <text x="364" y="137" text-anchor="middle" fill="#607D8B" font-size="8.5" font-family="monospace">kernel driver (uhugedriver)</text>
+
+  <!-- Connectors between stack and chip panel -->
+  <line x1="284" y1="49" x2="270" y2="49" stroke="rgba(79,209,197,0.2)" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="284" y1="77" x2="270" y2="77" stroke="rgba(79,209,197,0.2)" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="284" y1="105" x2="270" y2="105" stroke="rgba(79,209,197,0.2)" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="284" y1="133" x2="270" y2="133" stroke="rgba(79,209,197,0.2)" stroke-width="0.8" stroke-dasharray="2,2"/>
+
+  <!-- Python env panel -->
+  <text x="460" y="30" fill="#607D8B" font-size="8" font-family="monospace" letter-spacing="1.5">PYTHON ENVS</text>
+
+  <rect x="456" y="38" width="172" height="20" rx="3" fill="rgba(244,196,113,0.06)" stroke="rgba(244,196,113,0.3)" stroke-width="1"/>
+  <text x="542" y="52" text-anchor="middle" fill="#F4C471" font-size="7.5" font-family="monospace">~/tt-metal/build/python_env_vllm</text>
+
+  <rect x="456" y="64" width="172" height="20" rx="3" fill="rgba(79,209,197,0.06)" stroke="rgba(79,209,197,0.3)" stroke-width="1"/>
+  <text x="542" y="78" text-anchor="middle" fill="#81E6D9" font-size="7.5" font-family="monospace">~/tt-metal/python_env</text>
+
+  <rect x="456" y="90" width="172" height="20" rx="3" fill="rgba(236,150,184,0.06)" stroke="rgba(236,150,184,0.25)" stroke-width="1"/>
+  <text x="542" y="104" text-anchor="middle" fill="#EC96B8" font-size="7.5" font-family="monospace">~/tt-forge-venv</text>
+
+  <line x1="456" y1="48" x2="444" y2="49" stroke="rgba(244,196,113,0.25)" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="456" y1="74" x2="444" y2="77" stroke="rgba(79,209,197,0.25)" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="456" y1="100" x2="444" y2="105" stroke="rgba(236,150,184,0.2)" stroke-width="0.8" stroke-dasharray="2,2"/>
+
+  <!-- model storage callout -->
+  <rect x="456" y="126" width="172" height="42" rx="3" fill="rgba(39,174,96,0.05)" stroke="rgba(39,174,96,0.2)" stroke-width="1"/>
+  <text x="542" y="141" text-anchor="middle" fill="#27AE60" font-size="7.5" font-family="monospace">~/models/</text>
+  <text x="542" y="154" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">Qwen3-0.6B/  (~1.5 GB)</text>
+  <text x="542" y="164" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">scratchpad:  ~/tt-scratchpad/</text>
+
+  <!-- border frame — Buchla panel style -->
+  <rect x="1" y="1" width="638" height="198" rx="5" fill="none" stroke="rgba(79,209,197,0.12)" stroke-width="1.5"/>
+</svg>

@@ -1,0 +1,5 @@
+{
+  "layout": "layouts/track.njk",
+  "tags": ["tinkerer-chapter"],
+  "personaId": "tinkerer"
+}

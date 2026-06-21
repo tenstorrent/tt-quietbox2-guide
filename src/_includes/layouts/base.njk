@@ -7,6 +7,7 @@
   <title>{{ title or "QB2 Guide" }} — Tenstorrent Quietbox 2</title>
   <meta name="description" content="{{ description or 'Your guide to the Tenstorrent Quietbox 2 — from first boot to first model and beyond.' }}">
   <link rel="stylesheet" href="/assets/style.css">
+  <link rel="stylesheet" href="/assets/tensix-viz.css">
 </head>
 <body>
   <header class="topbar">
@@ -29,5 +30,7 @@
   {{ content | safe }}
 
   <script src="/assets/main.js"></script>
+  <script src="/assets/tensix-viz.js"></script>
+  <script>if (typeof _TensixVizBundle !== 'undefined') _TensixVizBundle.autoInit();</script>
 </body>
 </html>

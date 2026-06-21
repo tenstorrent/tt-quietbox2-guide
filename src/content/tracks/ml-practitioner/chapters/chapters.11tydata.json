@@ -1,0 +1,5 @@
+{
+  "layout": "layouts/track.njk",
+  "tags": ["ml-practitioner-chapter"],
+  "personaId": "ml-practitioner"
+}

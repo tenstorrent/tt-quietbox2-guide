@@ -5,7 +5,17 @@ personaId: tinkerer
 permalink: /read/tinkerer/
 ---
 {% set persona = personas | findPersona(personaId) %}
-<div class="site-main">
-  <h1>{{ persona.name }} — Complete Guide</h1>
-  <p style="color:var(--muted);">This track is coming in v2. <a href="/tinkerer/">Back to outline →</a></p>
+
+<div style="border-left:3px solid {{ persona.color }};padding-left:16px;margin-bottom:2em;">
+  <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Complete Guide</div>
+  <h1>{{ persona.name }}</h1>
+  <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
+  <p style="font-size:12px;color:var(--muted);margin-top:8px;">{{ persona.chapters | length }} chapters · {{ persona.chapters | readTime }} read time</p>
 </div>
+
+{% for chapter in collections.tinkererChapters %}
+<div class="read-chapter">
+  <div class="read-chapter-number">Chapter {{ loop.index }}</div>
+  {{ chapter.content | safe }}
+</div>
+{% endfor %}

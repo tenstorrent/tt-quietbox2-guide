@@ -11,21 +11,23 @@ permalink: /tinkerer/
     <h1>{{ persona.name }}</h1>
     <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
   </div>
-  <div class="callout callout--warn">
-    <span class="callout-icon illustrated-only">🚧</span>
-    This track is coming soon. The chapter outline is below — content ships in v2.
-  </div>
+
+  <p style="color:var(--text2);max-width:640px;line-height:1.7;">
+    You've got the QB2 running. Now you want to personalize it, push it, break it just enough to understand what's inside. This track is the playground. LED scripts that respond to chip temperature. tt-toplike demos that stop conversations cold. An Ubuntu setup that actually fits your workflow. A recovery playbook for when experimentation goes sideways. And the community that makes all of it more interesting than any single machine ever could be on its own.
+  </p>
+
   <div style="margin-top:2em;">
     {% for ch in persona.chapters %}
-    <div style="display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg1);">
-      <span style="color:{{ persona.color }};font-weight:700;font-size:13px;min-width:20px;">{{ loop.index }}</span>
-      <span style="color:var(--text2);">{{ ch.title }}</span>
-      <span style="margin-left:auto;font-size:11px;color:var(--muted);">{{ ch.time }} min</span>
-    </div>
+    <a href="/tinkerer/{{ ch.slug }}/" style="display:flex;align-items:baseline;gap:12px;padding:14px 0;border-bottom:1px solid var(--bg1);text-decoration:none;color:inherit;">
+      <span style="color:{{ persona.color }};font-weight:700;font-size:13px;min-width:20px;font-variant-numeric:tabular-nums;">{{ loop.index }}</span>
+      <span style="color:var(--text);font-weight:500;">{{ ch.title }}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap;">{{ ch.time }} min</span>
+    </a>
     {% endfor %}
   </div>
-  <div style="margin-top:2em;padding:16px;background:var(--bg1);border-radius:var(--radius);">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">While you wait —</div>
-    <a href="/first-timer/" style="color:var(--teal);font-size:13px;">Take the First Timer track first →</a>
+
+  <div style="margin-top:2.5em;padding:16px;background:var(--bg1);border-radius:8px;border-left:3px solid var(--teal);">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;">New to QB2?</div>
+    <a href="/first-timer/" style="color:var(--teal);font-size:13px;font-weight:500;">Take the First Timer track first — it covers hardware, boot, and your first model →</a>
   </div>
 </div>
