@@ -4,7 +4,7 @@
 
 The fastest path is the [tt-installer](https://github.com/tenstorrent/tt-installer) script. It handles drivers, firmware, containers, and Python environments in one pass.
 
-**Prerequisites:** Ubuntu 22.04, internet connection, administrator access.
+**Prerequisites:** Ubuntu 24.04 LTS, internet connection, administrator access.
 
 ```bash
 sudo apt update && sudo apt install -y curl jq

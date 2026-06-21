@@ -1,6 +1,7 @@
 ---
 layout: layouts/base.njk
 ---
+{% if personaId and not persona %}{% set persona = personas | findPersona(personaId) %}{% endif %}
 <div class="site-main">
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 2em;">
     <a href="/{{ persona.id }}/" style="font-size:12px; color: var(--muted);">← Back to {{ persona.name }}</a>

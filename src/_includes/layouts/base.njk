@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- data-mode is on <html> (documentElement) — not <body> — for CSS cascade inheritance -->
 <html lang="en" data-mode="illustrated">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +10,7 @@
 </head>
 <body>
   <header class="topbar">
-    <a href="/" class="topbar-logo">⚡ <span>QB2</span> Guide</a>
+    <a href="/" class="topbar-logo"><span aria-hidden="true">⚡</span> <span>QB2</span> Guide</a>
     <nav style="display:flex;gap:16px;align-items:center">
       {% if persona %}
       <a href="/{{ persona.id }}/" class="topbar-home">← {{ persona.name }}</a>

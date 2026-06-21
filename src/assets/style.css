@@ -184,7 +184,11 @@ blockquote {
 .venn-circle[data-persona="ml-practitioner"] { stroke: var(--pink); }
 .venn-circle[data-persona="builder-hacker"]  { stroke: var(--gold); }
 .venn-circle[data-persona="tinkerer"]        { stroke: var(--green); }
-.venn-circle:hover, .venn-circle.highlight  { fill: rgba(79,209,197,0.1); }
+.venn-circle.highlight  { fill: rgba(79,209,197,0.1); }
+[data-persona="first-timer"]:hover, [data-persona="first-timer"].highlight     { fill: rgba(79,209,197,0.12); }
+[data-persona="ml-practitioner"]:hover, [data-persona="ml-practitioner"].highlight { fill: rgba(236,150,184,0.12); }
+[data-persona="builder-hacker"]:hover, [data-persona="builder-hacker"].highlight    { fill: rgba(244,196,113,0.12); }
+[data-persona="tinkerer"]:hover, [data-persona="tinkerer"].highlight                { fill: rgba(39,174,96,0.12); }
 .venn-label { font-size: 10px; fill: var(--muted); pointer-events: none; text-anchor: middle; }
 .venn-intersection-label { font-size: 8px; fill: rgba(79,209,197,0.4); pointer-events: none; text-anchor: middle; }
 .venn-intersection { fill: rgba(79,209,197,0.0); cursor: default; }

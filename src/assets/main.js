@@ -44,5 +44,12 @@
       const persona = circle.getAttribute("data-persona");
       if (persona) window.location.href = "/" + persona + "/";
     });
+    circle.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const persona = circle.getAttribute("data-persona");
+        if (persona) window.location.href = "/" + persona + "/";
+      }
+    });
   });
 })();

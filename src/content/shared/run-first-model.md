@@ -2,7 +2,7 @@
 
 The fastest model to verify everything works is [Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) — it works on all Tenstorrent hardware, requires no license, and runs in seconds.
 
-Make sure your Python environment is active:
+Make sure your Python environment is active. On a Quietbox 2, the environments are pre-installed at `~/tt-metal/` — the source code isn't there, but the Python environments are:
 
 ```bash
 source ~/tt-metal/python_env/bin/activate
