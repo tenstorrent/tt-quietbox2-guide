@@ -1,0 +1,37 @@
+# QB2 Guide
+
+> Interactive guide to the Tenstorrent Quietbox 2 — from first boot to first model and beyond. Four choose-your-own-adventure paths for different skill levels and goals.
+
+## Site
+
+- [Home](https://tenstorrent.github.io/qb2-guide/): Landing page with SVG Venn diagram path chooser
+
+## Paths
+
+- [First Timer](/first-timer/): New to Linux, new to dedicated AI hardware. Covers unboxing, first boot, hardware verification, stack installation, and first model run. Fully written.
+- [ML Practitioner](/ml-practitioner/): Coming from CUDA or another ML platform. Covers model zoo, vLLM deployment, and performance tuning. Outlined in v1.
+- [Builder / Hacker](/builder-hacker/): Systems developer wanting to write kernels and go deep. Covers TT-Metal architecture, kernel writing, TT-Lang, and profiling. Outlined in v1.
+- [Curious Tinkerer](/tinkerer/): Hobbyist wanting to customize, illuminate, and experiment. Covers LEDs, demos, Ubuntu customization, and community. Outlined in v1.
+
+## Hardware
+
+The Tenstorrent Quietbox 2 (QB2) contains:
+- 4× Blackhole P300c AI accelerators
+- Connected via PCIe as 4 independent devices
+- Ubuntu 24.04 LTS pre-installed
+- Tenstorrent software stack pre-installed (TTNN, vLLM, tt-smi, drivers)
+- No tt-metal source tree (~/tt-metal does not exist by default)
+
+## Key Facts
+
+- Check hardware: `tt-smi -s` — returns JSON with 4 device entries on a healthy QB2
+- Activate Python env: `source ~/tt-metal/python_env/bin/activate`
+- Recommended starter model: Qwen/Qwen3-0.6B (no license gate, works on all TT hardware)
+- Multi-device API: use `ttnn.CreateDevices` / `ttnn.CloseDevices` (not individual open/close)
+- `TT_METAL_ARCH_NAME` must be `blackhole` for QB2
+
+## Optional
+
+- [agents.md](/agents.md): Task-oriented guide for AI assistants working with QB2 users
+- [tt-awesome](https://tenstorrent.github.io/tt-awesome/): Community catalog of projects for TT hardware
+- [Official docs](https://docs.tenstorrent.com): Full technical documentation
