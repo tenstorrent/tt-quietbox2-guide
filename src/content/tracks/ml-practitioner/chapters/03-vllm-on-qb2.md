@@ -36,12 +36,12 @@ python3 ~/.local/lib/tt-inference-server/run.py \
   --model Llama-3.1-8B-Instruct \
   --tt-device p100
 
-# The p100 flag targets QB2 P300c hardware
+# p100 = one Blackhole chip; QB2 has four — pass p300x2 to use them all
 # On first run: Docker pull + weight compilation (~5 min)
 # Then: port 8000 is ready
 ```
 
-The `--tt-device p100` flag tells tt-inference-server you're running on QB2/P300c hardware. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
+The `--tt-device p100` flag targets a single Blackhole chip — QB2 presents each of its four chips as a `p100`, which is plenty for an 8B model. To use the whole box (for a 70B, say), pass `p300x2` instead — see the Multi-Chip section below. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
 
 ## Path 2: Direct vLLM (more control)
 
@@ -178,23 +178,19 @@ Keep the SSH session open while you use the forwarded port. For a persistent set
 Don't expose port 8000 directly to the internet without authentication. The OpenAI-compatible API has no built-in auth layer — it trusts any caller. For internal network use or behind a VPN it's fine. For public exposure, put a reverse proxy with authentication in front of it.
 :::
 
-## Multi-Chip: Using All Four Cards
+## Multi-Chip: Using All Four Chips
 
-For 70B models, add the `--tensor-parallel-size 4` flag to use all four Blackhole chips:
+A 70B-class model needs the whole box. With tt-inference-server that's the `p300x2` device — both p300c cards, all four chips — and it handles the mesh and the tensor-parallel split for you:
 
 ```bash
-# Direct vLLM, 4-chip tensor parallel
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Llama-3.1-70B-Instruct \
-  --tensor-parallel-size 4 \
-  --port 8000
-
-# Or with tt-inference-server:
 python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-70B-Instruct \
-  --tt-device p100 \
-  --num_chips 4
+  --model Llama-3.3-70B-Instruct \
+  --tt-device p300x2 \
+  --workflow server \
+  --docker-server
 ```
+
+The full walkthrough — prerequisites, weights, and an OpenAI-compatible client — is in [Running Llama-3.3-70B on QB2](/lessons/llama-70b/).
 
 The model weights distribute across all four chips' DRAM. The KV-cache splits across the chips' Tensix cores. From the client's perspective, the API is identical — same URL, same request format.
 

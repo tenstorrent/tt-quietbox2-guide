@@ -91,7 +91,7 @@ docker run \
   --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
   --model Llama-3.3-70B-Instruct \
-  --tt-device p150x4
+  --tt-device p300x2
 ```
 
 Wait for `Application startup complete` — first run downloads 140 GB of weights, so plan ahead. Then ask it something that requires reasoning:

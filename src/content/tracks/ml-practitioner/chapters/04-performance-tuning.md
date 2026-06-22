@@ -127,7 +127,7 @@ In vLLM, performance optimization happens at the model-loading stage. The compil
 
 ## Tensor Parallelism and Attention Heads
 
-When you add chips via `--tensor-parallel-size 4`, the model's attention heads split evenly across chips. Llama-3.1-70B has 64 attention heads — 16 per chip with 4-way tensor parallelism. The chips coordinate activations via their Ethernet cores (the left and right column on the chip grid) directly, without routing through the CPU.
+When you serve a model across all four chips (the `p300x2` device), its attention heads split evenly across them. Llama-3.1-70B has 64 attention heads — 16 per chip with 4-way tensor parallelism. The chips coordinate activations via their Ethernet cores (the left and right column on the chip grid) directly, without routing through the CPU.
 
 This matters for scaling intuition: tensor parallel across 4 chips doesn't give you 4x throughput, because the chips need to communicate partial activations at each layer boundary. What you gain is 4x the memory pool (fitting a model that wouldn't fit on one chip) and meaningful throughput improvement from the compute scale-out.
 

@@ -66,7 +66,7 @@ The same command also runs these weight variants:
   <div class="spec-card">
     <div class="spec-card-label">Status</div>
     <div class="spec-card-value">🟡 Functional</div>
-    <div class="spec-card-sub">Tested on BH 4×P150 / QB2</div>
+    <div class="spec-card-sub">Tested on QB2 (p300x2)</div>
   </div>
   <div class="spec-card">
     <div class="spec-card-label">Max context</div>
@@ -81,7 +81,7 @@ The same command also runs these weight variants:
 </div>
 
 :::callout type="tip"
-The official tt-inference-server documentation for this model lists the target hardware as "BH 4xP150" — that's the same Blackhole chip count and DRAM configuration as your QB2 P300c cards. The device flag is `p150x4`.
+tt-inference-server identifies the QB2 as `p300x2` — two p300c cards, four Blackhole chips. That's the `--tt-device` value to pass for a model that needs the whole box, like this one.
 :::
 
 ---
@@ -149,7 +149,7 @@ The simplest path is the `run.py` helper from tt-inference-server — one comman
 
 ```bash
 cd ~/code/tt-inference-server
-python3 run.py --model Llama-3.3-70B-Instruct --device p150x4 --workflow server --docker-server
+python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 --workflow server --docker-server
 ```
 
 **Under the hood**, `run.py` launches the TT vLLM container. If you'd rather drive Docker yourself — to pin flags, or run without the repo — the equivalent is:
@@ -164,7 +164,7 @@ docker run \
   --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
   --model Llama-3.3-70B-Instruct \
-  --tt-device p150x4
+  --tt-device p300x2
 ```
 
 <div class="warning-box">
@@ -330,7 +330,7 @@ docker run \
   --volume volume_id_DeepSeek-R1-Distill-Llama-70B:/home/container_app_user/cache_root \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
   --model DeepSeek-R1-Distill-Llama-70B \
-  --tt-device p150x4
+  --tt-device p300x2
 ```
 
 The HuggingFace model ID is `deepseek-ai/DeepSeek-R1-Distill-Llama-70B` — no gated license, so no need to request access. You do still need a HF token.
@@ -402,7 +402,7 @@ sudo modprobe tenstorrent
 
 **Server starts but requests return very slowly:**
 
-Confirm all four chips are active during inference using `tt-smi -s`. If only 1–2 show elevated aiclk, tensor parallelism isn't using all cards. Verify the `--tt-device p150x4` flag is present in your docker command.
+Confirm all four chips are active during inference using `tt-smi -s`. If only 1–2 show elevated aiclk, tensor parallelism isn't using all four chips. Verify the `--tt-device p300x2` flag is present in your command.
 
 **Out of disk space during Docker volume creation:**
 
