@@ -88,6 +88,28 @@ module.exports = function (eleventyConfig) {
 </div>`;
   });
 
+  /**
+   * tensixsystem shortcode — multi-chip system view using the real topology.
+   * Usage: {% tensixsystem "qb2", "Your four Blackhole chips" %}
+   * Renders genuine chips (qb2 = 2× p300c cards = 4 chips), not one chip
+   * split into quadrants. `config` is a registered topology name from the
+   * tensix-viz bundle (qb2, t3000, …); the widget auto-activates on load.
+   */
+  eleventyConfig.addShortcode("tensixsystem", function (config, title) {
+    const cfg = config || "qb2";
+    const heading = title || "QB2 — four Blackhole chips";
+    const esc = (s) =>
+      String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    return `<div class="tensix-viz-wrapper illustrated-only">
+  <div class="tensix-viz-header">
+    <span class="tensix-viz-title">⬡ ${esc(heading)}</span>
+  </div>
+  <div class="tensix-viz-body">
+    <div data-viz="system" data-config="${esc(cfg)}" data-mode="active"></div>
+  </div>
+</div>`;
+  });
+
   // ---------------------------------------------------------------------------
   // Collections
   // ---------------------------------------------------------------------------

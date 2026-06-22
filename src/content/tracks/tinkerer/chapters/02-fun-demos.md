@@ -152,19 +152,9 @@ python3 expedition.py run --tui --seed-only --limit 8 --chips 4
 First Voice is the payoff. After each successful compile, the game runs one inference pass and prints the model's decoded output. A sentiment classifier labeling its first sentence. A ResNet identifying its first image. A GPT-2 generating its first token. Watch the chip do something real with what it just learned to run.
 :::
 
-{% tensixviz "blackhole", [
-  {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5]], "color": "tensixActive", "label": "Chip 0 — AlexNet forge", "ms": 700},
-  {"step": "pause", "ms": 500},
-  {"step": "highlight", "cores": [[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[15,3],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[15,4],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5]], "color": "tensixActive", "label": "Chip 1 — GPT-2 forge", "ms": 700},
-  {"step": "pause", "ms": 500},
-  {"step": "highlight", "cores": [[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[1,9],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10]], "color": "tensixActive", "label": "Chip 2 — BEiT forge", "ms": 700},
-  {"step": "pause", "ms": 500},
-  {"step": "highlight", "cores": [[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7],[15,7],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[15,8],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[9,10],[10,10],[11,10],[12,10],[13,10],[14,10],[15,10]], "color": "tensixActive", "label": "Chip 3 — DINOv2 forge", "ms": 700},
-  {"step": "pause", "ms": 1200},
-  {"step": "clear"}
-] %}
+{% tensixsystem "qb2", "Four chips, four models — your QB2's two p300c cards" %}
 
-<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">Four chips, four models, simultaneously. Each quadrant is one Blackhole card running a different compiled model.</p>
+<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">Four genuine Blackhole chips across two p300c cards, joined by the Samtec link. The model-zoo game compiles a different model on each, in parallel.</p>
 
 ---
 
