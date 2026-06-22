@@ -1,13 +1,13 @@
 ---
-title: What Just Arrived
+title: What to Know About Your Workstation
 currentChapter: 01-what-just-arrived
 permalink: /first-timer/01-what-just-arrived/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
-# What Just Arrived
+# What to Know About Your Workstation
 
-A workstation arrived. It has four AI accelerators inside, an operating system you may not have used before, and software already configured and waiting. The machine is ready. You're the variable.
+Your workstation is a Tenstorrent Quietbox 2: four AI accelerators inside, an operating system you may not have used before, and the software stack already configured and waiting. The machine is ready to go — what's left is knowing what you've got.
 
 This guide doesn't assume you know Linux, or Python, or what a PCIe slot is. It assumes you're curious, and that curiosity is enough.
 
