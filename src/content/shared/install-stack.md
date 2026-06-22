@@ -17,17 +17,17 @@ After it finishes, reboot:
 sudo reboot
 ```
 
-### What tt-installer creates
+### What ends up on your QB2
 
 | Path | What it is |
 |------|-----------|
-| `~/tt-metal/python_env/` | TTNN / Direct API venv |
-| `~/tt-metal/build/python_env_vllm/` | vLLM inference server venv |
-| `/opt/venv-forge` (symlinked as `~/tt-forge-venv/`) | TT-Forge / TT-XLA / JAX venv |
-| `/usr/bin/tt-smi` | Hardware monitoring CLI |
-| `~/tt-scratchpad/` | Working directory (created by VS Code extension, or make it yourself: `mkdir -p ~/tt-scratchpad`) |
+| `~/tt-metal/python_env/` | TTNN / Direct API venv (pre-installed on QB2) |
+| `~/.tenstorrent-venv/` | Main Python environment with vLLM and other tools |
+| `~/.local/bin/tt-forge` | TT-Forge container wrapper (runs via Docker) |
+| `~/.local/bin/tt-smi` | Hardware monitoring CLI (on PATH) |
+| `~/models/` | Model weights storage (create it: `mkdir -p ~/models`) |
 
-The `~/tt-metal/` directory exists but contains **only the compiled environments** — not the tt-metal source code. That's intentional. You don't need the source to run models or use the APIs.
+`tt-installer` on a fresh Ubuntu machine uses Docker containers for Metalium and Forge. On a QB2 that shipped from Tenstorrent, the TTNN venv at `~/tt-metal/python_env/` is pre-built. The `~/tt-metal/` directory contains compiled environments — not the tt-metal source code.
 
 <figure class="video-demo">
 <img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">

@@ -18,16 +18,20 @@ If your QB2 came pre-configured: jump to <strong>What You Have</strong> below. T
 
 ## What You Have
 
-After a stock QB2 install (or after tt-installer finishes), this is your map:
+On a QB2 from Tenstorrent, the stack is pre-installed. Here's your map:
 
 | Component | Location | When to use it |
 |-----------|----------|----------------|
 | TTNN venv | `~/tt-metal/python_env/` | Direct API work, TTNN operations, cookbook examples |
-| vLLM venv | `~/tt-metal/build/python_env_vllm/` | Serving models via HTTP, OpenAI-compatible API |
-| Forge/XLA venv | `~/tt-forge-venv/` → `/opt/venv-forge` | JAX, TT-Forge, PyTorch/XLA (advanced) |
-| `tt-smi` | `/usr/bin/tt-smi` | Hardware monitoring, always available |
+| vLLM | `vllm` in `~/.tenstorrent-venv/` | Serving models via HTTP, OpenAI-compatible API |
+| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` | Compile PyTorch/JAX models via container |
+| `tt-smi` | `~/.local/bin/tt-smi` (on PATH) | Hardware monitoring, always available |
 | Model storage | `~/models/` (convention) | Where you put downloaded model weights |
 | Scratch space | `~/tt-scratchpad/` | Working directory for scripts and experiments |
+
+:::callout type="tip"
+**Installing on a fresh Ubuntu machine?** `tt-installer` today uses Docker containers for Metalium and Forge — it creates `~/.tenstorrent-venv` with Python tools and installs `tt-metalium` / `tt-forge` wrapper scripts in `~/.local/bin/`. The paths here reflect a configured QB2; a fresh install may differ slightly.
+:::
 
 Create the scratch directory if it doesn't exist yet:
 
@@ -48,32 +52,27 @@ python3 -c "import ttnn; print('TTNN ready')"
 deactivate
 ```
 
-### vLLM (`~/tt-metal/build/python_env_vllm/`)
+### vLLM (in `~/.tenstorrent-venv`)
 
-Use this to run a model as a server with an OpenAI-compatible HTTP API. This is how you'd point a chat application at your QB2.
-
-```bash
-source ~/tt-metal/build/python_env_vllm/bin/activate
-# prompt changes to (python_env_vllm)
-python3 -m vllm.entrypoints.openai.api_server --help
-deactivate
-```
-
-### TT-Forge/XLA (`~/tt-forge-venv/`)
-
-For JAX and TT-Forge (PyTorch model compiler). More advanced. Keep it separate — this venv conflicts with TTNN:
+Use this to run a model as a server with an OpenAI-compatible HTTP API. vLLM is available in the main tenstorrent venv:
 
 ```bash
-# Before activating forge, unset TT_METAL_HOME if you set it
-unset TT_METAL_HOME
-source ~/tt-forge-venv/bin/activate
+source ~/.tenstorrent-venv/bin/activate
+vllm serve ~/models/Qwen3-0.6B --port 8000
 ```
 
-If `~/tt-forge-venv` doesn't exist:
+Or use `tt-studio` for a no-code UI that handles vLLM startup automatically.
+
+### TT-Forge (`tt-forge` wrapper)
+
+`tt-forge` is a Docker container wrapper installed to `~/.local/bin/` by tt-installer. It runs the TT-XLA/Forge compiler stack without requiring a local Python venv:
+
 ```bash
-ls /opt/venv-forge    # check if it's there
-ln -s /opt/venv-forge ~/tt-forge-venv    # create the symlink
+# Use the tt-forge wrapper directly
+tt-forge --help
 ```
+
+For scripting with `import forge` in Python, use the `tt-forge-fe` source tree or check [docs.tenstorrent.com/tt-forge](https://docs.tenstorrent.com/tt-forge-onnx/) for current installation instructions.
 
 ## Confirming Each Environment Works
 
@@ -84,15 +83,15 @@ Run this check sequence:
 source ~/tt-metal/python_env/bin/activate
 python3 -c "import ttnn; print('✓ TTNN')" && deactivate
 
-# vLLM
-source ~/tt-metal/build/python_env_vllm/bin/activate
+# vLLM (in the main tenstorrent venv)
+source ~/.tenstorrent-venv/bin/activate
 python3 -c "import vllm; print('✓ vLLM')" && deactivate
 
 # Check for the tt-smi binary
 which tt-smi && tt-smi --version
 ```
 
-All three should respond without errors. If TTNN is missing, the install didn't complete — rerun tt-installer. If the vLLM import fails, same fix.
+All three should respond without errors. If TTNN import fails, the venv may not be set up — check [docs.tenstorrent.com](https://docs.tenstorrent.com) for the current setup guide. If `tt-smi` isn't found, add `~/.local/bin` to your PATH (see below).
 
 <figure class="video-demo">
 <img src="/assets/video/04b-venv-demo.gif" alt="Activating the TTNN venv and importing ttnn on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
@@ -101,7 +100,7 @@ All three should respond without errors. If TTNN is missing, the install didn't 
 
 <div class="callout callout--deep-dive">
 <span class="callout-icon illustrated-only">📁</span>
-<strong>Why ~/tt-metal exists without source code:</strong> The tt-installer builds the Python environments and places them under <code>~/tt-metal/</code> as a conventional home. It also compiles shared libraries (the <code>.so</code> files in <code>~/tt-metal/build/lib/</code>) that TTNN needs at runtime. The source code — the C++ kernels, the build system — isn't needed to use the stack. It's only needed if you want to modify the stack itself. Most people never need it.
+<strong>Why ~/tt-metal exists without source code:</strong> On a QB2, <code>~/tt-metal/</code> contains the pre-built TTNN Python environment and compiled shared libraries. The source code — C++ kernels, the build system — isn't there by default, and most users never need it. If you want to build from source (for kernel modification or upstream contributions), the <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/">build-tt-metal lesson</a> walks through it.
 </div>
 
 ## Installing tt-smi if it's Missing
