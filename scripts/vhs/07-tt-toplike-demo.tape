@@ -1,58 +1,43 @@
-# VHS tape — tt-toplike hardware monitor demo
+# VHS tape — tt-toplike TUI demo
+# Records the live tt-toplike TUI running against QB2 hardware.
 # Record with: vhs scripts/vhs/07-tt-toplike-demo.tape
 
 Output src/assets/video/07-tt-toplike-demo.gif
 
 Set Shell "bash"
 Set FontSize 13
-Set Width 900
-Set Height 560
+Set Width 1000
+Set Height 600
 Set Theme "Catppuccin Mocha"
 
-Type "# tt-toplike — real-time hardware monitor for Blackhole chips"
-Sleep 400ms
+# Brief lead-in so viewers know what they're about to see
+Type "# tt-toplike — real-time Blackhole hardware monitor"
+Sleep 500ms
 Enter
-Sleep 200ms
-
-Type "which tt-toplike && tt-toplike --version"
-Sleep 400ms
-Enter
-Sleep 600ms
-
-Type ""
 Sleep 300ms
-Enter
 
-Type "# Check all four chips at a glance with snapshot mode:"
+Type "tt-toplike"
 Sleep 400ms
 Enter
-Sleep 200ms
 
-Type "tt-smi -s | python3 -m json.tool | grep -E 'board_type|aiclk|power' | head -12"
-Sleep 400ms
-Enter
-Sleep 1500ms
+# Let the TUI initialize and render the first few frames
+Sleep 3s
 
-Type ""
-Sleep 300ms
-Enter
+# Pause on the default view so the layout is readable
+Sleep 2s
 
-Type "# tt-toplike --mode arcade shows live chip activity as ASCII art"
-Sleep 400ms
-Enter
-Sleep 200ms
+# Press 'f' to switch to flow mode (NOC particle visualization)
+Type "f"
+Sleep 3s
 
-Type "# (run it yourself — it's interactive, can't record live TUI here)"
-Sleep 400ms
-Enter
-Sleep 400ms
+# Press 'a' to switch to arcade mode
+Type "a"
+Sleep 3s
 
-Type "# But we can see the modes available:"
-Sleep 400ms
-Enter
-Sleep 200ms
+# Back to default view
+Type "d"
+Sleep 2s
 
-Type "tt-toplike --help 2>&1 | head -20"
-Sleep 400ms
-Enter
-Sleep 1000ms
+# Quit
+Type "q"
+Sleep 500ms
