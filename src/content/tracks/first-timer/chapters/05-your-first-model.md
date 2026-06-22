@@ -98,11 +98,10 @@ print('Done.')
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">Tensor parallel across chips — each chip holds different model layers.</p>
 
-<div class="video-placeholder illustrated-only">
-  <strong>Coming soon: First model run</strong>
-  TTNN device check, hf download, vLLM server start, curl query — all on a live QB2.
-  <!-- VIDEO: VHS recording. Script: scripts/vhs/05-first-model-demo.tape -->
-</div>
+<figure class="video-demo">
+<img src="/assets/video/05-first-model-demo.gif" alt="TTNN device open and Qwen3-0.6B model files on a live QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Opening TTNN device and browsing model files on a live QB2</figcaption>
+</figure>
 
 ---
 

@@ -149,7 +149,10 @@ with ttnn.experimental.profiler.profile():
 
 The [OptimizerFW tool via tt-forge](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/) provides higher-level optimization passes that can analyze a full PyTorch model graph and suggest kernel-level improvements.
 
-<!-- VIDEO -->
+<figure class="video-demo">
+<img src="/assets/video/07-tt-toplike-demo.gif" alt="tt-toplike version check and tt-smi snapshot showing chip clocks and power on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike on a live QB2 — four Blackhole chips, real-time clock and power readings</figcaption>
+</figure>
 
 ---
 

@@ -80,11 +80,10 @@ This opens the interactive TUI — press `q` to quit. You'll see per-chip utiliz
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">This is what active inference looks like inside one chip. Four of these run in parallel on a QB2.</p>
 
-<div class="video-placeholder illustrated-only">
-  <strong>Coming soon: tt-smi live demo</strong>
-  Running tt-smi -s on a live QB2 — all four chips visible, JSON output formatted and annotated.
-  <!-- VIDEO: VHS recording. Script: scripts/vhs/03-tt-smi-demo.tape -->
-</div>
+<figure class="video-demo">
+<img src="/assets/video/03-tt-smi-demo.gif" alt="tt-smi -s on a live QB2 — four P300c Blackhole chips, JSON snapshot output" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-smi -s on a live QB2 — four P300c chips, JSON snapshot mode</figcaption>
+</figure>
 
 ---
 

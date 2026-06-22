@@ -133,7 +133,10 @@ ls -lh ~/models/Llama-3.1-8B-Instruct/*.safetensors | wc -l
 
 A correctly downloaded Llama-3.1-8B-Instruct should have 4 safetensors shards. Qwen3-0.6B has 1.
 
-<!-- VIDEO -->
+<figure class="video-demo">
+<img src="/assets/video/08-model-download-demo.gif" alt="Browsing Qwen3-0.6B model files, hf CLI version, disk usage on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Qwen3-0.6B already downloaded — files, size, and the hf download command</figcaption>
+</figure>
 
 ---
 

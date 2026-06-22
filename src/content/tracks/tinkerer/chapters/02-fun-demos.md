@@ -119,7 +119,10 @@ That's the demo.
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">One Blackhole P300c running a slice of Llama-3.1-70B. All four of yours look like this, simultaneously.</p>
 
-<!-- VIDEO -->
+<figure class="video-demo">
+<img src="/assets/video/07-tt-toplike-demo.gif" alt="tt-toplike showing version, chip clocks, and available modes on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike on a live QB2 — checking the tool and hardware state before launching</figcaption>
+</figure>
 
 ## Demo 5: TT-Forge Compiletron — Hunt the Wild Model
 

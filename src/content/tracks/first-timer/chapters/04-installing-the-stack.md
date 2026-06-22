@@ -94,6 +94,11 @@ which tt-smi && tt-smi --version
 
 All three should respond without errors. If TTNN is missing, the install didn't complete — rerun tt-installer. If the vLLM import fails, same fix.
 
+<figure class="video-demo">
+<img src="/assets/video/04b-venv-demo.gif" alt="Activating the TTNN venv and importing ttnn on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Navigating between system Python and the TTNN venv — checking what's active before and after</figcaption>
+</figure>
+
 <div class="callout callout--deep-dive">
 <span class="callout-icon illustrated-only">📁</span>
 <strong>Why ~/tt-metal exists without source code:</strong> The tt-installer builds the Python environments and places them under <code>~/tt-metal/</code> as a conventional home. It also compiles shared libraries (the <code>.so</code> files in <code>~/tt-metal/build/lib/</code>) that TTNN needs at runtime. The source code — the C++ kernels, the build system — isn't needed to use the stack. It's only needed if you want to modify the stack itself. Most people never need it.
@@ -132,11 +137,10 @@ Check space before any download:
 df -h ~/models
 ```
 
-<div class="video-placeholder illustrated-only">
-  <strong>Coming soon: tt-installer walkthrough</strong>
-  Running tt-installer on a fresh Ubuntu system — selecting defaults, watching it run, confirming environments.
-  <!-- VIDEO: VHS recording. Script: scripts/vhs/04-tt-installer-demo.tape -->
-</div>
+<figure class="video-demo">
+<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">After tt-installer and reboot — venvs, tt-smi, and hf are ready</figcaption>
+</figure>
 
 ---
 
