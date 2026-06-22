@@ -5,8 +5,8 @@
     "color": "#4FD1C5",
     "colorVar": "--teal",
     "couplet": [
-      "Your first walk with a Quietbox doesn't have to be long to go somewhere new.",
-      "This guide keeps pace with you."
+      "New to Tenstorrent hardware? Start here.",
+      "Six chapters from first boot to first model."
     ],
     "vennCx": 38,
     "vennCy": 38,
@@ -25,8 +25,8 @@
     "color": "#EC96B8",
     "colorVar": "--pink",
     "couplet": [
-      "You've run models before.",
-      "You haven't run them like this — not at this speed, not on silicon you can actually touch."
+      "You've run models before — now do it on hardware you own.",
+      "vLLM, performance tuning, TT-Forge, and multi-chip inference."
     ],
     "vennCx": 62,
     "vennCy": 38,
@@ -45,8 +45,8 @@
     "color": "#F4C471",
     "colorVar": "--gold",
     "couplet": [
-      "The architecture goes all the way down, and you're the one going with it.",
-      "Bring something to build."
+      "Kernels, data movement, and the compiler pipeline.",
+      "TTNN, TT-Lang, and TT-Forge from the ground up."
     ],
     "vennCx": 38,
     "vennCy": 62,
@@ -65,8 +65,8 @@
     "color": "#27AE60",
     "colorVar": "--green",
     "couplet": [
-      "There's more to configure, illuminate, and break here than most machines will ever admit to having.",
-      "Start anywhere."
+      "LEDs, demos, Ubuntu setup, and controlled chaos.",
+      "Break things, understand why, fix them."
     ],
     "vennCx": 62,
     "vennCy": 62,
