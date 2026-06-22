@@ -6,7 +6,7 @@ layout: layouts/base.njk
 {% endif %}
 <div class="track-layout" data-persona="{{ persona.id }}">
   <nav class="chapter-nav">
-    <div class="chapter-nav-label">{{ persona.name }}</div>
+    <div class="chapter-nav-label">{{ persona.verb }}</div>
     <a href="/" class="chapter-nav-back">← All Paths</a>
     {% for ch in persona.chapters %}
     <a href="/{{ persona.id }}/{{ ch.slug }}/"

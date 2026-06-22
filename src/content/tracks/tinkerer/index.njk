@@ -1,6 +1,6 @@
 ---
 layout: layouts/base.njk
-title: Curious Tinkerer
+title: "Customize"
 personaId: tinkerer
 permalink: /tinkerer/
 ---
@@ -8,8 +8,8 @@ permalink: /tinkerer/
 <div class="site-main" data-persona="{{ persona.id }}">
   <div style="border-left:3px solid {{ persona.color }};padding-left:16px;margin-bottom:2em;">
     <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Path</div>
-    <h1>{{ persona.name }}</h1>
-    <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
+    <h1>{{ persona.goal }}</h1>
+    <p style="color:var(--text2);">{{ persona.support }}</p>
   </div>
 
   <p style="color:var(--text2);max-width:640px;line-height:1.7;">
@@ -28,6 +28,6 @@ permalink: /tinkerer/
 
   <div style="margin-top:2.5em;padding:16px;background:var(--bg1);border-radius:8px;border-left:3px solid var(--teal);">
     <div style="font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;">New to QB2?</div>
-    <a href="/first-timer/" style="color:var(--teal);font-size:13px;font-weight:500;">Take the First Timer track first — it covers hardware, boot, and your first model →</a>
+    <a href="/first-timer/" style="color:var(--teal);font-size:13px;font-weight:500;">Take the Explore track first — it covers hardware, boot, and your first model →</a>
   </div>
 </div>

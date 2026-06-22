@@ -9,7 +9,7 @@ description: "Choose your path through the Tenstorrent Quietbox 2 — from first
   <p class="hero-eyebrow">A handbook for your</p>
   <h1 class="hero-title">TT-QuietBox<sup>®</sup> 2</h1>
   <div class="hero-couplet" id="hero-couplet">
-    <p>Hover a circle to see what each path covers. Click to begin.</p>
+    <p>Hover a path to see what you'll do. Click to dive in.</p>
   </div>
 </section>
 
@@ -22,14 +22,14 @@ description: "Choose your path through the Tenstorrent Quietbox 2 — from first
     <circle
       class="venn-circle"
       data-persona="{{ p.id }}"
-      data-couplet-1="{{ p.couplet[0] }}"
-      data-couplet-2="{{ p.couplet[1] }}"
+      data-couplet-1="{{ p.goal }}"
+      data-couplet-2="{{ p.support }}"
       cx="{{ p.vennCx * 5.2 }}"
       cy="{{ p.vennCy * 5.2 }}"
       r="110"
       role="button"
       tabindex="0"
-      aria-label="Enter {{ p.name }} path"
+      aria-label="{{ p.goal }}"
     />
     {% endfor %}
 
@@ -44,7 +44,7 @@ description: "Choose your path through the Tenstorrent Quietbox 2 — from first
     <text class="venn-label"
       x="{{ p.vennCx * 5.2 + (p.vennCx < 50 and -55 or 55) }}"
       y="{{ p.vennCy * 5.2 + (p.vennCy < 50 and -80 or 80) }}"
-      style="fill: {{ p.color }}">{{ p.name }}</text>
+      style="fill: {{ p.color }}">{{ p.verb }}</text>
     {% endfor %}
   </svg>
 </div>
@@ -52,8 +52,8 @@ description: "Choose your path through the Tenstorrent Quietbox 2 — from first
 <div class="persona-cards">
   {% for p in personas %}
   <a href="/{{ p.id }}/" class="persona-card" data-persona="{{ p.id }}" style="--persona-color: {{ p.color }}">
-    <div class="persona-card-name">{{ p.name }}</div>
-    <div class="persona-card-couplet">{{ p.couplet[0] }}</div>
+    <div class="persona-card-verb">{{ p.verb }}</div>
+    <div class="persona-card-name">{{ p.goal }}</div>
     <div class="persona-card-meta">{{ p.chapters | length }} chapters · {{ p.chapters | readTime }}</div>
     <span class="persona-card-enter">Enter →</span>
   </a>

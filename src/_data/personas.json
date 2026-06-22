@@ -2,16 +2,15 @@
   {
     "id": "first-timer",
     "name": "First Timer",
+    "verb": "Explore",
+    "goal": "Explore Tenstorrent hardware & software for the first time",
+    "support": "Six chapters from first boot to first model.",
     "color": "#4FD1C5",
     "colorVar": "--teal",
-    "couplet": [
-      "New to Tenstorrent hardware? Start here.",
-      "Six chapters from first boot to first model."
-    ],
     "vennCx": 38,
     "vennCy": 38,
     "chapters": [
-      { "slug": "01-what-just-arrived", "title": "What Just Arrived", "time": 5 },
+      { "slug": "01-what-just-arrived", "title": "What to Know About Your Workstation", "time": 5 },
       { "slug": "02-first-boot", "title": "First Boot", "time": 8 },
       { "slug": "03-is-this-thing-on", "title": "Is This Thing On?", "time": 6 },
       { "slug": "04-installing-the-stack", "title": "Installing the Stack", "time": 10 },
@@ -22,12 +21,11 @@
   {
     "id": "ml-practitioner",
     "name": "ML Practitioner",
+    "verb": "Run & build",
+    "goal": "Run and build on top of models",
+    "support": "vLLM, performance tuning, TT-Forge, and multi-chip inference.",
     "color": "#EC96B8",
     "colorVar": "--pink",
-    "couplet": [
-      "You've run models before — now do it on hardware you own.",
-      "vLLM, performance tuning, TT-Forge, and multi-chip inference."
-    ],
     "vennCx": 62,
     "vennCy": 38,
     "chapters": [
@@ -42,12 +40,11 @@
   {
     "id": "builder-hacker",
     "name": "Builder / Hacker",
+    "verb": "Tinker",
+    "goal": "Tinker with models and the software & hardware stack",
+    "support": "TTNN, TT-Lang, and TT-Forge from the ground up.",
     "color": "#F4C471",
     "colorVar": "--gold",
-    "couplet": [
-      "Kernels, data movement, and the compiler pipeline.",
-      "TTNN, TT-Lang, and TT-Forge from the ground up."
-    ],
     "vennCx": 38,
     "vennCy": 62,
     "chapters": [
@@ -62,12 +59,11 @@
   {
     "id": "tinkerer",
     "name": "Curious Tinkerer",
+    "verb": "Customize",
+    "goal": "Customize your workstation and make it truly your own",
+    "support": "LEDs, demos, Ubuntu setup, and controlled chaos.",
     "color": "#27AE60",
     "colorVar": "--green",
-    "couplet": [
-      "LEDs, demos, Ubuntu setup, and controlled chaos.",
-      "Break things, understand why, fix them."
-    ],
     "vennCx": 62,
     "vennCy": 62,
     "chapters": [

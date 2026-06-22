@@ -35,10 +35,10 @@ permalink: /lessons/llama-70b/
 <p class="lesson-subtitle">A full 70-billion parameter model, running locally on the four Blackhole chips in your TT-QuietBox® 2. No cloud. No API key. Just your hardware.</p>
 
 <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
-  <a href="/first-timer/" class="track-pill track-pill--teal">First Timer</a>
-  <a href="/ml-practitioner/" class="track-pill track-pill--pink">ML Practitioner</a>
-  <a href="/builder-hacker/" class="track-pill track-pill--gold">Builder / Hacker</a>
-  <a href="/tinkerer/" class="track-pill track-pill--green">Curious Tinkerer</a>
+  <a href="/first-timer/" class="track-pill track-pill--teal">Explore</a>
+  <a href="/ml-practitioner/" class="track-pill track-pill--pink">Run & build</a>
+  <a href="/builder-hacker/" class="track-pill track-pill--gold">Tinker</a>
+  <a href="/tinkerer/" class="track-pill track-pill--green">Customize</a>
 </div>
 
 <div class="lesson-meta">
@@ -88,7 +88,7 @@ The official tt-inference-server documentation for this model lists the target h
 
 ## Before you start
 
-**Docker must be installed.** The tt-inference-server uses Docker containers to manage the environment. If you've completed the First Timer track, Docker is already present. Verify:
+**Docker must be installed.** The tt-inference-server uses Docker containers to manage the environment. If you've completed the Explore track, Docker is already present. Verify:
 
 ```bash
 docker --version
@@ -429,7 +429,7 @@ Inside that ceiling: Llama-3.3-70B-Instruct is the capable baseline. DeepSeek-R1
 ---
 
 <div style="display:flex; flex-wrap:wrap; gap:12px; margin: 40px 0 0;">
-  <a href="/ml-practitioner/03-vllm-on-qb2/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--pink); font-weight:600; font-size:14px; border:1px solid rgba(236,150,184,0.25);">ML Practitioner: vLLM on QB2 →</a>
+  <a href="/ml-practitioner/03-vllm-on-qb2/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--pink); font-weight:600; font-size:14px; border:1px solid rgba(236,150,184,0.25);">Run & build: vLLM on QB2 →</a>
   <a href="/ml-practitioner/04-performance-tuning/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--pink); font-weight:600; font-size:14px; border:1px solid rgba(236,150,184,0.25);">Performance Tuning →</a>
   <a href="/tinkerer/02-fun-demos/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--green); font-weight:600; font-size:14px; border:1px solid rgba(39,174,96,0.25);">Fun Demos →</a>
 </div>

@@ -1,6 +1,6 @@
 # QB2 Guide
 
-> Interactive guide to the Tenstorrent Quietbox 2 — from first boot to first model and beyond. Four choose-your-own-adventure paths for different skill levels and goals.
+> Interactive guide to the Tenstorrent Quietbox 2 — from first boot to first model and beyond. Four choose-your-own-adventure paths, organized around what you want to do.
 
 ## Site
 
@@ -8,10 +8,10 @@
 
 ## Paths
 
-- [First Timer](/first-timer/): New to Linux, new to dedicated AI hardware. Covers unboxing, first boot, hardware verification, stack installation, and first model run. Fully written.
-- [ML Practitioner](/ml-practitioner/): Coming from CUDA or another ML platform. Covers model zoo, vLLM deployment, and performance tuning. Outlined in v1.
-- [Builder / Hacker](/builder-hacker/): Systems developer wanting to write kernels and go deep. Covers TT-Metal architecture, kernel writing, TT-Lang, and profiling. Outlined in v1.
-- [Curious Tinkerer](/tinkerer/): Hobbyist wanting to customize, illuminate, and experiment. Covers LEDs, demos, Ubuntu customization, and community. Outlined in v1.
+- [Explore](/first-timer/): Explore Tenstorrent hardware & software for the first time. Covers unboxing, first boot, hardware verification, stack installation, and first model run. Fully written.
+- [Run & build](/ml-practitioner/): Run and build on top of models. Covers model zoo, vLLM deployment, and performance tuning. Outlined in v1.
+- [Tinker](/builder-hacker/): Tinker with models and the software & hardware stack — write kernels and go deep. Covers TT-Metal architecture, kernel writing, TT-Lang, and profiling. Outlined in v1.
+- [Customize](/tinkerer/): Customize your workstation and make it truly your own. Covers LEDs, demos, Ubuntu customization, and community. Outlined in v1.
 
 ## Hardware
 

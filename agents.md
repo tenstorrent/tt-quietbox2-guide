@@ -16,8 +16,8 @@ Recommended first model: `Qwen/Qwen3-0.6B`
 - Works on all 4 devices
 - Fast to download (~1.5GB)
 
-Python env for inference: `source ~/tt-metal/python_env/bin/activate`
-Python env for vLLM: `source ~/tt-metal/build/python_env_vllm/bin/activate`
+Python env for inference (TTNN): `source ~/tt-metal/python_env/bin/activate`
+Python env for vLLM: `source ~/.tenstorrent-venv/bin/activate`
 
 ### Install Troubleshooting
 - Driver not loaded: `sudo modprobe tenstorrent` or check `lsmod | grep tenstorrent`
@@ -30,18 +30,18 @@ Python env for vLLM: `source ~/tt-metal/build/python_env_vllm/bin/activate`
 | `tt-smi` shows <4 devices | `dmesg | grep tenstorrent` | Reseat PCIe card or reflash firmware |
 | `DispatchCoreAxis.ROW` error | Code uses wrong dispatch config | Use `ttnn.DispatchCoreConfig(ttnn.DispatchCoreType.WORKER)` |
 | `~/tt-metal` not found | QB2 ships without source tree | Clone from https://github.com/tenstorrent/tt-metal |
-| venv not found | Path may differ | Try `/opt/venv-*` or re-run tt-installer |
+| venv not found | Path may differ | Try `~/tt-metal/python_env` (TTNN) or `~/.tenstorrent-venv` (vLLM), or re-run tt-installer |
 
 ## Content Map by Task
 
 | User wants to... | Send them to |
 |-----------------|-------------|
-| Verify hardware works | First Timer Ch3: Is This Thing On? |
-| Install the stack | First Timer Ch4: Installing the Stack |
-| Run first model | First Timer Ch5: Your First Model |
-| Serve models via API | ML Practitioner: vLLM on QB2 |
-| Write kernels | Builder/Hacker: Your First Kernel |
-| Customize LEDs | Tinkerer: LED Customization |
+| Verify hardware works | Explore Ch3: Is This Thing On? |
+| Install the stack | Explore Ch4: Installing the Stack |
+| Run first model | Explore Ch5: Your First Model |
+| Serve models via API | Run & build: vLLM on QB2 |
+| Write kernels | Tinker: Your First Kernel |
+| Customize LEDs | Customize: LED Customization |
 
 ## Architecture Facts
 

@@ -43,17 +43,17 @@ When you dispatch a new kernel and the starfield or flow display changes noticea
 
 ## The Other Tracks
 
-This track focused on kernel writing and architecture. Two other tracks cover complementary territory:
+This track focused on kernel writing and architecture. Two other paths cover complementary territory:
 
 <div style="display:flex;gap:16px;margin:1.5em 0;flex-wrap:wrap;">
   <a href="/ml-practitioner/" style="flex:1;min-width:220px;display:block;padding:16px;background:var(--bg1);border-radius:var(--radius);text-decoration:none;border-left:3px solid #81E6D9;">
     <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Track</div>
-    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">ML Practitioner</div>
+    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Run & build</div>
     <div style="font-size:12px;color:var(--text2);">Model deployment, multi-chip inference, production patterns. Start here if your goal is running large models efficiently rather than writing kernels.</div>
   </a>
   <a href="/tinkerer/" style="flex:1;min-width:220px;display:block;padding:16px;background:var(--bg1);border-radius:var(--radius);text-decoration:none;border-left:3px solid #EC96B8;">
     <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Track</div>
-    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Curious Tinkerer</div>
+    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Customize</div>
     <div style="font-size:12px;color:var(--text2);">Hardware exploration, monitoring tools, system-level curiosity. If you want to understand the physical machine before you program it, that track comes first.</div>
   </a>
 </div>

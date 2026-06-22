@@ -1,6 +1,6 @@
 ---
 layout: layouts/base.njk
-title: ML Practitioner
+title: "Run & build"
 personaId: ml-practitioner
 permalink: /ml-practitioner/
 ---
@@ -8,11 +8,11 @@ permalink: /ml-practitioner/
 <div class="site-main" data-persona="{{ persona.id }}">
   <div style="border-left:3px solid {{ persona.color }};padding-left:16px;margin-bottom:2em;">
     <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Path</div>
-    <h1>{{ persona.name }}</h1>
-    <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
+    <h1>{{ persona.goal }}</h1>
+    <p style="color:var(--text2);">{{ persona.support }}</p>
   </div>
   <p style="color:var(--text2);line-height:1.7;margin-bottom:2em;">
-    This track is for ML engineers who already know PyTorch and CUDA. It covers the conceptual remapping from GPU compute to Tensix architecture, the model families the QB2 supports and how to acquire them, running vLLM as a production OpenAI-compatible inference server, and reading hardware metrics to understand what the chips are actually doing. No kernel writing, no Metalium — those are in the Builder/Hacker track. This is the inference practitioner path: fast, production-oriented, grounded in the hardware.
+    This track is for ML engineers who already know PyTorch and CUDA. It covers the conceptual remapping from GPU compute to Tensix architecture, the model families the QB2 supports and how to acquire them, running vLLM as a production OpenAI-compatible inference server, and reading hardware metrics to understand what the chips are actually doing. No kernel writing, no Metalium — those are in the Tinker track. This is the inference practitioner path: fast, production-oriented, grounded in the hardware.
   </p>
   <div style="display:flex; gap:12px; margin-bottom:2em;">
     <a href="/{{ persona.id }}/{{ persona.chapters[0].slug }}/"

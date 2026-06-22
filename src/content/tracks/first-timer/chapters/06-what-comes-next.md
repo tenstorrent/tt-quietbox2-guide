@@ -123,17 +123,17 @@ Pick a specific thing you want to do and follow the link directly.
 <div style="display:grid; gap:16px; margin: 2em 0;">
 
 <a href="/ml-practitioner/" style="display:block; background:var(--bg1); border-left:3px solid var(--pink); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
-  <div style="color:var(--pink);font-weight:700;margin-bottom:4px;">ML Practitioner →</div>
+  <div style="color:var(--pink);font-weight:700;margin-bottom:4px;">Run & build →</div>
   <div style="font-size:13px;color:var(--text2);">Serve real models. Understand performance. Integrate with your existing ML workflow. If you're coming from CUDA, this is where the familiar parts live and where the new parts pay off.</div>
 </a>
 
 <a href="/builder-hacker/" style="display:block; background:var(--bg1); border-left:3px solid var(--gold); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
-  <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">Builder / Hacker →</div>
+  <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">Tinker →</div>
   <div style="font-size:13px;color:var(--text2);">Write code that runs on the chips directly — kernels, data movement, compute pipelines. The architecture goes all the way down and you can follow it.</div>
 </a>
 
 <a href="/tinkerer/" style="display:block; background:var(--bg1); border-left:3px solid var(--green); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
-  <div style="color:var(--green);font-weight:700;margin-bottom:4px;">Curious Tinkerer →</div>
+  <div style="color:var(--green);font-weight:700;margin-bottom:4px;">Customize →</div>
   <div style="font-size:13px;color:var(--text2);">Customize, illuminate, break, and fix things. The LEDs, the desktop, the demos that make people stop and ask what that machine is.</div>
 </a>
 
@@ -143,4 +143,4 @@ The QB2 is a beginning. There's a lot of surface area here, and you've only scra
 
 ---
 
-**[← Back to First Timer track](/first-timer/)**
+**[← Back to Explore](/first-timer/)**

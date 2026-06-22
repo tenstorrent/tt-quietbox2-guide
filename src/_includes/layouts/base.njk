@@ -14,7 +14,7 @@
     <a href="/" class="topbar-logo"><span aria-hidden="true">⚡</span> <span>QB2</span> Guide</a>
     <nav style="display:flex;gap:16px;align-items:center">
       {% if persona %}
-      <a href="/{{ persona.id }}/" class="topbar-home">← {{ persona.name }}</a>
+      <a href="/{{ persona.id }}/" class="topbar-home">← {{ persona.verb }}</a>
       {% elif not isHome %}
       <a href="/" class="topbar-home">← Home</a>
       {% endif %}

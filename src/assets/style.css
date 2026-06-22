@@ -263,8 +263,8 @@ blockquote {
   transition: background 0.15s, transform 0.15s;
 }
 .persona-card:hover { background: var(--bg2); transform: translateY(-2px); text-decoration: none; }
-.persona-card-name { font-weight: 700; font-size: 15px; color: var(--persona-color, var(--teal)); margin-bottom: 6px; }
-.persona-card-couplet { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; min-height: 3em; }
+.persona-card-verb { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--persona-color, var(--teal)); margin-bottom: 8px; }
+.persona-card-name { font-weight: 700; font-size: 15px; color: var(--text); line-height: 1.35; margin-bottom: 10px; min-height: 4em; }
 .persona-card-meta { font-size: 12px; color: var(--muted); }
 .persona-card-enter { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--persona-color, var(--teal)); font-weight: 600; }
 

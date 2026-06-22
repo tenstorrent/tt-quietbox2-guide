@@ -7,7 +7,7 @@ permalink: /ml-practitioner/05-going-deeper/
 
 # Going Deeper
 
-You've rerouted the mental model, picked a model that fits the hardware, stood up a production inference server, and watched the hardware breathe through prefill and decode. That's the ML Practitioner track done. What it opens up is considerably larger.
+You've rerouted the mental model, picked a model that fits the hardware, stood up a production inference server, and watched the hardware breathe through prefill and decode. That's the Run & build track done. What it opens up is considerably larger.
 
 ## Interactive Lessons in tt-vscode-toolkit
 
@@ -55,7 +55,7 @@ The VS Code extension ships lessons that run against your QB2 directly — not s
 
 **Build a Python application against the OpenAI-compatible API.** The server is running on localhost:8000. The OpenAI SDK works unchanged. Take something you've built against `api.openai.com` — a chatbot, a summarizer, a classification pipeline — and point it at your QB2. Measure the latency. Compare the cost per token. This is where the practical value of local inference becomes tangible rather than theoretical.
 
-**Take the Builder/Hacker track.** The ML Practitioner track ends at the TTNN surface. The Builder/Hacker track goes below it: Metalium kernels, NoC data movement, dispatch programming, the full architecture exposure. If you've ever wanted to understand how a matmul actually runs on silicon — not the math, the execution — that track is the path.
+**Take the Tinker track.** The Run & build track ends at the TTNN surface. The Tinker track goes below it: Metalium kernels, NoC data movement, dispatch programming, the full architecture exposure. If you've ever wanted to understand how a matmul actually runs on silicon — not the math, the execution — that track is the path.
 
 ## Community and Further Reading
 
@@ -78,12 +78,12 @@ The VS Code extension ships lessons that run against your QB2 directly — not s
 <div style="display:grid; gap:16px; margin: 2em 0;">
 
 <a href="/builder-hacker/" style="display:block; background:var(--bg1); border-left:3px solid var(--gold); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
-  <div style="color:var(--gold); font-weight:700; margin-bottom:4px;">Builder / Hacker →</div>
+  <div style="color:var(--gold); font-weight:700; margin-bottom:4px;">Tinker →</div>
   <div style="font-size:13px; color:var(--text2);">Write code that runs directly on the Tensix cores. Metalium kernels, NoC data movement, compute pipelines from scratch. The architecture goes all the way down — this track follows it.</div>
 </a>
 
 <a href="/tinkerer/" style="display:block; background:var(--bg1); border-left:3px solid var(--green); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
-  <div style="color:var(--green); font-weight:700; margin-bottom:4px;">Curious Tinkerer →</div>
+  <div style="color:var(--green); font-weight:700; margin-bottom:4px;">Customize →</div>
   <div style="font-size:13px; color:var(--text2);">Customize, illuminate, and demo the machine. The LEDs, the desktop setup, the demos that make people stop and ask what that thing is running.</div>
 </a>
 

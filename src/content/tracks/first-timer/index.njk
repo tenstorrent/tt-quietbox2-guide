@@ -1,6 +1,6 @@
 ---
 layout: layouts/base.njk
-title: First Timer
+title: "Explore"
 personaId: first-timer
 permalink: /first-timer/
 ---
@@ -8,8 +8,8 @@ permalink: /first-timer/
 <div class="site-main" data-persona="{{ persona.id }}">
   <div style="border-left: 3px solid {{ persona.color }}; padding-left: 16px; margin-bottom: 2em;">
     <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Path</div>
-    <h1>{{ persona.name }}</h1>
-    <p style="color:var(--text2);">{{ persona.couplet[0] }} {{ persona.couplet[1] }}</p>
+    <h1>{{ persona.goal }}</h1>
+    <p style="color:var(--text2);">{{ persona.support }}</p>
   </div>
   <div style="display:flex; gap:12px; margin-bottom:2em;">
     <a href="/{{ persona.id }}/{{ persona.chapters[0].slug }}/"

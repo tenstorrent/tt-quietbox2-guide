@@ -52,17 +52,17 @@ The most useful bug reports include a `tt-smi -s` JSON snapshot, the full error 
 
 ## Where to Go from Here
 
-You've tinkered. You've broken things and fixed them. You've shown demos that stopped people mid-conversation. The next layer is in the Builder/Hacker track, where the interesting question shifts from "what can this machine do?" to "what can I build on it?"
+You've tinkered. You've broken things and fixed them. You've shown demos that stopped people mid-conversation. The next layer is the Tinker track, where the interesting question shifts from "what can this machine do?" to "what can I build on it?"
 
 <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:2em;">
   <a href="/first-timer/" style="flex:1;min-width:200px;padding:16px;background:var(--bg1);border-radius:8px;text-decoration:none;border-left:3px solid var(--teal);">
     <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Review</div>
-    <div style="color:var(--teal);font-weight:700;">First Timer Track</div>
+    <div style="color:var(--teal);font-weight:700;">Explore</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">Revisit the fundamentals with fresh eyes.</div>
   </a>
   <a href="/builder-hacker/" style="flex:1;min-width:200px;padding:16px;background:var(--bg1);border-radius:8px;text-decoration:none;border-left:3px solid var(--pink);">
     <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Go Deeper</div>
-    <div style="color:var(--pink);font-weight:700;">Builder/Hacker Track</div>
+    <div style="color:var(--pink);font-weight:700;">Tinker</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">Custom kernels, inference pipelines, production deployments.</div>
   </a>
 </div>
