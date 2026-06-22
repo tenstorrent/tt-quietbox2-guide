@@ -60,10 +60,6 @@ The chips run warm under load. Fans will get louder when you run inference. This
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">One Blackhole P300c. You have four of these.</p>
 
-<div class="video-placeholder illustrated-only">
-  <strong>Coming soon: Unboxing walkthrough</strong>
-  A short camera video touring the physical QB2 — ports, power button, indicator lights, card slots.
-</div>
 
 ---
 
