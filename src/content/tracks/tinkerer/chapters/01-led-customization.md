@@ -11,6 +11,61 @@ Four chips on your desk. Each one has indicators, tiny tells of internal state. 
 
 This chapter is about making the QB2 communicate on your terms, using `tt-smi` to query chip state and steer the indicators toward something more informative, more decorative, or more satisfying. The machine becomes a physical dashboard.
 
+## tt-qb-lights: RGB That Responds to Your Hardware
+
+If your QB2 is in a case with addressable RGB — or if you have a motherboard like the ASRock B850M-C with onboard RGB — there's a ready-made solution that does this properly: **[tt-qb-lights](https://github.com/tsingletaryTT/tt-qb-lights)**, a Rust systemd service built by Taylor Singletary specifically for Tenstorrent hardware.
+
+Rather than calling `tt-smi` on a loop, it reads directly from `/sys/class/hwmon/blackhole-pci-*` — the same kernel interface `lm-sensors` uses — so it's low overhead and doesn't depend on any Tenstorrent CLI tools being in your PATH. It talks to [OpenRGB](https://gitlab.com/CalcProgrammer1/OpenRGB) over TCP (port 6742), so any RGB device OpenRGB supports becomes a live hardware dashboard.
+
+**What it does:**
+
+- Smooth color gradients driven by ASIC temperature — cool teal at idle, cycling through your chosen palette as the chips heat up
+- Power-based brightness: dims to ~30% when idle, climbs to full brightness under load
+- Warning pulse: lights pulse when temperature crosses a configurable threshold (default 70°C)
+- Six built-in color schemes including *QuietBox Sunset* (inspired by the QB2 wallpaper), *TT Dark*, and *Tenstorrent Branding* (official teal → pink → gold → red)
+- Live-editable config at `~/.config/tt-qb-lights/config.toml` — change schemes and restart, no rebuild needed
+
+**Quick setup:**
+
+```bash
+# Clone and build
+git clone https://github.com/tsingletaryTT/tt-qb-lights ~/code/tt-qb-lights
+cd ~/code/tt-qb-lights
+
+# Automated installer — checks prerequisites, builds, guides you through setup
+./install.sh
+
+# Or manually:
+cargo build --release
+
+# Test without touching your lights
+./target/release/tt-qb-lights --single-shot   # prints sensor readings
+./target/release/tt-qb-lights --dry-run --debug  # shows color decisions
+
+# Initialize your config
+./target/release/tt-qb-lights --init
+# Then edit: nano ~/.config/tt-qb-lights/config.toml
+```
+
+Requires: Rust 1.70+, OpenRGB installed and running with its SDK server enabled, Tenstorrent drivers loaded (so `sensors | grep blackhole` shows devices).
+
+:::callout type="tip"
+`./install.sh` handles the full prerequisites check — Rust, OpenRGB, lm-sensors, build tools — and asks before installing anything. Use it on a fresh machine rather than running the steps manually.
+:::
+
+The service file handles startup ordering so OpenRGB starts before `tt-qb-lights`:
+
+```bash
+sudo systemctl enable openrgb
+sudo systemctl enable tt-qb-lights
+sudo systemctl start tt-qb-lights
+journalctl -u tt-qb-lights -f   # watch it go
+```
+
+Full source, architecture notes, and troubleshooting: [github.com/tsingletaryTT/tt-qb-lights](https://github.com/tsingletaryTT/tt-qb-lights)
+
+---
+
 ## Discover Your LED Options
 
 `tt-smi` ships with a `--help` flag that reveals everything the current firmware supports. The LED interface can evolve across firmware versions, so this is the canonical starting point:
