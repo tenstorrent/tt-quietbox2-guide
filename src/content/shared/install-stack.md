@@ -29,4 +29,7 @@ sudo reboot
 
 The `~/tt-metal/` directory exists but contains **only the compiled environments** — not the tt-metal source code. That's intentional. You don't need the source to run models or use the APIs.
 
-<!-- VIDEO: VHS recording of tt-installer running, selecting defaults, and completing. Script: scripts/vhs/04-tt-installer-demo.tape -->
+<figure class="video-demo">
+<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">After tt-installer and reboot — venvs, tt-smi, and hf are ready</figcaption>
+</figure>

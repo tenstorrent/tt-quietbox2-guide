@@ -35,7 +35,8 @@
       { "slug": "02-model-zoo", "title": "The Model Zoo", "time": 6 },
       { "slug": "03-vllm-on-qb2", "title": "vLLM on QB2", "time": 10 },
       { "slug": "04-performance-tuning", "title": "Performance Tuning", "time": 8 },
-      { "slug": "05-going-deeper", "title": "Going Deeper", "time": 4 }
+      { "slug": "05-going-deeper", "title": "Going Deeper", "time": 4 },
+      { "slug": "06-tt-forge", "title": "TT-Forge: Compile Anything", "time": 12 }
     ]
   },
   {
@@ -54,7 +55,8 @@
       { "slug": "02-first-kernel", "title": "Your First Kernel", "time": 12 },
       { "slug": "03-ttlang-intro", "title": "TT-Lang Introduction", "time": 10 },
       { "slug": "04-profiling", "title": "Profiling & Optimization", "time": 10 },
-      { "slug": "05-going-deep", "title": "Going Deep", "time": 5 }
+      { "slug": "05-going-deep", "title": "Going Deep", "time": 5 },
+      { "slug": "06-tt-forge-compiler", "title": "TT-Forge: The Compiler Pipeline", "time": 12 }
     ]
   },
   {

@@ -1,7 +1,7 @@
-# VHS tape — first model run: TTNN handshake + hf download + vLLM serve
+# VHS tape — first model run: TTNN device open + model files
 # Record with: vhs scripts/vhs/05-first-model-demo.tape
 
-Output assets/video/05-first-model-demo.gif
+Output src/assets/video/05-first-model-demo.gif
 
 Set Shell "bash"
 Set FontSize 13
@@ -24,21 +24,16 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "python3 -c \""
-Sleep 200ms
-Type "import ttnn; "
-Type "d = ttnn.open_device(device_id=0); "
-Type "print('Device open:', d); "
-Type "ttnn.close_device(d); "
-Type "print('Done.')\""
+Type "python3 /tmp/vhs-open-device.py"
 Sleep 500ms
 Enter
-Sleep 4000ms
+Sleep 5000ms
 
-Type "# 'Device open:' means chip 0 is alive"
+Type "# Device open: MeshDevice — chip 0 is alive"
 Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 500ms
+
 Type "deactivate"
 Sleep 400ms
 Enter
@@ -48,42 +43,36 @@ Type ""
 Sleep 300ms
 Enter
 
-Type "# Step 3: check disk space before downloading"
+Type "# Step 3: Qwen3-0.6B is already downloaded"
 Sleep 400ms
 Enter
 Sleep 200ms
-
-Type "df -h ~/models"
-Sleep 400ms
-Enter
-Sleep 800ms
-
-Type ""
-Sleep 300ms
-Enter
-
-Type "# Step 4: download Qwen3-0.6B (1.5 GB, no token required)"
-Sleep 400ms
-Enter
-Sleep 200ms
-
-Type "source ~/tt-metal/python_env/bin/activate"
-Sleep 300ms
-Enter
-Sleep 800ms
-
-Type "hf download Qwen/Qwen3-0.6B --local-dir ~/models/Qwen3-0.6B"
-Sleep 500ms
-Enter
-Sleep 5000ms
-# Download takes time — record manually for the full download progress
 
 Type "ls ~/models/Qwen3-0.6B/"
 Sleep 400ms
 Enter
 Sleep 800ms
 
-Type "deactivate"
+Type "# model.safetensors — the weights are here"
 Sleep 400ms
 Enter
+Sleep 500ms
+
+Type ""
+Sleep 300ms
+Enter
+
+Type "# Step 4: to download a model yourself:"
 Sleep 400ms
+Enter
+Sleep 200ms
+
+Type "# hf download Qwen/Qwen3-0.6B --local-dir ~/models/Qwen3-0.6B"
+Sleep 400ms
+Enter
+Sleep 600ms
+
+Type "df -h ~/models"
+Sleep 400ms
+Enter
+Sleep 800ms

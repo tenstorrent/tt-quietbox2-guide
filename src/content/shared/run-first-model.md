@@ -51,4 +51,7 @@ df -h ~
 
 You need at least 3 GB free for this model alone. Larger models (Llama-3.1-8B) need 16+ GB.
 
-<!-- VIDEO: VHS recording of the TTNN device open/close verification and hf download. Script: scripts/vhs/05-first-model-demo.tape -->
+<figure class="video-demo">
+<img src="/assets/video/05-first-model-demo.gif" alt="TTNN device open handshake and model files check" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">TTNN device open handshake on chip 0 — then Qwen3-0.6B files on disk</figcaption>
+</figure>

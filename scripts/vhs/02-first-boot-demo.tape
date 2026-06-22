@@ -3,7 +3,7 @@
 # NOTE: This is a window environment demo — record manually.
 # This script shows the terminal portion only (after opening a terminal).
 
-Output assets/video/02-first-boot-demo.gif
+Output src/assets/video/02-first-boot-demo.gif
 
 Set Shell "bash"
 Set FontSize 14
