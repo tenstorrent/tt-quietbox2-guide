@@ -195,7 +195,7 @@ blockquote {
 }
 .chapter-nav-item:hover { color: var(--text); background: var(--bg1); }
 .chapter-nav-item.active { color: var(--persona-color, var(--teal)); border-left-color: var(--persona-color, var(--teal)); background: rgba(79,209,197,0.06); font-weight: 600; }
-.track-content { flex: 1; padding: 40px 40px 80px; max-width: 760px; }
+.track-content { flex: 1; min-width: 0; padding: 40px 40px 80px; max-width: 920px; }
 
 /* ── Persona colors via data-persona ─────────────────────────────────────── */
 [data-persona="first-timer"]     { --persona-color: var(--teal); }

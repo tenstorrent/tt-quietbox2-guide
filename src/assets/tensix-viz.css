@@ -179,6 +179,11 @@
   max-width: 100%;
 }
 
+/* Multi-chip (card/system) canvases are created without the .tensix-viz-canvas
+   class; keep them responsive so a card's chips scale to fit the column
+   instead of being clipped by .tv-card's overflow. */
+.tv-chip-wrapper canvas { max-width: 100%; height: auto; }
+
 .tensix-viz-controls {
   display: flex;
   align-items: center;
