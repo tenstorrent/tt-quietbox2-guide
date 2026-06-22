@@ -49,13 +49,13 @@ The convergence is intentional. TT-Forge was designed so that model-framework ch
 
 ## forge.compile() in Practice
 
-Activate the forge environment first:
+Run forge scripts via the `tt-forge` container wrapper:
 
 ```bash
-source ~/tt-forge-venv/bin/activate
+tt-forge python3 my_forge_script.py
 ```
 
-The `TT_METAL_ARCH_NAME=blackhole` environment variable is already set in your `.bashrc`. The compiler knows what hardware it's targeting.
+The container has `TT_METAL_ARCH_NAME=blackhole` set. The compiler knows what hardware it's targeting.
 
 Here is a complete BEiT image classification example using the tt-forge-models zoo:
 

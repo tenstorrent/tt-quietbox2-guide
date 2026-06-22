@@ -17,10 +17,14 @@ If vLLM is the highway, TT-Forge is the ability to go anywhere.
 
 ## The Three Compilation Paths
 
-Every framework has an entry point into the stack. They all land in the same venv:
+Every framework has an entry point into the stack. Run them via the `tt-forge` container wrapper:
 
 ```bash
-source ~/tt-forge-venv/bin/activate
+# Run a script through the forge container
+tt-forge python3 my_model.py
+
+# Or drop into a forge shell
+tt-forge bash
 ```
 
 | Path | Backend | Entry point | Use for |
@@ -29,7 +33,7 @@ source ~/tt-forge-venv/bin/activate
 | TT-XLA (JAX) | `jax.jit` + PJRT plugin | `import pjrt_plugin_tt` | JAX / Flax models |
 | TT-Forge-ONNX | `tt_forge_onnx` | `import tt_forge_onnx` | ONNX exports from any framework |
 
-`~/tt-forge-venv/` is the Python 3.12 venv created by `tt-installer`. It's kept separate from the TTNN venv intentionally — the two conflict. Activate one, do your work, deactivate before switching.
+`tt-forge` is a Docker container wrapper installed to `~/.local/bin/` by tt-installer. It bundles Python 3.12 with all three backends. Keep it separate from TTNN work — the two environments conflict if mixed.
 
 :::callout type="warn"
 If you have `TT_METAL_HOME` set (from TTNN work), unset it before activating the forge venv: `unset TT_METAL_HOME`. Leaving it set can cause import errors.
