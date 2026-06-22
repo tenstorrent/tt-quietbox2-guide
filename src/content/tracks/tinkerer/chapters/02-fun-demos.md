@@ -78,8 +78,8 @@ The AnimateDiff integration in tt-local-generator also runs natively on QB2. Sho
 Four chips. A language model with 70 billion parameters. No API key. No latency spike from a datacenter on another continent.
 
 ```bash
-# Activate the vLLM environment
-source ~/tt-metal/build/python_env_vllm/bin/activate
+# Activate the main tenstorrent venv (contains vLLM)
+source ~/.tenstorrent-venv/bin/activate
 
 # Download Llama-3.1-70B (requires Hugging Face account + license acceptance)
 huggingface-cli download meta-llama/Llama-3.1-70B-Instruct \

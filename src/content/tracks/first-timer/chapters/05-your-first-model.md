@@ -37,7 +37,7 @@ When that Python snippet ran without errors, the Blackhole chip opened a dispatc
 The fastest path to actually generating text is vLLM. It handles model loading, tokenization, batching, and presents an OpenAI-compatible HTTP API.
 
 ```bash
-source ~/tt-metal/build/python_env_vllm/bin/activate
+source ~/.tenstorrent-venv/bin/activate
 
 # Make sure the model is downloaded first (see above)
 # Then start the server:

@@ -71,8 +71,8 @@ This is where new Linux users often hit a wall. Ubuntu ships with its own Python
 |------|----------|-----------|
 | System Python | `/usr/bin/python3` | Ubuntu's built-in Python — **don't pip install here** |
 | TTNN venv | `~/tt-metal/python_env/` | Pre-built environment for TTNN and the Direct API |
-| vLLM venv | `~/tt-metal/build/python_env_vllm/` | Pre-built environment for serving models |
-| TT-Forge venv | `~/tt-forge-venv/` → `/opt/venv-forge` | For TT-Forge and JAX (symlink) |
+| Tenstorrent venv | `~/.tenstorrent-venv/` | Main venv with vLLM and other tools |
+| TT-Forge wrapper | `~/.local/bin/tt-forge` | Container-based Forge/JAX (runs via Docker) |
 
 ### Why does this matter?
 

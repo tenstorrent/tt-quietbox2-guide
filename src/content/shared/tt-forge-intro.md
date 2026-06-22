@@ -10,10 +10,14 @@ Three paths into the compiler stack:
 | **TT-XLA** | `jax.jit` + `pjrt_plugin_tt` | JAX / Flax models |
 | **TT-Forge-ONNX** | `tt_forge_onnx` | ONNX exports from any framework |
 
-All three live in the same venv. Activate it once:
+All three run via the `tt-forge` container wrapper installed by tt-installer:
 
 ```bash
-source ~/tt-forge-venv/bin/activate
+# Run a forge script via the container
+tt-forge python3 my_model.py
+
+# Or activate the forge venv if tt-forge-fe is installed locally
+source ~/tt-forge-fe/env/activate 2>/dev/null || tt-forge bash
 ```
 
 Here is the full forge compile-and-run pattern:

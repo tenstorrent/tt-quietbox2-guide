@@ -166,7 +166,7 @@ pyenv virtualenv 3.11.9 myproject
 pyenv activate myproject
 ```
 
-Keep these entirely separate from `~/tt-metal/python_env/` and `~/tt-metal/build/python_env_vllm/`. Those are managed by tt-metal's build system. Don't pip-install into them manually.
+Keep these entirely separate from `~/tt-metal/python_env/` and `~/.tenstorrent-venv/`. Those are managed environments. Don't pip-install into them manually.
 
 ## VS Code
 
@@ -195,7 +195,7 @@ Add these to `~/.bashrc` or `~/.zshrc` to cut down repetitive typing:
 ```bash
 # Tenstorrent environment shortcuts
 alias ttenv='source ~/tt-metal/python_env/bin/activate'
-alias ttvllm='source ~/tt-metal/build/python_env_vllm/bin/activate'
+alias ttvllm='source ~/.tenstorrent-venv/bin/activate'
 
 # Readable tt-smi JSON output
 alias ttsmi='tt-smi -s | python3 -m json.tool'

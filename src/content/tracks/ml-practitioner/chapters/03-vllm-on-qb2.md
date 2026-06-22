@@ -24,8 +24,8 @@ Both paths produce the same OpenAI-compatible API on port 8000. Which you use de
 ## Path 1: Direct vLLM
 
 ```bash
-# Activate the vLLM environment
-source ~/tt-metal/build/python_env_vllm/bin/activate
+# Activate the main tenstorrent venv (contains vLLM)
+source ~/.tenstorrent-venv/bin/activate
 
 # Set the Blackhole architecture flag
 export TT_METAL_ARCH_NAME=blackhole

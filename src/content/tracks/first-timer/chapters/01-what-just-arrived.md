@@ -27,7 +27,8 @@ Tenstorrent ships the QB2 ready to serve models. You don't install drivers. You 
 - **Kernel driver** — loaded automatically at boot, makes the chips visible to software
 - **`tt-smi`** — hardware monitoring tool, lives at `/usr/bin/tt-smi`
 - **TTNN Python environment** — pre-built venv at `~/tt-metal/python_env/`
-- **vLLM environment** — pre-built inference server venv at `~/tt-metal/build/python_env_vllm/`
+- **vLLM** — in the main tenstorrent venv at `~/.tenstorrent-venv/`
+- **TT-Forge/XLA** — container wrapper at `~/.local/bin/tt-forge`
 - **Firmware** — already flashed to all four chips
 
 What's intentionally absent: the `~/tt-metal` source code. The environments are there; the source isn't. You can build models, run inference, and work with the full API stack without it. Building from source is a later chapter — a much later chapter.
