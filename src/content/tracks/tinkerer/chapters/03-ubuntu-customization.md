@@ -7,13 +7,13 @@ permalink: /tinkerer/03-ubuntu-customization/
 
 # Ubuntu Customization
 
-The QB2 ships with Ubuntu 24.04 LTS and KDE Plasma. It's functional. It's also waiting for your preferences. This chapter is about making the machine yours without breaking what Tenstorrent set up.
+The QB2 ships with Ubuntu 24.04 LTS and its stock GNOME desktop — the same experience every Ubuntu user gets. It's functional. It's also waiting for your preferences. This chapter is about making the machine yours without breaking what Tenstorrent set up.
 
 The rule throughout: don't touch the tt-metal environments. Customize everything else freely.
 
 ## Quick Orientation
 
-Ubuntu 24.04 uses `apt` as its system package manager. KDE Plasma sits on top. Three package systems coexist:
+Ubuntu 24.04 uses `apt` as its system package manager, with the GNOME desktop on top. Three package systems coexist:
 
 ```bash
 apt         # system packages — drivers, libraries, system tools
@@ -33,9 +33,41 @@ Install `ncdu` first if it isn't present: `sudo apt install ncdu`. It's a termin
 Do not run `sudo apt upgrade` without checking tt-metal kernel compatibility first. Tenstorrent drivers are kernel-version-sensitive. An automatic kernel upgrade can make your chips temporarily invisible until you reload the driver. Check the [tt-metal release notes](https://github.com/tenstorrent/tt-metal) for the current supported kernel range before any major upgrade.
 :::
 
+## Desktop
+
+Ubuntu's GNOME desktop is what greets you on first boot. Two tools make it yours without fighting it:
+
+**GNOME Tweaks** — fonts, window-button layout, animations, startup apps:
+```bash
+sudo apt install gnome-tweaks
+```
+
+**Extension Manager** — browse and install GNOME Shell extensions (dash-to-dock, system monitors, clipboard history):
+```bash
+sudo apt install gnome-shell-extension-manager
+```
+
+Most desktop settings live in `dconf`; script them with `gsettings`:
+```bash
+gsettings set org.gnome.desktop.interface color-scheme prefer-dark   # dark mode
+gsettings set org.gnome.desktop.interface clock-show-seconds true
+```
+
+GNOME on Ubuntu 24.04 runs on **Wayland** by default — `echo $XDG_SESSION_TYPE` confirms it. That matters when you pick a terminal below.
+
+:::callout type="tip"
+**Prefer KDE?** GNOME is the default everyone gets, but it's only a default — you can run KDE Plasma instead if that's more your taste (it's where this guide's author does most of their own work):
+
+```bash
+sudo apt install kde-plasma-desktop
+```
+
+It installs alongside GNOME; pick the session from the gear menu on the login screen. More knobs, heavier footprint, entirely optional.
+:::
+
 ## Terminal
 
-The KDE default terminal is Konsole. It works. Better options exist:
+Ubuntu's GNOME desktop ships **GNOME Terminal** by default. It's perfectly good. If you want more, a few favorites:
 
 **Kitty** — GPU-accelerated, fast, tabs + splits built in:
 ```bash
