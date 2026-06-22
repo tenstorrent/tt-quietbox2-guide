@@ -207,7 +207,10 @@ The LEDs will now respond to chip state automatically, every time you log in.
 The `classify()` function in the script is the right place to add more nuance — voltage spike detection, fan speed crossings, or any other field from `tt-smi -s`. The monitor loop doesn't care what you feed it.
 :::
 
-<!-- VIDEO -->
+<figure class="video-demo">
+<img src="/assets/video/10-led-telemetry-demo.gif" alt="tt-smi -s showing per-chip temperature, power, clock, and firmware version on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">The telemetry fields your LED script reads — temperature, power, aiclk, firmware version per chip</figcaption>
+</figure>
 
 ---
 

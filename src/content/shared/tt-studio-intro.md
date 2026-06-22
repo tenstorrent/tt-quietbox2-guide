@@ -27,4 +27,7 @@ For a deeper look at how the inference server is wired up, the [tt-vscode-toolki
 <strong>Two UIs, one server:</strong> tt-studio and tt-local-generator are both front ends for tt-inference-server. You can switch between them freely — they talk to the same running container on port 8000.
 </div>
 
-<!-- VIDEO -->
+<figure class="video-demo">
+<img src="/assets/video/12-tt-studio-demo.gif" alt="tt-studio on PATH, startup command, SSH port-forward instructions, --help output" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-studio is a single command — starts a web UI at localhost:7860, accessible via SSH tunnel from your laptop</figcaption>
+</figure>

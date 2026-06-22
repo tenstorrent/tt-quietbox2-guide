@@ -47,11 +47,10 @@ sudo apt update
 
 `sudo` means "run as administrator." Ubuntu will ask for your password. This doesn't install or change anything — it just refreshes the list of what's available. You'll see a lot of text scroll by. That's normal.
 
-<div class="video-placeholder illustrated-only">
-  <strong>Coming soon: First boot terminal walkthrough</strong>
-  Terminal basics: df -h, ping, apt update. Checking disk space and internet connectivity on a live QB2.
-  <!-- VIDEO: VHS recording. Script: scripts/vhs/02-first-boot-demo.tape -->
-</div>
+<figure class="video-demo">
+<img src="/assets/video/02-first-boot-demo.gif" alt="QB2 first boot terminal: uname, ping, df, home directory, tt-smi version" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Live QB2 — Ubuntu 24.04, internet up, disk space, tt-smi on PATH</figcaption>
+</figure>
 
 ## Ubuntu: What You Should Know
 

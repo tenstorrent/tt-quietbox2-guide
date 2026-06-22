@@ -176,11 +176,10 @@ Whether fusion fires depends on shape compatibility and the current kernel fusio
 <strong>Go deeper with explore-metalium.</strong> The TT-VSCode Toolkit's <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/" style="color:var(--teal)">explore-metalium lesson</a> (30 min) walks through writing a custom kernel in TT-Metalium C++. It covers the reader/compute/writer split at the C++ level — the same model abstracted by TTNN. Run it after this chapter to see what's underneath the Python API.
 </div>
 
-<div class="video-placeholder illustrated-only">
-  <strong>Coming soon: First kernel walkthrough</strong>
-  Running ttnn_add_tensors.py on a live QB2 — environment activation, JIT compile, warm cache run, inspecting tile shapes.
-  <!-- VIDEO: VHS recording. -->
-</div>
+<figure class="video-demo">
+<img src="/assets/video/11-first-kernel-demo.gif" alt="Activating TTNN venv, running elementwise add kernel on Blackhole chip" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">ttnn.add() on a live Blackhole chip — device open, tile dispatch, result back in bfloat16</figcaption>
+</figure>
 
 ---
 
