@@ -51,7 +51,7 @@ The VS Code extension ships lessons that run against your QB2 directly — not s
 
 ## Three Things to Try Next
 
-**[Run Llama-3.3-70B with all four chips.](/lessons/llama-70b/)** The largest model QB2 officially supports: 70 billion parameters, 128K context, tensor-parallel across all four Blackhole cards. The lesson has the exact Docker command, prerequisites checklist, and a variant for the DeepSeek-R1 reasoning model that uses the same infrastructure. Download the weights (140 GB — plan ahead), start the server, and run a request that would be genuinely difficult to answer. Watch `tt-smi -s` while it generates — the hardware doing real work looks different from the hardware doing toy work.
+**[Run Llama-3.3-70B with all four chips.](/lessons/llama-70b/)** The largest model QB2 officially supports: 70 billion parameters, 128K context, tensor-parallel across all four Blackhole chips. The lesson has the exact Docker command, prerequisites checklist, and a variant for the DeepSeek-R1 reasoning model that uses the same infrastructure. Download the weights (140 GB — plan ahead), start the server, and run a request that would be genuinely difficult to answer. Watch `tt-smi -s` while it generates — the hardware doing real work looks different from the hardware doing toy work.
 
 **Build a Python application against the OpenAI-compatible API.** The server is running on localhost:8000. The OpenAI SDK works unchanged. Take something you've built against `api.openai.com` — a chatbot, a summarizer, a classification pipeline — and point it at your QB2. Measure the latency. Compare the cost per token. This is where the practical value of local inference becomes tangible rather than theoretical.
 

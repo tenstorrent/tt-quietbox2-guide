@@ -38,6 +38,6 @@ Idle temperatures of 35–55°C are normal. Under full inference load, Blackhole
 </div>
 
 <figure class="video-demo">
-<img src="/assets/video/03-tt-smi-demo.gif" alt="tt-smi -s showing four Blackhole P300c chips on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-smi -s on a live QB2 — four P300c chips, JSON snapshot mode</figcaption>
+<img src="/assets/video/03-tt-smi-demo.gif" alt="tt-smi -s showing four Blackhole chips on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-smi -s on a live QB2 — four Blackhole chips, JSON snapshot mode</figcaption>
 </figure>

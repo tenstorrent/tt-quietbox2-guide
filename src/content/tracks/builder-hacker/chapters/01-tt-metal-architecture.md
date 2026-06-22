@@ -26,16 +26,16 @@ You can enter this stack at any level. TTNN is the right entry point for standar
 
 The Blackhole chip is a 17-column by 12-row network-on-chip (NoC) grid. Every cell in that grid is a node. Not every node is a compute core. The grid has four distinct zones:
 
-**Tensix cores** — columns 1-7 and 9-15, rows 1-10. One hundred and forty of them. These are the compute nodes. Each Tensix core is itself a small computer.
+**Tensix cores** — columns 1-7 and 9-15, rows 1-10. One hundred and forty physical tiles, of which 120 are enabled on QB2's chips (two columns are harvested). These are the compute nodes. Each Tensix core is itself a small computer.
 
-**DRAM controllers** — rows 0 and 11, running the full width of the chip. Eight banks of 12 GB each. The chip's main memory lives here, physically along the chip edges, close to the NoC's routing paths.
+**DRAM controllers** — rows 0 and 11, running the full width of the chip. 32 GB of GDDR6 per chip (64 GB per p300c card). The chip's main memory lives here, physically along the chip edges, close to the NoC's routing paths.
 
-**ETH ports** — column 0 and column 16. These connect chips together. On a QB2 with four Blackhole cards, the ETH ports form the chip-to-chip fabric used by `CreateDevices` when you open a multi-chip mesh.
+**ETH ports** — column 0 and column 16. These connect chips together. On a QB2's four Blackhole chips, the ETH ports form the chip-to-chip fabric used by `CreateDevices` when you open a multi-chip mesh.
 
 **PCIe interface** — column 8, the center column. Every command from your Python application crosses here. `ttnn.open_device(0)` sends a dispatch message through this column.
 
 {% tensixviz "blackhole", [
-  {"step": "highlight", "cores": [[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[9,0],[10,0],[11,0],[12,0],[13,0],[14,0],[15,0],[1,11],[2,11],[3,11],[4,11],[5,11],[6,11],[7,11],[9,11],[10,11],[11,11],[12,11],[13,11],[14,11],[15,11]], "color": "dram", "label": "DRAM banks — rows 0 and 11, 8×12GB", "ms": 800},
+  {"step": "highlight", "cores": [[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[9,0],[10,0],[11,0],[12,0],[13,0],[14,0],[15,0],[1,11],[2,11],[3,11],[4,11],[5,11],[6,11],[7,11],[9,11],[10,11],[11,11],[12,11],[13,11],[14,11],[15,11]], "color": "dram", "label": "DRAM banks — rows 0 and 11, 32 GB GDDR6 per chip", "ms": 800},
   {"step": "pause", "ms": 700},
   {"step": "unhighlight"},
   {"step": "highlight", "cores": [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[16,1],[16,2],[16,3],[16,4],[16,5],[16,6],[16,7],[16,8],[16,9],[16,10]], "color": "eth", "label": "ETH ports — cols 0 and 16, chip-to-chip links", "ms": 800},
@@ -44,16 +44,16 @@ The Blackhole chip is a 17-column by 12-row network-on-chip (NoC) grid. Every ce
   {"step": "highlight", "cores": [[8,1],[8,2],[8,3],[8,4],[8,5],[8,6],[8,7],[8,8],[8,9],[8,10]], "color": "pcie", "label": "PCIe column 8 — CPU-to-chip dispatch path", "ms": 800},
   {"step": "pause", "ms": 700},
   {"step": "unhighlight"},
-  {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[15,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[15,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5],[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7],[15,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[15,8],[1,9],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10],[9,10],[10,10],[11,10],[12,10],[13,10],[14,10],[15,10]], "color": "tensixActive", "label": "140 Tensix compute cores — cols 1-7 and 9-15, rows 1-10", "ms": 900},
+  {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[15,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[15,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5],[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7],[15,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[15,8],[1,9],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10],[9,10],[10,10],[11,10],[12,10],[13,10],[14,10],[15,10]], "color": "tensixActive", "label": "Tensix compute cores — cols 1-7 and 9-15 (120 enabled per chip)", "ms": 900},
   {"step": "pause", "ms": 1500},
   {"step": "clear"}
 ] %}
 
-<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">One Blackhole P300c chip. Four of these live in your QB2.</p>
+<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">One Blackhole chip. Four of these — on two p300c cards — live in your QB2.</p>
 
 ## Inside a Tensix Core
 
-Zoom in on any one of those 140 yellow nodes. Each Tensix core contains:
+Zoom in on any one of those Tensix nodes. Each Tensix core contains:
 
 - **RISC-V control processor** — a small general-purpose CPU that executes your kernel logic
 - **Matrix engine (FPU)** — hardware-accelerated matrix multiply and elementwise ops; this is what makes it fast

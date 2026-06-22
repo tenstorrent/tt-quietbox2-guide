@@ -50,7 +50,7 @@ permalink: /lessons/llama-70b/
 
 ## What you're actually deploying
 
-**Llama-3.3-70B-Instruct** from Meta. 70 billion parameters — the largest instruction-tuned Llama 3 model available publicly. This is the model that, two years ago, required a dedicated cloud VM with 8× A100s. Your QB2 has four Blackhole P300c chips; together they have enough DRAM bandwidth and capacity to run it.
+**Llama-3.3-70B-Instruct** from Meta. 70 billion parameters — the largest Llama model that fits on a single QB2. This is the model that, two years ago, required a dedicated cloud VM with 8× A100s. Your QB2 has four Blackhole chips (on two p300c cards); together they have enough DRAM bandwidth and capacity to run it.
 
 The same command also runs these weight variants:
 
@@ -307,7 +307,7 @@ During a long prompt (prefill phase), you'll see aiclk spike across all four chi
   {"step": "pause", "ms": 500},
   {"step": "highlight", "cores": [[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[9,0],[10,0],[11,0],[12,0],[13,0],[14,0],[15,0],[1,11],[2,11],[3,11],[4,11],[5,11],[6,11],[7,11],[9,11],[10,11],[11,11],[12,11],[13,11],[14,11],[15,11]], "color": "dram", "label": "DRAM banks — streaming 140GB of weights through 4 chips", "ms": 600},
   {"step": "pause", "ms": 500},
-  {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[15,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[15,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5],[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7],[15,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[9,8],[10,8],[11,8],[12,8],[13,2],[14,2],[15,2],[1,9],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10],[9,10],[10,10],[11,10],[12,10],[13,10],[14,10],[15,10]], "color": "tensixActive", "label": "All 140 Tensix cores computing — prefill in flight", "ms": 900},
+  {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[15,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[15,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5],[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7],[15,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[9,8],[10,8],[11,8],[12,8],[13,2],[14,2],[15,2],[1,9],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10],[9,10],[10,10],[11,10],[12,10],[13,10],[14,10],[15,10]], "color": "tensixActive", "label": "All 120 Tensix cores computing — prefill in flight", "ms": 900},
   {"step": "pause", "ms": 1200},
   {"step": "clear"}
 ] %}
@@ -422,7 +422,7 @@ sudo systemctl start docker
 
 ## Where this fits
 
-This is the largest model the QB2 runs with official Tenstorrent support. The next tier up — Qwen2.5-72B, Qwen3-32B — requires more chips than the QB2 has (t3k = 8 chips, or BH LoudBox = 8× P150). The 70B range is the ceiling for a single QB2.
+This is the largest model the QB2 runs with official Tenstorrent support. Models beyond the ~70B range eventually need more memory or more chips than the QB2 has — an 8-chip system like a Wormhole t3k or a Blackhole LoudBox (8× p150). The 70B range is the practical ceiling for a single QB2.
 
 Inside that ceiling: Llama-3.3-70B-Instruct is the capable baseline. DeepSeek-R1-Distill-Llama-70B is the reasoning variant. The smaller models in other chapters (Llama-3.1-8B, Qwen3-0.6B) are faster to start and better for experimentation — use those for iteration, and come back here when you want to show someone what the machine can actually do.
 

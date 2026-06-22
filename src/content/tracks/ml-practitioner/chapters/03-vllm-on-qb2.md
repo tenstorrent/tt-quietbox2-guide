@@ -19,7 +19,7 @@ The **tt-inference-server path** wraps the same vLLM backend in a Docker contain
 
 Both paths produce the same OpenAI-compatible API on port 8000. Which you use depends on whether you want the control surface of running vLLM directly or the simplicity of a single command.
 
-<img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole P300c chips" class="spot-illustration" style="max-width:100%; margin: 2em 0;">
+<img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" class="spot-illustration" style="max-width:100%; margin: 2em 0;">
 
 ## Path 1: Direct vLLM
 
@@ -147,7 +147,7 @@ Keep these ports clear. Other services on the QB2 use them.
 | Port | Service |
 |---|---|
 | `8000` | vLLM / tt-inference-server (OpenAI-compatible API) |
-| `7860` | tt-studio (web UI) |
+| `3000` | tt-studio (web UI) |
 | `8001` | tt-inference-server prompt server |
 
 If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`

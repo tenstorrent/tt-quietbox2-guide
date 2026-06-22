@@ -52,7 +52,7 @@
   <!-- vLLM venv -->
   <rect x="165" y="136" width="175" height="62" rx="4" fill="rgba(244,196,113,0.04)" stroke="#F4C471" stroke-width="1.5"/>
   <text x="252" y="152" text-anchor="middle" fill="#F4C471" font-size="8.5" font-family="monospace" letter-spacing="0.5">vLLM serving</text>
-  <text x="252" y="166" text-anchor="middle" fill="#E6B55E" font-size="7" font-family="monospace">~/tt-metal/build/python_env_vllm/</text>
+  <text x="252" y="166" text-anchor="middle" fill="#E6B55E" font-size="7" font-family="monospace">~/.tenstorrent-venv/</text>
   <text x="252" y="179" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">source .../bin/activate</text>
   <text x="178" y="192" fill="#607D8B" font-size="7" font-family="monospace">vllm  openai  huggingface_hub</text>
 
@@ -62,8 +62,8 @@
   <!-- Forge venv -->
   <rect x="360" y="50" width="155" height="62" rx="4" fill="rgba(236,150,184,0.04)" stroke="rgba(236,150,184,0.4)" stroke-width="1.5"/>
   <text x="438" y="66" text-anchor="middle" fill="#EC96B8" font-size="8.5" font-family="monospace" letter-spacing="0.5">TT-Forge / TT-XLA</text>
-  <text x="438" y="80" text-anchor="middle" fill="#EC96B8" font-size="7" font-family="monospace">~/tt-forge-venv/</text>
-  <text x="438" y="93" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">→ symlink → /opt/venv-forge</text>
+  <text x="438" y="80" text-anchor="middle" fill="#EC96B8" font-size="7" font-family="monospace">~/.local/bin/tt-forge</text>
+  <text x="438" y="93" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">→ runs via Docker container</text>
   <text x="368" y="107" fill="#607D8B" font-size="7" font-family="monospace">torch-xla  jax  forge</text>
 
   <!-- CONFLICT warning between TTNN and Forge -->
@@ -85,7 +85,7 @@
   <text x="77" y="213" text-anchor="middle" fill="#607D8B" font-size="7" font-family="monospace">echo $VIRTUAL_ENV</text>
 
   <!-- Bottom note -->
-  <text x="14" y="252" fill="rgba(96,125,139,0.6)" font-size="7" font-family="monospace">QB2 ships with TTNN + vLLM envs pre-installed at ~/tt-metal/ — no source tree, just the environments.</text>
+  <text x="14" y="252" fill="rgba(96,125,139,0.6)" font-size="7" font-family="monospace">QB2 ships with the TTNN env at ~/tt-metal/python_env and the vLLM env at ~/.tenstorrent-venv — no source tree, just the environments.</text>
 
   <rect x="1" y="1" width="618" height="258" rx="5" fill="none" stroke="rgba(79,209,197,0.1)" stroke-width="1.5"/>
 </svg>

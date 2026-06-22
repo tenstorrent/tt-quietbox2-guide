@@ -16,7 +16,7 @@
 ## Hardware
 
 The Tenstorrent Quietbox 2 (QB2) contains:
-- 4× Blackhole P300c AI accelerators
+- 2× Blackhole p300c cards (4 Blackhole chips total)
 - Connected via PCIe as 4 independent devices
 - Ubuntu 24.04 LTS pre-installed
 - Tenstorrent software stack pre-installed (TTNN, vLLM, tt-smi, drivers)

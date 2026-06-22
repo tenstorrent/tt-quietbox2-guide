@@ -158,7 +158,7 @@ b_l1 = ttnn.to_memory_config(b, ttnn.L1_MEMORY_CONFIG)
 c = ttnn.matmul(a_l1, b_l1)
 ```
 
-This works when the tensor fits in L1. For large tensors it won't — DRAM is 96 GB (8 banks × 12 GB), L1 is small per-core scratchpad. Use L1 pinning for intermediate results in tight compute loops.
+This works when the tensor fits in L1. For large tensors it won't — DRAM is 32 GB per chip, L1 is small per-core scratchpad. Use L1 pinning for intermediate results in tight compute loops.
 
 ## Kernel Fusion: Chaining Ops
 

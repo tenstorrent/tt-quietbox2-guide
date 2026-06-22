@@ -41,7 +41,7 @@
   <!-- tt-studio box (middle) -->
   <rect x="168" y="48" width="138" height="52" rx="4" fill="rgba(244,196,113,0.05)" stroke="#F4C471" stroke-width="1.5"/>
   <text x="237" y="65" text-anchor="middle" fill="#F4C471" font-size="8.5" font-family="monospace" letter-spacing="0.5">tt-studio</text>
-  <text x="237" y="78" text-anchor="middle" fill="#E6B55E" font-size="7" font-family="monospace">web UI  :7860</text>
+  <text x="237" y="78" text-anchor="middle" fill="#E6B55E" font-size="7" font-family="monospace">web UI  :3000</text>
   <text x="237" y="91" text-anchor="middle" fill="#607D8B" font-size="6.5" font-family="monospace">browser in · tokens out</text>
 
   <!-- OpenAI-compatible clients box (right) -->
@@ -93,19 +93,19 @@
   <!-- 4x Blackhole chips row -->
   <rect x="240" y="238" width="68" height="30" rx="3" fill="rgba(79,209,197,0.06)" stroke="#4FD1C5" stroke-width="1.5"/>
   <text x="274" y="252" text-anchor="middle" fill="#4FD1C5" font-size="7.5" font-family="monospace">BH #0</text>
-  <text x="274" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">P300c</text>
+  <text x="274" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">p300c 0</text>
 
   <rect x="316" y="238" width="68" height="30" rx="3" fill="rgba(79,209,197,0.06)" stroke="#4FD1C5" stroke-width="1.5"/>
   <text x="350" y="252" text-anchor="middle" fill="#4FD1C5" font-size="7.5" font-family="monospace">BH #1</text>
-  <text x="350" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">P300c</text>
+  <text x="350" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">p300c 0</text>
 
   <rect x="392" y="238" width="68" height="30" rx="3" fill="rgba(79,209,197,0.06)" stroke="#4FD1C5" stroke-width="1.5"/>
   <text x="426" y="252" text-anchor="middle" fill="#4FD1C5" font-size="7.5" font-family="monospace">BH #2</text>
-  <text x="426" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">P300c</text>
+  <text x="426" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">p300c 1</text>
 
   <rect x="468" y="238" width="68" height="30" rx="3" fill="rgba(79,209,197,0.06)" stroke="#4FD1C5" stroke-width="1.5"/>
   <text x="502" y="252" text-anchor="middle" fill="#4FD1C5" font-size="7.5" font-family="monospace">BH #3</text>
-  <text x="502" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">P300c</text>
+  <text x="502" y="263" text-anchor="middle" fill="#607D8B" font-size="6" font-family="monospace">p300c 1</text>
 
   <!-- ═══════════════════════════════════════════════
        PATCH CABLES — top to middle

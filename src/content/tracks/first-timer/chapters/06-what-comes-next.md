@@ -11,7 +11,7 @@ You unboxed a machine that most people have never touched. You confirmed four Bl
 
 The rest is up to you.
 
-<img src="/assets/illustrations/inference-stack.svg" class="spot-illustration" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole P300c chips" style="max-width:100%; margin: 2em 0;">
+<img src="/assets/illustrations/inference-stack.svg" class="spot-illustration" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" style="max-width:100%; margin: 2em 0;">
 
 ## Tools in Your World
 
@@ -31,7 +31,7 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Here's what's avai
   <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Web UI for model serving. Pick a model, click Run, get tokens. Handles the Docker container and compilation automatically.</div>
   <code style="font-size:12px; color:var(--muted);">tt-studio</code>
   <span style="color:var(--muted); font-size:12px;">  →  </span>
-  <code style="font-size:12px; color:var(--muted);">http://localhost:7860</code>
+  <code style="font-size:12px; color:var(--muted);">http://localhost:3000</code>
 </div>
 
 <div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
