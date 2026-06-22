@@ -130,4 +130,4 @@ A correctly downloaded Llama-3.1-8B-Instruct should have 4 safetensors shards. Q
 
 ---
 
-**Next:** [vLLM on QB2 →](/ml-practitioner/03-vllm-on-qb2/)
+**Next:** [Serving Models on QB2 →](/ml-practitioner/03-vllm-on-qb2/)

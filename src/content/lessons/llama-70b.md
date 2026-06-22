@@ -145,7 +145,14 @@ git pull
 
 ## Step 2 — Start the server
 
-This is the full Docker launch command for Llama-3.3-70B-Instruct on a QB2:
+The simplest path is the `run.py` helper from tt-inference-server — one command that pulls the container, downloads and compiles the weights, and maps the port:
+
+```bash
+cd ~/code/tt-inference-server
+python3 run.py --model Llama-3.3-70B-Instruct --device p150x4 --workflow server --docker-server
+```
+
+**Under the hood**, `run.py` launches the TT vLLM container. If you'd rather drive Docker yourself — to pin flags, or run without the repo — the equivalent is:
 
 ```bash
 docker run \
@@ -158,13 +165,6 @@ docker run \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
   --model Llama-3.3-70B-Instruct \
   --tt-device p150x4
-```
-
-Or via the `run.py` helper if you cloned the repo:
-
-```bash
-cd ~/code/tt-inference-server
-python3 run.py --model Llama-3.3-70B-Instruct --device p150x4 --workflow server --docker-server
 ```
 
 <div class="warning-box">
@@ -429,7 +429,7 @@ Inside that ceiling: Llama-3.3-70B-Instruct is the capable baseline. DeepSeek-R1
 ---
 
 <div style="display:flex; flex-wrap:wrap; gap:12px; margin: 40px 0 0;">
-  <a href="/ml-practitioner/03-vllm-on-qb2/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--pink); font-weight:600; font-size:14px; border:1px solid rgba(236,150,184,0.25);">Run & build: vLLM on QB2 →</a>
+  <a href="/ml-practitioner/03-vllm-on-qb2/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--pink); font-weight:600; font-size:14px; border:1px solid rgba(236,150,184,0.25);">Run & build: Serving Models on QB2 →</a>
   <a href="/ml-practitioner/04-performance-tuning/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--pink); font-weight:600; font-size:14px; border:1px solid rgba(236,150,184,0.25);">Performance Tuning →</a>
   <a href="/tinkerer/02-fun-demos/" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:var(--bg1); border-radius:var(--radius); text-decoration:none; color:var(--green); font-weight:600; font-size:14px; border:1px solid rgba(39,174,96,0.25);">Fun Demos →</a>
 </div>

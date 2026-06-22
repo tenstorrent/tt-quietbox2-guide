@@ -1,27 +1,51 @@
 ---
-title: vLLM on QB2
+title: Serving Models on QB2
 currentChapter: 03-vllm-on-qb2
 permalink: /ml-practitioner/03-vllm-on-qb2/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
-# vLLM on QB2
+# Serving Models on QB2
 
 This is the chapter with the most practical density. By the end of it you'll have a running OpenAI-compatible inference server, a working curl command, and a Python client snippet you can drop into any application. Everything in this chapter is production-ready, not toy code.
 
-## The Deployment Stack
+## Pick Your Rung
 
-The QB2 ships with two paths to running models as a server.
+There's a ladder of ways to serve a model on the QB2, from no-code to full control. Start as high up as you can; drop a rung only when you need what the lower one gives you.
 
-The **direct vLLM path** activates the pre-built venv and launches the API server directly. More control, lower ceremony.
+| Approach | Reach for it when… |
+|---|---|
+| **[tt-studio](https://github.com/tenstorrent/tt-studio)** | You want a web UI — pick a model, click Run, no code. (Covered in [What Comes Next](/first-timer/06-what-comes-next/).) |
+| **tt-inference-server** ← *this chapter* | You want one command and a production-ready, OpenAI-compatible API. **The default.** |
+| **vLLM directly** | You want to drive the server process yourself and tune its flags. |
+| **TT-Forge / Metalium** | You're compiling or hand-writing the model — the [Builder/Hacker track](/builder-hacker/). |
 
-The **tt-inference-server path** wraps the same vLLM backend in a Docker container with one-command deploy syntax. This is what tt-studio and tt-local-generator use internally. It handles Docker pulls, environment setup, and port mapping automatically.
+Most of the time you want **tt-inference-server**: it wraps the TT fork of vLLM in a Docker container with one-command deploy, handling the image pull, environment, weight compilation, and port mapping for you. It's also exactly what tt-studio and tt-local-generator use under the hood. We'll lead with it, then drop to driving vLLM directly for when you want the control surface.
 
-Both paths produce the same OpenAI-compatible API on port 8000. Which you use depends on whether you want the control surface of running vLLM directly or the simplicity of a single command.
+Both rungs below tt-studio produce the same OpenAI-compatible API on port 8000.
 
 <img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" class="spot-illustration" style="max-width:100%; margin: 2em 0;">
 
-## Path 1: Direct vLLM
+## Path 1: tt-inference-server (recommended)
+
+The tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you — one command and you have a server.
+
+```bash
+# Deploy Llama-3.1-8B-Instruct with one command
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Llama-3.1-8B-Instruct \
+  --tt-device p100
+
+# The p100 flag targets QB2 P300c hardware
+# On first run: Docker pull + weight compilation (~5 min)
+# Then: port 8000 is ready
+```
+
+The `--tt-device p100` flag tells tt-inference-server you're running on QB2/P300c hardware. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
+
+## Path 2: Direct vLLM (more control)
+
+When you want to drive the server process yourself — custom flags, no Docker layer between you and vLLM — activate the pre-built venv and launch the API server directly.
 
 ```bash
 # Activate the main tenstorrent venv (contains vLLM)
@@ -43,23 +67,6 @@ Watch the logs. When you see a line containing `Application startup complete`, t
 :::callout type="tip"
 The `TT_METAL_ARCH_NAME=blackhole` environment variable is required for Blackhole hardware. The vLLM TT fork needs it to select the correct device backend. If you see errors about unknown architecture or device initialization failures, this is the first thing to check.
 :::
-
-## Path 2: tt-inference-server
-
-The tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you.
-
-```bash
-# Deploy Llama-3.1-8B-Instruct with one command
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-8B-Instruct \
-  --tt-device p100
-
-# The p100 flag targets QB2 P300c hardware
-# On first run: Docker pull + weight compilation (~5 min)
-# Then: port 8000 is ready
-```
-
-The `--tt-device p100` flag tells tt-inference-server you're running on QB2/P300c hardware. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
 
 ## Verifying the Server
 

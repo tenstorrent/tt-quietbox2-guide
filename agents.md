@@ -39,7 +39,7 @@ Python env for vLLM: `source ~/.tenstorrent-venv/bin/activate`
 | Verify hardware works | Explore Ch3: Is This Thing On? |
 | Install the stack | Explore Ch4: Installing the Stack |
 | Run first model | Explore Ch5: Your First Model |
-| Serve models via API | Run & build: vLLM on QB2 |
+| Serve models via API | Run & build: Serving Models on QB2 |
 | Write kernels | Tinker: Your First Kernel |
 | Customize LEDs | Customize: LED Customization |
 
