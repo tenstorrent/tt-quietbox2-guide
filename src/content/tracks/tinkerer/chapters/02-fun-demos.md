@@ -32,10 +32,11 @@ The demo lands harder when the chips are busy. Start a model in one terminal, th
 Install tt-toplike if it isn't already present:
 
 ```bash
-sudo apt install tt-toplike
+# tt-toplike is not in the Tenstorrent apt PPA — install from GitHub releases or via cargo:
+# https://github.com/tenstorrent/tt-toplike/releases
+sudo dpkg -i tt-toplike_*.deb
+# Or: cargo install tt-toplike
 ```
-
-The Tenstorrent apt PPA must be configured first — it's set up automatically by tt-installer, or see [docs.tenstorrent.com](https://docs.tenstorrent.com/getting-started/installation) for manual PPA setup.
 
 ## Demo 2: Flow Mode
 
@@ -58,8 +59,9 @@ This one tends to generate the most questions. "What are those things?" is how g
 Set up a continuous generation loop and you have a generative art installation:
 
 ```bash
-# Install tt-local-generator (requires Tenstorrent apt PPA — set up by tt-installer)
-sudo apt install tt-local-generator
+# Install tt-local-generator from GitHub releases (not in the Tenstorrent apt PPA)
+# https://github.com/tenstorrent/tt-local-generator/releases
+sudo dpkg -i tt-local-generator_*.deb
 
 # Launch the app
 tt-local-generator
@@ -77,35 +79,37 @@ The AnimateDiff integration in tt-local-generator also runs natively on QB2. Sho
 
 Four chips. A language model with 70 billion parameters. No API key. No latency spike from a datacenter on another continent.
 
+The fastest path is through tt-inference-server, which handles the Docker container and weight caching automatically:
+
 ```bash
-# Activate the main tenstorrent venv (contains vLLM)
-source ~/.tenstorrent-venv/bin/activate
-
-# Download Llama-3.1-70B (requires Hugging Face account + license acceptance)
-huggingface-cli download meta-llama/Llama-3.1-70B-Instruct \
-  --local-dir ~/models/Llama-3.1-70B-Instruct
-
-# Start the server with all four chips
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Llama-3.1-70B-Instruct \
-  --num_gpus 4 \
-  --port 8000
+docker run \
+  --env "HF_TOKEN=$HF_TOKEN" \
+  --ipc host \
+  --publish 8000:8000 \
+  --device /dev/tenstorrent \
+  --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
+  --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
+  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
+  --model Llama-3.3-70B-Instruct \
+  --tt-device p150x4
 ```
 
-Wait for `Application startup complete`. Then ask it something that requires reasoning:
+Wait for `Application startup complete` — first run downloads 140 GB of weights, so plan ahead. Then ask it something that requires reasoning:
 
 ```bash
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Llama-3.1-70B-Instruct",
+    "model": "Llama-3.3-70B-Instruct",
     "messages": [{"role": "user", "content": "Explain the tradeoffs between data-parallel and model-parallel inference for large language models. Be specific about memory and latency."}]
   }' | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])"
 ```
 
-The response comes from silicon in your own office. The model that required a specialized cloud service a year ago is running on hardware you own.
+The response comes from silicon in your own office. The model that required a specialized cloud service a year ago runs on hardware you own.
 
 That's the demo.
+
+For the full walkthrough — prerequisites, HuggingFace token setup, the DeepSeek reasoning model variant, and troubleshooting — see **[Running Llama-3.3-70B on QB2](/lessons/llama-70b/)**.
 
 {% tensixviz "blackhole", [
   {"step": "highlight", "cores": [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[16,1],[16,2],[16,3],[16,4],[16,5],[16,6],[16,7],[16,8],[16,9],[16,10]], "color": "eth", "label": "ETH ring — chip-to-chip for 70B tensor parallel", "ms": 600},

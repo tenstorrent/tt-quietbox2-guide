@@ -22,8 +22,8 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Here's what's avai
 <div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
   <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://docs.tenstorrent.com/tt-toplike" style="color:inherit; text-decoration:none;">tt-toplike</a></div>
   <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Real-time hardware monitor — htop for your chips. Chip temps, power, utilization, DRAM bandwidth. Runs in the terminal, updates live.</div>
-  <code style="font-size:12px; color:var(--muted);">sudo apt install tt-toplike</code>
-  <span style="color:var(--muted); font-size:12px;">  (requires <a href="https://docs.tenstorrent.com/getting-started/installation" style="color:var(--muted);">Tenstorrent apt PPA</a>)</span>
+  <code style="font-size:12px; color:var(--muted);">cargo install tt-toplike</code>
+  <span style="color:var(--muted); font-size:12px;">  or download the <a href="https://github.com/tenstorrent/tt-toplike/releases" style="color:var(--muted);">.deb from GitHub releases</a> (not in the apt PPA)</span>
 </div>
 
 <div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
@@ -88,6 +88,11 @@ Pick a specific thing you want to do and follow the link directly.
   <td style="padding:8px 12px; color:var(--text2);">Chat with an LLM directly in Python</td>
   <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/interactive-chat/">Interactive Chat</a></td>
   <td style="padding:8px 12px; color:var(--muted);">20 min</td>
+</tr>
+<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
+  <td style="padding:8px 12px; color:var(--text2);">Run Llama-3.3-70B locally (the biggest model QB2 supports)</td>
+  <td style="padding:8px 12px;"><a href="/lessons/llama-70b/">Running Llama-3.3-70B on QB2</a></td>
+  <td style="padding:8px 12px; color:var(--muted);">45 min</td>
 </tr>
 <tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
   <td style="padding:8px 12px; color:var(--text2);">Run AI agents locally on a 70B model</td>
