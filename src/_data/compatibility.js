@@ -21,7 +21,7 @@ const INTERNAL_LINKS = {
 const SOFTWARE_URLS = {
   "tt-inference-server": "https://github.com/tenstorrent/tt-inference-server",
   "tt-metal":            "https://github.com/tenstorrent/tt-metal",
-  "tt-forge":            "https://github.com/tenstorrent/tt-forge-fe",
+  "tt-forge":            "https://github.com/tenstorrent/tt-forge-onnx",
 };
 
 // Hardware priority — Quietbox 2 is the exact system, prefer it
