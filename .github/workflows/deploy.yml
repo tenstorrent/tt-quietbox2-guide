@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Rebuild daily at 06:00 UTC to pick up compatibility matrix updates
+    - cron: "0 6 * * *"
 
 permissions:
   contents: read

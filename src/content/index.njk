@@ -60,3 +60,34 @@ description: "Choose your path through the Tenstorrent Quietbox 2 — from first
   {% endfor %}
 </div>
 </div>
+
+{% if compatibility.models.length > 0 %}
+<section class="compat-section">
+  <div class="compat-header">
+    <h2 class="compat-title">What's Running on QB2</h2>
+    <p class="compat-subtitle">Live from the Tenstorrent compatibility matrix — models confirmed or in testing on Quietbox 2 / P150 / P300c hardware.</p>
+    {% if compatibility.generatedAt %}
+    <p class="compat-updated">Updated {{ compatibility.generatedAt | replace("T", " ") | truncate(16, true, "") }} UTC</p>
+    {% endif %}
+  </div>
+
+  <div class="compat-grid">
+    {% for model in compatibility.models %}
+    <a href="{{ model.link }}" class="compat-card compat-card--{{ model.status | lower }}" target="_blank" rel="noopener">
+      <div class="compat-card-top">
+        <span class="compat-status compat-status--{{ model.status | lower }}">{{ model.status }}</span>
+        {% if model.task %}<span class="compat-task">{{ model.task }}</span>{% endif %}
+      </div>
+      <div class="compat-card-name">{{ model.name }}</div>
+      {% if model.size %}<div class="compat-card-size">{{ model.size }}</div>{% endif %}
+      {% if model.description %}
+      <div class="compat-card-desc">{{ model.description | truncate(90) }}</div>
+      {% endif %}
+      <div class="compat-card-footer">
+        {% for sw in model.software %}<span class="compat-sw">{{ sw }}</span>{% endfor %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
