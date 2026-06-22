@@ -104,12 +104,14 @@ All three should respond without errors. If TTNN is missing, the install didn't 
 On a QB2 it shouldn't be missing, but on another Ubuntu system:
 
 ```bash
-pip install tt-smi    # installs the Python wrapper
-# or, for the system binary:
-sudo apt install tt-smi    # if the Tenstorrent apt repo is configured
+# Option A — public PyPI (any machine, no PPA needed):
+pip install tt-smi
+
+# Option B — via apt (requires Tenstorrent PPA, set up by tt-installer):
+sudo apt install tt-smi
 ```
 
-The full Tenstorrent apt repository setup is documented at [docs.tenstorrent.com](https://docs.tenstorrent.com).
+Both install the same tool. Option A works anywhere with Python; option B integrates with your system package manager. On a freshly installed Ubuntu machine without tt-installer, option A is the easier path.
 
 ## Disk Space and Model Storage
 

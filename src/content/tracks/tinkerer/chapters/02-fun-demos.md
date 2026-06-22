@@ -33,9 +33,9 @@ Install tt-toplike if it isn't already present:
 
 ```bash
 sudo apt install tt-toplike
-# or, via cargo:
-cargo install tt-toplike
 ```
+
+The Tenstorrent apt PPA must be configured first — it's set up automatically by tt-installer, or see [docs.tenstorrent.com](https://docs.tenstorrent.com/getting-started/installation) for manual PPA setup.
 
 ## Demo 2: Flow Mode
 
@@ -58,9 +58,8 @@ This one tends to generate the most questions. "What are those things?" is how g
 Set up a continuous generation loop and you have a generative art installation:
 
 ```bash
-# Install or update tt-local-generator
-# Full docs: https://docs.tenstorrent.com/tt-local-generator
-pip install tt-local-generator   # or follow the docs installer
+# Install tt-local-generator (requires Tenstorrent apt PPA — set up by tt-installer)
+sudo apt install tt-local-generator
 
 # Launch the app
 tt-local-generator
@@ -121,6 +120,44 @@ That's the demo.
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">One Blackhole P300c running a slice of Llama-3.1-70B. All four of yours look like this, simultaneously.</p>
 
 <!-- VIDEO -->
+
+## Demo 5: TT-Forge Compiletron — Hunt the Wild Model
+
+The premise is simple: compile as many models as possible, score points, and try not to hit something that crashes the runtime.
+
+tt-forge-compiletron is a roguelike model compilation game. It is also a genuine engineering survey tool. The gameplay loop runs models from the `tt-forge-models` zoo (200+ curated PyTorch and JAX models) through `forge.compile()` on your Blackhole chips. Each successful compile earns points. First-ever compile of a model earns a ×5 multiplier. The scoring system rewards breadth, rarity, and speed.
+
+The TUI is three screens running in a Textual interface: a model queue on the left, live per-chip compilation status in the center, and a running scoreboard with ASCII art banners rendered in pyfiglet. When a model compiles successfully, the First Voice feature kicks in — a themed inference pass that prints the model's first decoded output on Tenstorrent silicon. The first time a language model generates a token on your hardware, it announces itself with a banner.
+
+The bestiary at `data/bestiary.json` grows with every session. It records compile status, timing, and failure class for every model attempted. Come back later and it knows what you've already conquered.
+
+Set up and launch:
+
+```bash
+cd ~/code/tt-forge-compiletron
+source ~/tt-forge-fe/env/activate
+python3 expedition.py run --tui --seed-only --limit 8 --chips 4
+```
+
+`--seed-only` pulls from the curated zoo only, `--limit 8` caps the session at eight models, `--chips 4` assigns all four Blackhole cards. A good starting session.
+
+:::callout type="tip"
+First Voice is the payoff. After each successful compile, the game runs one inference pass and prints the model's decoded output. A sentiment classifier labeling its first sentence. A ResNet identifying its first image. A GPT-2 generating its first token. Watch the chip do something real with what it just learned to run.
+:::
+
+{% tensixviz "blackhole", [
+  {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5]], "color": "tensixActive", "label": "Chip 0 — AlexNet forge", "ms": 700},
+  {"step": "pause", "ms": 500},
+  {"step": "highlight", "cores": [[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[15,3],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[15,4],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5]], "color": "tensixActive", "label": "Chip 1 — GPT-2 forge", "ms": 700},
+  {"step": "pause", "ms": 500},
+  {"step": "highlight", "cores": [[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[1,9],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10]], "color": "tensixActive", "label": "Chip 2 — BEiT forge", "ms": 700},
+  {"step": "pause", "ms": 500},
+  {"step": "highlight", "cores": [[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7],[15,7],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[15,8],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[9,10],[10,10],[11,10],[12,10],[13,10],[14,10],[15,10]], "color": "tensixActive", "label": "Chip 3 — DINOv2 forge", "ms": 700},
+  {"step": "pause", "ms": 1200},
+  {"step": "clear"}
+] %}
+
+<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">Four chips, four models, simultaneously. Each quadrant is one Blackhole card running a different compiled model.</p>
 
 ---
 

@@ -23,8 +23,7 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Here's what's avai
   <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://docs.tenstorrent.com/tt-toplike" style="color:inherit; text-decoration:none;">tt-toplike</a></div>
   <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Real-time hardware monitor — htop for your chips. Chip temps, power, utilization, DRAM bandwidth. Runs in the terminal, updates live.</div>
   <code style="font-size:12px; color:var(--muted);">sudo apt install tt-toplike</code>
-  <span style="color:var(--muted); font-size:12px;">  or  </span>
-  <code style="font-size:12px; color:var(--muted);">cargo install tt-toplike</code>
+  <span style="color:var(--muted); font-size:12px;">  (requires <a href="https://docs.tenstorrent.com/getting-started/installation" style="color:var(--muted);">Tenstorrent apt PPA</a>)</span>
 </div>
 
 <div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">

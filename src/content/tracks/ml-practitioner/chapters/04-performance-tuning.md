@@ -14,7 +14,7 @@ Running a model is table stakes. Knowing how to interpret what the hardware is d
 `tt-toplike` is htop for your Blackhole chips. Install it once, run it alongside inference, watch what the hardware does.
 
 ```bash
-# Install (if not already installed)
+# Install (if not already installed — requires Tenstorrent apt PPA, set up by tt-installer)
 sudo apt install tt-toplike
 
 # Launch in arcade mode — real-time chip visualization
