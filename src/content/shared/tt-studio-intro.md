@@ -8,7 +8,7 @@ Start it with a single command on the QB2:
 tt-studio
 ```
 
-Then open `http://localhost:3000` in your browser. Select a model from the library, adjust parameters if you want, and click Run. The first launch for any model compiles weights for Blackhole — that takes a few minutes. Subsequent runs skip compilation and load fast from the on-disk cache.
+Then open `http://localhost:3000` in your browser, pick a model from the Deploy Model dropdown, and click Run. **On a QB2, Qwen3-32B is already there with its weights pre-cached** — its first deploy skips the multi-GB download and is ready in a few minutes. Other models download on first use; after that, every run loads fast from the on-disk cache.
 
 **What's happening under the hood:** tt-studio is a UI sitting on top of [tt-inference-server](https://github.com/tenstorrent/tt-inference-server). When you select a model and click Run, tt-studio spins up a Docker container running the TT fork of vLLM on port 8000. Your browser talks to tt-studio; tt-studio talks to that container. [tt-local-generator](https://docs.tenstorrent.com/tt-local-generator) routes through the same container — both are UIs sitting on top of tt-inference-server, just with different front ends.
 

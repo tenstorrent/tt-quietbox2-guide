@@ -43,6 +43,19 @@ python3 ~/.local/lib/tt-inference-server/run.py \
 
 The `--tt-device p100` flag targets a single Blackhole chip — QB2 presents each of its four chips as a `p100`, which is plenty for an 8B model. To use the whole box (for a 70B, say), pass `p300x2` instead — see the Multi-Chip section below. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
 
+:::callout type="tip"
+**Instant first serve — no download.** Your QB2 ships with **Qwen3-32B** weights pre-cached on disk (it's the same model already loaded in tt-studio's Deploy dropdown), so you can serve it across all four chips right away:
+:::
+
+```bash
+# Serve the preloaded Qwen3-32B — weights are already on disk, no download
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Qwen3-32B \
+  --tt-device p300x2 \
+  --workflow server \
+  --docker-server
+```
+
 ## Path 2: Direct vLLM (more control)
 
 When you want to drive the server process yourself — custom flags, no Docker layer between you and vLLM — activate the pre-built venv and launch the API server directly.

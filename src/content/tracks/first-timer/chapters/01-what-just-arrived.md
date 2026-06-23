@@ -29,6 +29,8 @@ Tenstorrent ships the QB2 ready to serve models. You don't install drivers. You 
 - **TTNN Python environment** — pre-built venv at `~/tt-metal/python_env/`
 - **vLLM** — in the main tenstorrent venv at `~/.tenstorrent-venv/`
 - **TT-Forge/XLA** — container wrapper at `~/.local/bin/tt-forge`
+- **tt-studio** — the no-code web UI for serving models, pre-installed (launch with `tt-studio`)
+- **A ready-to-run model** — Qwen3-32B, weights pre-cached on disk, deployable from tt-studio with no download
 - **Firmware** — already flashed to all four chips
 
 What's intentionally absent: the `~/tt-metal` source code. The environments are there; the source isn't. You can build models, run inference, and work with the full API stack without it. Building from source is a later chapter — a much later chapter.
