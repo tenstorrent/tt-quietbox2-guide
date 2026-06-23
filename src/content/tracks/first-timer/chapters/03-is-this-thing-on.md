@@ -28,6 +28,11 @@ tt-smi -s | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['de
 
 If you see `4 devices`, move on. The QB2 is ready.
 
+<div class="callout callout--tip">
+<span class="callout-icon illustrated-only">⚡</span>
+Chips enumerating means the hardware is alive — but the fastest proof it actually <em>runs</em> a model is the preloaded <strong>Qwen3-32B</strong>: launch <code>tt-studio</code>, pick it from the Deploy dropdown, and chat. No download. Full walkthrough in <a href="/first-timer/05-your-first-model/">Your First Model</a>.
+</div>
+
 ## If You See Fewer Than Four
 
 A missing device usually means one of three things:

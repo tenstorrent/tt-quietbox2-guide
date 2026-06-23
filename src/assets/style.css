@@ -210,6 +210,8 @@ blockquote {
 .hero-title sup { font-size: 0.5em; vertical-align: super; font-weight: 400; }
 .hero-couplet { margin: 0 auto; max-width: 480px; color: var(--text2); font-size: 0.95rem; transition: opacity 0.3s; }
 .hero-couplet p { margin: 0; }
+.hero-postscript { text-align: center; max-width: 560px; margin: 6px auto 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.hero-postscript strong { color: var(--text2); font-weight: 600; }
 
 /* ── Home layout: venn + cards side by side on wide screens ─────────────── */
 .home-layout { display: flex; flex-direction: column; align-items: center; }
