@@ -15,107 +15,51 @@ The rest is up to you.
 
 ## Tools in Your World
 
-The QB2 ships with a full stack, but the ecosystem is bigger. Here's what's available and where to find it.
+The QB2 ships with a full stack, but the ecosystem is bigger. Start with **tt-toplike** — `htop` for your chips, except the telemetry comes alive as ASCII art:
 
-<div style="display:grid; gap:12px; margin: 1.5em 0;">
+<figure class="video-demo">
+<img src="/assets/video/tt-toplike-insights.gif" alt="tt-toplike insights mode — live ASCII visualization of all four Blackhole chips during inference" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike insights mode — all four Blackhole chips under live inference, power and DRAM state rendered in real time</figcaption>
+</figure>
 
-<div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
-  <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://docs.tenstorrent.com/tt-toplike" style="color:inherit; text-decoration:none;">tt-toplike</a></div>
-  <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Real-time hardware monitor — htop for your chips. Chip temps, power, utilization, DRAM bandwidth. Runs in the terminal, updates live.</div>
-  <code style="font-size:12px; color:var(--muted);">cargo install tt-toplike</code>
-  <span style="color:var(--muted); font-size:12px;">  or download the <a href="https://github.com/tenstorrent/tt-toplike/releases" style="color:var(--muted);">.deb from GitHub releases</a> (not in the apt PPA)</span>
-</div>
+<div class="rcard-grid">
 
-<div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
-  <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://github.com/tenstorrent/tt-studio" style="color:inherit; text-decoration:none;">tt-studio</a></div>
-  <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Web UI for model serving. Pick a model, click Run, get tokens. Handles the Docker container and compilation automatically.</div>
-  <code style="font-size:12px; color:var(--muted);">tt-studio</code>
-  <span style="color:var(--muted); font-size:12px;">  →  </span>
-  <code style="font-size:12px; color:var(--muted);">http://localhost:3000</code>
-</div>
+{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips: temps, power, utilization, DRAM bandwidth, live in the terminal.", "cargo install tt-toplike · .deb on Releases" %}
 
-<div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
-  <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://docs.tenstorrent.com/tt-local-generator" style="color:inherit; text-decoration:none;">tt-local-generator</a></div>
-  <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">GTK4 desktop app for video generation, image generation, and art on QB2. Uses tt-inference-server for diffusion models and a local prompt server for LLM-based prompt polishing.</div>
-  <code style="font-size:12px; color:var(--muted);">tt-local-generator</code>
-</div>
+{% card "repo", "https://github.com/tenstorrent/tt-studio", "tt-studio", "Web UI for model serving. Pick a model, click Run, get tokens — it handles the container and compilation.", "tt-studio → localhost:3000" %}
 
-<div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
-  <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://github.com/tenstorrent/tt-inference-server" style="color:inherit; text-decoration:none;">tt-inference-server</a></div>
-  <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Docker-based one-command model deployment. The server that tt-studio and tt-local-generator both route through. Run it directly to get a fully OpenAI-compatible HTTP API on port 8000.</div>
-  <code style="font-size:12px; color:var(--muted);">https://github.com/tenstorrent/tt-inference-server</code>
-</div>
+{% card "site", "https://docs.tenstorrent.com/tt-local-generator", "tt-local-generator", "GTK4 desktop app for video, image, and art generation on QB2, on top of tt-inference-server.", "tt-local-generator" %}
 
-<div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
-  <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit" style="color:inherit; text-decoration:none;">tt-vscode-toolkit</a></div>
-  <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">VS Code extension with 40+ interactive lessons that run directly against your QB2. Guided walkthroughs for inference, kernel writing, performance tuning, and multi-chip workloads.</div>
-  <code style="font-size:12px; color:var(--muted);">https://docs.tenstorrent.com/tt-vscode-toolkit</code>
-</div>
+{% card "repo", "https://github.com/tenstorrent/tt-inference-server", "tt-inference-server", "Docker-based one-command model deployment — the OpenAI-compatible server tt-studio and tt-local-generator route through.", "" %}
 
-<div style="background:var(--bg1); border-left:3px solid var(--teal); padding:16px; border-radius:var(--radius);">
-  <div style="color:var(--teal); font-weight:700; margin-bottom:4px;"><a href="https://tenstorrent.github.io/tt-awesome/" style="color:inherit; text-decoration:none;">tt-awesome</a></div>
-  <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Community catalog of everything built on Tenstorrent hardware — models, demos, benchmarks, integrations, research projects. If someone has done it, it's in here.</div>
-  <code style="font-size:12px; color:var(--muted);">https://tenstorrent.github.io/tt-awesome/</code>
-</div>
+{% card "site", "https://docs.tenstorrent.com/tt-vscode-toolkit", "tt-vscode-toolkit", "VS Code extension with 40+ interactive lessons that run directly against your QB2.", "" %}
+
+{% card "site", "https://tenstorrent.github.io/tt-awesome/", "tt-awesome", "Community catalog of everything built on Tenstorrent hardware — models, demos, benchmarks, research.", "" %}
 
 </div>
 
 ## Where to Go From Here
 
-Pick a specific thing you want to do and follow the link directly.
+Pick a thing you want to do and jump straight in.
 
-<div style="margin: 1.5em 0; overflow-x:auto;">
-<table style="width:100%; border-collapse:collapse; font-size:13px;">
-<thead>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.2);">
-  <th style="text-align:left; padding:8px 12px; color:var(--muted); font-weight:600;">If you want to...</th>
-  <th style="text-align:left; padding:8px 12px; color:var(--muted); font-weight:600;">Go here</th>
-  <th style="text-align:left; padding:8px 12px; color:var(--muted); font-weight:600;">Time</th>
-</tr>
-</thead>
-<tbody>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Serve a model with an OpenAI-compatible API</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/vllm-production/">Production Inference with vLLM</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">30 min</td>
-</tr>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Run Llama-3.1-8B with one command</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/">TT-Inference-Server</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">20 min</td>
-</tr>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Chat with an LLM directly in Python</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/interactive-chat/">Interactive Chat</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">20 min</td>
-</tr>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Run Llama-3.3-70B locally (the biggest model QB2 supports)</td>
-  <td style="padding:8px 12px;"><a href="/lessons/llama-70b/">Running Llama-3.3-70B on QB2</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">45 min</td>
-</tr>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Run AI agents locally on a 70B model</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/qb2-local-agents/">Local AI Agents on QB2</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">60 min</td>
-</tr>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Generate video on QB2</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/qb2-video-generation/">QB2 Video Generation</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">45 min</td>
-</tr>
-<tr style="border-bottom:1px solid rgba(79,209,197,0.07);">
-  <td style="padding:8px 12px; color:var(--text2);">Build kernels from scratch on Tensix cores</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/">Explore TT-Metalium</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">open-ended</td>
-</tr>
-<tr>
-  <td style="padding:8px 12px; color:var(--text2);">Write cookbook-style parallel algorithms</td>
-  <td style="padding:8px 12px;"><a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/">Cookbook Overview</a></td>
-  <td style="padding:8px 12px; color:var(--muted);">varies</td>
-</tr>
-</tbody>
-</table>
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/vllm-production/", "Production Inference with vLLM", "Serve a model behind an OpenAI-compatible API.", "30 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/", "TT-Inference-Server", "Run Llama-3.1-8B with one command.", "20 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/interactive-chat/", "Interactive Chat", "Chat with an LLM directly in Python.", "20 min" %}
+
+{% card "lesson", "/lessons/llama-70b/", "Running Llama-3.3-70B on QB2", "Run the biggest model QB2 supports, across all four chips.", "45 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/qb2-local-agents/", "Local AI Agents on QB2", "Run AI agents locally on a 70B model.", "60 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/qb2-video-generation/", "QB2 Video Generation", "Generate video on your QB2.", "45 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/", "Explore TT-Metalium", "Build kernels from scratch on the Tensix cores.", "open-ended" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/", "Cookbook Overview", "Write cookbook-style parallel algorithms.", "varies" %}
+
 </div>
 
 ## Choose Your Next Track

@@ -372,6 +372,29 @@ figure.video-demo figcaption { margin-top: 8px; font-size: 13px; color: var(--mu
 .specsheet-source a { color: var(--muted); text-decoration: underline; }
 .specsheet-source a:hover { color: var(--teal); }
 
+/* ── Resource cards (lessons / repos / tools / models) ───────────────────── */
+.rcard-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  gap: 14px; margin: 1.5em 0;
+}
+.rcard {
+  display: flex; flex-direction: column; gap: 5px;
+  background: var(--bg1); border: 1px solid var(--bg2);
+  border-left: 3px solid var(--teal); border-radius: var(--radius);
+  padding: 14px 16px; text-decoration: none; color: var(--text);
+  transition: background 0.15s, transform 0.15s;
+}
+.rcard:hover { background: var(--bg2); transform: translateY(-2px); text-decoration: none; }
+.rcard--repo  { border-left-color: var(--gold); }
+.rcard--lesson { border-left-color: var(--teal); }
+.rcard--model { border-left-color: var(--pink); }
+.rcard--tool, .rcard--site { border-left-color: var(--green); }
+.rcard-kind { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.rcard-title { font-weight: 700; font-size: 14px; color: var(--text); }
+.rcard--repo .rcard-title, .rcard--model .rcard-title { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; }
+.rcard-desc { font-size: 12.5px; line-height: 1.5; color: var(--text2); }
+.rcard-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: "JetBrains Mono", ui-monospace, monospace; }
+
 /* ── Compatibility matrix section ────────────────────────────────────────── */
 .compat-section {
   max-width: 1080px; margin: 48px auto 0; padding: 0 32px 80px;

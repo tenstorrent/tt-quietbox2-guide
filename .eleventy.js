@@ -110,6 +110,29 @@ module.exports = function (eleventyConfig) {
 </div>`;
   });
 
+  /**
+   * card shortcode — a rich resource card (lesson / repo / tool / model / site).
+   * Usage: {% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time ASCII hardware monitor.", "Rust · .deb / cargo" %}
+   * kind: lesson | repo | tool | model | site (sets the accent + label)
+   * Internal URLs (starting "/") open in-place with a → arrow; external get ↗.
+   * Wrap several in <div class="rcard-grid">…</div> for a responsive grid.
+   */
+  eleventyConfig.addShortcode("card", function (kind, url, title, desc, meta) {
+    const esc = (s) =>
+      String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const LABELS = { lesson: "Lesson", repo: "GitHub", tool: "Tool", model: "Model", site: "Site" };
+    const label = LABELS[kind] || "Link";
+    const external = /^https?:\/\//.test(url);
+    const attrs = external ? ' target="_blank" rel="noopener"' : "";
+    const arrow = external ? "↗" : "→";
+    const metaHtml = meta ? `\n  <span class="rcard-meta">${esc(meta)}</span>` : "";
+    return `<a class="rcard rcard--${esc(kind)}" href="${esc(url)}"${attrs}>
+  <span class="rcard-kind">${label} ${arrow}</span>
+  <span class="rcard-title">${esc(title)}</span>
+  <span class="rcard-desc">${esc(desc)}</span>${metaHtml}
+</a>`;
+  });
+
   // ---------------------------------------------------------------------------
   // Collections
   // ---------------------------------------------------------------------------

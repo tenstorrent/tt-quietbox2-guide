@@ -68,6 +68,19 @@ tt-smi
 
 This opens the interactive TUI — press `q` to quit. You'll see per-chip utilization, temperature, and memory usage update live. Useful when a model is running and you want to see all four chips light up.
 
+For something richer than the built-in TUI, **tt-toplike** renders the same telemetry as live ASCII art — every chip's power, temperature, and DRAM state, animated:
+
+<figure class="video-demo">
+<img src="/assets/video/tt-toplike-insights.gif" alt="tt-toplike insights mode — live ASCII visualization of all four Blackhole chips during inference" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike — all four Blackhole chips at once, power and DRAM state rendered live</figcaption>
+</figure>
+
+<div class="rcard-grid">
+
+{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips, as live ASCII art. More on it in What Comes Next.", "cargo install tt-toplike · .deb on Releases" %}
+
+</div>
+
 {% tensixviz "blackhole", [
   {"step": "highlight", "cores": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1]], "color": "teal", "label": "Prefill: first row of cores handling prompt tokens", "ms": 600},
   {"step": "pause", "ms": 500},
