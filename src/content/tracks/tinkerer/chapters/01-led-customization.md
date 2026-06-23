@@ -64,6 +64,14 @@ journalctl -u tt-qb-lights -f   # watch it go
 
 Full source, architecture notes, and troubleshooting: [github.com/tsingletaryTT/tt-qb-lights](https://github.com/tsingletaryTT/tt-qb-lights)
 
+<div class="rcard-grid">
+
+{% card "repo", "https://github.com/tsingletaryTT/tt-qb-lights", "tt-qb-lights", "Rust systemd service that turns OpenRGB-supported lights into a live hardware dashboard — reads Blackhole sensors directly, drives color by temperature and brightness by power.", "git clone · ./install.sh" %}
+
+{% card "tool", "https://gitlab.com/CalcProgrammer1/OpenRGB", "OpenRGB", "Open-source RGB controller tt-qb-lights talks to over TCP (port 6742); any device OpenRGB supports becomes a live dashboard.", "" %}
+
+</div>
+
 ---
 
 ## Discover Your LED Options

@@ -71,8 +71,8 @@ This opens the interactive TUI — press `q` to quit. You'll see per-chip utiliz
 For something richer than the built-in TUI, **tt-toplike** renders the same telemetry as live ASCII art — every chip's power, temperature, and DRAM state, animated:
 
 <figure class="video-demo">
-<img src="/assets/video/tt-toplike-insights.gif" alt="tt-toplike insights mode — live ASCII visualization of all four Blackhole chips during inference" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike — all four Blackhole chips at once, power and DRAM state rendered live</figcaption>
+<img src="/assets/video/tt-toplike-host-cpu.gif" alt="tt-toplike host + chip view — live ASCII telemetry for the QB2 host and its four Blackhole chips" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike — the host and all four Blackhole chips, live telemetry as ASCII art</figcaption>
 </figure>
 
 <div class="rcard-grid">

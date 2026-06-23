@@ -110,7 +110,11 @@ You don't need a QB2 to experiment with TT-Lang. The `ttlang-sim` browser-based 
 
 For the structured lesson with exercises and a graded environment:
 
-**TT-Lang Introduction lesson:** [docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/) — 25 minutes, covers all four decorators, circular buffer semantics, and a complete vector add + elementwise multiply walkthrough.
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/", "TT-Lang Introduction", "Covers all four decorators, circular buffer semantics, and a complete vector add + elementwise multiply walkthrough.", "25 min" %}
+
+</div>
 
 The lesson runs inside VS Code with the TT-VSCode Toolkit extension. It uses a local simulator so compilation is instant. After the lesson, running the same kernel on QB2 hardware is a one-line change.
 

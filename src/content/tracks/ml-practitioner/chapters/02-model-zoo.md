@@ -15,7 +15,7 @@ The QB2 supports a focused set of model families, optimized for Blackhole silico
 
 | Model Family | Variants | Chips Required | Disk Space |
 |---|---|---|---|
-| Qwen3 | 0.6B, 7B, 14B | 1 (0.6B/7B), 2-4 (14B) | 1.5 GB / 14 GB / 28 GB |
+| Qwen3 | 0.6B, 8B, 14B | 1 (0.6B/8B), 2-4 (14B) | 1.5 GB / ~16 GB / 28 GB |
 | Llama 3.1 | 8B-Instruct | 1 | ~16 GB |
 | Llama 3.1 | 70B-Instruct | 4 | ~140 GB |
 | Mistral | 7B-Instruct | 1 | ~14 GB |
@@ -28,9 +28,21 @@ The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with
 
 **Llama-3.1-8B-Instruct** is where you start if you need production-quality output on a single chip. Strong reasoning, strong instruction-following, 128K context. The model most people actually use for serious work on a single Blackhole.
 
-**Qwen3-7B** is a strong alternative in the same size class. Use it if your workload benefits from Qwen's architectural choices or if you want to compare against the 0.6B for quality/speed tradeoffs.
+**Qwen3-8B** is a strong alternative in the same size class as Llama-3.1-8B. Use it if your workload benefits from Qwen's architectural choices, or to compare against the 0.6B for quality/speed tradeoffs.
 
 **Llama-3.1-70B-Instruct** requires all four chips and 140 GB of storage. It's the top-of-rack option for workloads where quality is the priority. Inference speed is lower than the 8B, but the output quality difference is real on complex tasks.
+
+<div class="rcard-grid">
+
+{% card "model", "https://huggingface.co/Qwen/Qwen3-0.6B", "Qwen3-0.6B", "The fastest way to confirm the stack is working — the \"hello world\" of this hardware. Single chip.", "0.6B · 1.5 GB" %}
+
+{% card "model", "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct", "Llama-3.1-8B-Instruct", "Production-quality output on a single chip — strong reasoning, strong instruction-following, 128K context.", "8B · ~16 GB · gated" %}
+
+{% card "model", "https://huggingface.co/Qwen/Qwen3-8B", "Qwen3-8B", "Qwen's 8B-class model — a strong single-chip alternative to Llama-3.1-8B for workloads that benefit from Qwen's architecture.", "8B · ~16 GB" %}
+
+{% card "model", "https://huggingface.co/meta-llama/Llama-3.1-70B-Instruct", "Llama-3.1-70B-Instruct", "The top-of-rack option for quality-first workloads — requires all four chips and 140 GB of storage.", "70B · ~140 GB · gated" %}
+
+</div>
 
 ## Downloading Models
 
@@ -46,8 +58,8 @@ hf download Qwen/Qwen3-0.6B --local-dir ~/models/Qwen3-0.6B
 # Llama-3.1-8B-Instruct — 16 GB, requires HF login with license acceptance
 hf download meta-llama/Llama-3.1-8B-Instruct --local-dir ~/models/Llama-3.1-8B-Instruct
 
-# Qwen3-7B — 14 GB
-hf download Qwen/Qwen3-7B --local-dir ~/models/Qwen3-7B
+# Qwen3-8B — ~16 GB
+hf download Qwen/Qwen3-8B --local-dir ~/models/Qwen3-8B
 
 # Llama-3.1-70B-Instruct — 140 GB, plan your storage
 hf download meta-llama/Llama-3.1-70B-Instruct --local-dir ~/models/Llama-3.1-70B-Instruct

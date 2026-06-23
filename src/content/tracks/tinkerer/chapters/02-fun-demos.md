@@ -52,6 +52,11 @@ Watch what happens when you start or stop inference. The particle density change
 
 This one tends to generate the most questions. "What are those things?" is how good conversations start.
 
+<figure class="video-demo">
+<img src="/assets/video/tt-toplike-memory-flow.gif" alt="tt-toplike memory-flow mode — DRAM channels animated across the four Blackhole chips" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike flow mode — particle streams trace data moving between DRAM and compute cores in real time</figcaption>
+</figure>
+
 ## Demo 3: AI Video Generation — Live Generative Art
 
 `tt-local-generator` is a GTK4 desktop app that runs video generation entirely locally, no API key, no cloud dependency. The Wan2.2 text-to-video model produces 480×832 clips using all four Blackhole chips. Each clip takes roughly six minutes.
@@ -74,6 +79,14 @@ For a polished installation setup — fullscreen display, auto-start on login, c
 :::callout type="tip"
 The AnimateDiff integration in tt-local-generator also runs natively on QB2. Shorter clips, different aesthetic, same local-only principle. See [tt-animatediff](https://github.com/tenstorrent/tt-animatediff) for the standalone library.
 :::
+
+<div class="rcard-grid">
+
+{% card "repo", "https://github.com/tenstorrent/tt-local-generator", "tt-local-generator", "GTK4 desktop app for fully local video generation — the Wan2.2 text-to-video model produces 480×832 clips across all four Blackhole chips, no API key.", "dpkg -i tt-local-generator_*.deb" %}
+
+{% card "repo", "https://github.com/tenstorrent/tt-animatediff", "tt-animatediff", "Standalone AnimateDiff library that runs natively on QB2 — shorter clips, different aesthetic, same local-only principle.", "" %}
+
+</div>
 
 ## Demo 4: Local 70B with No Internet Required
 

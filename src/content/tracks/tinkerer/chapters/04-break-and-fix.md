@@ -221,6 +221,19 @@ sudo dpkg -i tt-toplike_*.deb
 The `tenstorrent` kernel module is a loadable driver. If it was loaded for kernel `6.x.y` and you're now on `6.x.z`, it may need to be rebuilt or reinstalled. `dmesg | grep tenstorrent` is your friend here — it shows exactly why the module failed to load.
 :::
 
+<figure class="video-demo">
+<img src="/assets/img/tt-toplike-arcade.png" alt="tt-toplike arcade mode — the four Blackhole chips under load" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike arcade mode — once the driver is healthy and tt-smi sees four devices, the chips come back to life</figcaption>
+</figure>
+
+<div class="rcard-grid">
+
+{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "The TUI visualizer — when it panics at startup, the chips are almost always invisible to the driver. Reinstall from Releases or via cargo.", "cargo install tt-toplike --force" %}
+
+{% card "repo", "https://github.com/tenstorrent/tt-metal", "tt-metal", "The core compute stack and driver source — check here for the currently supported kernel range when chips go missing after an upgrade.", "" %}
+
+</div>
+
 ---
 
 **Next:** [Community & Contribution →](/tinkerer/05-community/)

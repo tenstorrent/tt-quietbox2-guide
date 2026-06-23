@@ -13,12 +13,17 @@ You've seen the architecture, dispatched a kernel, written a TT-Lang program, an
 
 These four structured lessons continue from where this track ends. They are interactive, run inside VS Code with the TT-VSCode Toolkit, and include real code you run on your QB2:
 
-| Lesson | Duration | What you'll do |
-|--------|----------|----------------|
-| [explore-metalium](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/) | 30 min | Write a custom kernel in TT-Metalium C++ — the three-kernel model at the C++ API level, explicit circular buffer management, kernel dispatch |
-| [tt-lang-intro](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/) | 25 min | Full TT-Lang walkthrough — decorators, circular buffers, vector add, elementwise multiply, running on hardware |
-| [cookbook-overview](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/) | varies | TTNN op cookbook — attention, layernorm, convolution patterns; profiling included |
-| [build-tt-metal](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/) | 60 min | Build TT-Metal from source on QB2 — unlocks perf tooling, kernel modification, the full source tree |
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/", "explore-metalium", "Write a custom kernel in TT-Metalium C++ — the three-kernel model at the C++ API level, explicit circular buffer management, kernel dispatch.", "30 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/", "tt-lang-intro", "Full TT-Lang walkthrough — decorators, circular buffers, vector add, elementwise multiply, running on hardware.", "25 min" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/", "cookbook-overview", "TTNN op cookbook — attention, layernorm, convolution patterns; profiling included.", "varies" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/", "build-tt-metal", "Build TT-Metal from source on QB2 — unlocks perf tooling, kernel modification, the full source tree.", "60 min" %}
+
+</div>
 
 Build `tt-metal` from source if you're serious about optimization. The pre-built environment is a complete API surface; the source-built environment adds per-cycle profiling, kernel modification, and the ability to send patches upstream.
 
@@ -28,7 +33,13 @@ Build `tt-metal` from source if you're serious about optimization. The pre-built
 
 **Profile a TTNN cookbook pattern end-to-end.** Pick any TTNN recipe from the cookbook-overview lesson — a transformer block, a convolution layer, an embedding lookup. Run it on QB2 with the profiler enabled. Find the bottleneck op. Try to shrink it: L1 memory configs, batch size changes, dtype changes. Document the before-and-after numbers. This produces a reusable reference for the specific pattern on Blackhole hardware.
 
-**Explore tt-awesome.** The community kernel repository at [github.com/tenstorrent/tt-awesome](https://github.com/tenstorrent/tt-awesome) collects implementations, benchmarks, and examples contributed by the Tenstorrent community. It is the fastest way to see what other builders are doing on the same hardware. Read a kernel you didn't write, run it, profile it, try to improve it.
+**Explore tt-awesome.** The community kernel repository collects implementations, benchmarks, and examples contributed by the Tenstorrent community. It is the fastest way to see what other builders are doing on the same hardware. Read a kernel you didn't write, run it, profile it, try to improve it.
+
+<div class="rcard-grid">
+
+{% card "repo", "https://github.com/tenstorrent/tt-awesome", "tt-awesome", "Community kernel repository — implementations, benchmarks, and examples contributed by the Tenstorrent community.", "" %}
+
+</div>
 
 ## tt-toplike as a Permanent Companion
 

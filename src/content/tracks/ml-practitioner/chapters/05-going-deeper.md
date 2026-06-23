@@ -57,6 +57,14 @@ The VS Code extension ships lessons that run against your QB2 directly — not s
 
 **Take the Tinker track.** The Run & build track ends at the TTNN surface. The Tinker track goes below it: Metalium kernels, NoC data movement, dispatch programming, the full architecture exposure. If you've ever wanted to understand how a matmul actually runs on silicon — not the math, the execution — that track is the path.
 
+<div class="rcard-grid">
+
+{% card "lesson", "/lessons/llama-70b/", "Running Llama-3.3-70B on QB2", "The largest model QB2 officially supports, tensor-parallel across all four chips — exact Docker command, prerequisites, and a DeepSeek-R1 variant.", "all four chips" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/", "Explore TT-Metalium", "The layer below TTNN — how Metalium kernels are written, compiled, and dispatched, and how tensor-parallel AllReduce crosses chip boundaries.", "open-ended" %}
+
+</div>
+
 ## Community and Further Reading
 
 <div style="display:grid; gap:12px; margin: 1.5em 0;">

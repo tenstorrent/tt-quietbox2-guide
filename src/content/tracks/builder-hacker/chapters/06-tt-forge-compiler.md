@@ -96,6 +96,14 @@ First-call JIT time is real. BEiT compiles in a few seconds. A large vision tran
 See the [TT-Forge intro lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-forge-intro/) for compilation flags and caching options.
 :::
 
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-forge-intro/", "TT-Forge intro", "Compile a PyTorch or JAX model to Tensix machine code — compilation flags and caching options.", "" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-xla-jax/", "TT-XLA JAX", "The JAX path: register the TT PJRT plugin and compile @jax.jit functions through the TT-MLIR pipeline.", "" %}
+
+</div>
+
 ## The ForgeModel Interface
 
 The `tt-forge-models` zoo at `~/code/tt-forge-models` defines a standardized interface for 200+ models. Every loader implements the `ForgeModel` abstract base class from `base.py`:
@@ -121,6 +129,12 @@ compiled = forge.compile(model, sample_inputs=inputs)
 ```
 
 Read the full [forge-models zoo lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/) for traversal patterns and custom variant registration.
+
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/", "forge-models zoo", "The standardized ForgeModel interface for 200+ models — traversal patterns and custom variant registration.", "" %}
+
+</div>
 
 :::callout type="deep-dive"
 The JAX path requires one extra step before the compile call: `import pjrt_plugin_tt` at the top of your script. This import registers the TT PJRT plugin as a JAX backend. After that, `@jax.jit` decorated functions trace and compile through the same TT-MLIR pipeline.

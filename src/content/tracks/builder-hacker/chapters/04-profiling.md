@@ -143,6 +143,12 @@ Do not optimize what you haven't measured. The chip's actual bottleneck is rarel
 <strong>Full performance analysis requires building from source.</strong> The deepest profiling — per-kernel cycle counts, NOC link utilization per hop, RISC-V instruction traces — requires the TT-Metal source tree and the perf tooling that builds with it. The <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/" style="color:var(--teal)">build-tt-metal lesson</a> (60 min) covers building from source on the QB2. The source-built tools expose profiling capabilities that the pre-built environment doesn't include.
 </div>
 
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/", "build-tt-metal", "Build TT-Metal from source on the QB2 — source-built perf tooling exposes per-kernel cycle counts, NOC link utilization, and RISC-V instruction traces.", "60 min" %}
+
+</div>
+
 ---
 
 **Next:** [Going Deep →](/builder-hacker/05-going-deep/)

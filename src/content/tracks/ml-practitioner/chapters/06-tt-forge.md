@@ -146,6 +146,14 @@ Five models worth knowing immediately:
 
 Models not on this table: BLOOM, GPT-2, LLaMA, YOLOv4, BEiT, and 190+ more. Browse the full zoo in the [forge-models-zoo lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/).
 
+<div class="rcard-grid">
+
+{% card "repo", "https://github.com/tenstorrent/tt-forge-models", "tt-forge-models", "The standardized model zoo for TT-Forge — 200+ pretrained models, every one loadable in two lines.", "~/code/tt-forge-models" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/", "forge-models-zoo", "Browse the full zoo — the 190+ models beyond the five worth knowing immediately.", "" %}
+
+</div>
+
 :::callout type="tip"
 `dtype_override=torch.bfloat16` is the recommended default for all models. Blackhole runs bfloat16 at native hardware throughput. If you need float32 for precision reasons, omit the override — but expect slower inference.
 :::
@@ -173,13 +181,19 @@ The `pjrt_plugin_tt` import is the entire setup. After that, `jax.jit` compiles 
 
 Full walkthrough: [TT-XLA / JAX lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-xla-jax/).
 
+<div class="rcard-grid">
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-xla-jax/", "TT-XLA / JAX", "The full walkthrough for compiling JAX and Flax models to TT hardware via the PJRT plugin.", "" %}
+
+</div>
+
 ---
 
 ## Compiletron: The Expedition Game
 
 Someone at Tenstorrent decided the best way to stress-test the compiler stack across hundreds of model architectures was to make it a roguelike game. They were right.
 
-**tt-forge-compiletron** is a model-compilation expedition game. It lives at [tenstorrent/tt-forge-compiletron](https://github.com/tenstorrent/tt-forge-compiletron). You launch expeditions into the model zoo. Each expedition compiles a different model. The chip runs the compilation. You score points. You build a bestiary.
+**tt-forge-compiletron** is a model-compilation expedition game (it lives at `tenstorrent/tt-forge-compiletron`). You launch expeditions into the model zoo. Each expedition compiles a different model. The chip runs the compilation. You score points. You build a bestiary.
 
 Start it:
 

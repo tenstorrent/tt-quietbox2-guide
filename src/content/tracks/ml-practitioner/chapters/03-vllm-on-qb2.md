@@ -192,6 +192,14 @@ python3 ~/.local/lib/tt-inference-server/run.py \
 
 The full walkthrough — prerequisites, weights, and an OpenAI-compatible client — is in [Running Llama-3.3-70B on QB2](/lessons/llama-70b/).
 
+<div class="rcard-grid">
+
+{% card "lesson", "/lessons/llama-70b/", "Running Llama-3.3-70B on QB2", "The full walkthrough for the whole box — prerequisites, weights, and an OpenAI-compatible client.", "p300x2 · all four chips" %}
+
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/", "TT-Inference-Server", "The full list of run.py options for one-command, OpenAI-compatible deploys.", "" %}
+
+</div>
+
 The model weights distribute across all four chips' DRAM. The KV-cache splits across the chips' Tensix cores. From the client's perspective, the API is identical — same URL, same request format.
 
 <figure class="video-demo">

@@ -17,6 +17,14 @@ The community catalog lives at [tenstorrent.github.io/tt-awesome](https://tensto
 
 Adding a project is a pull request to [github.com/tenstorrent/tt-awesome](https://github.com/tenstorrent/tt-awesome). The bar is low: working code, a README, and a description that tells someone why they'd want to run it.
 
+<div class="rcard-grid">
+
+{% card "site", "https://tenstorrent.github.io/tt-awesome/", "tt-awesome", "The community catalog — models, demos, integrations, and experiments contributed by people who picked up the same hardware. Browse it before building.", "" %}
+
+{% card "repo", "https://github.com/tenstorrent/tt-awesome", "tt-awesome (contribute)", "Add your project with a pull request: working code, a README, and a description of why someone would want to run it.", "" %}
+
+</div>
+
 ## GitHub
 
 All of Tenstorrent's core repositories are public: [github.com/tenstorrent](https://github.com/tenstorrent).
@@ -41,6 +49,12 @@ The channels worth knowing: `#hardware-support` for driver and chip questions, `
 **Add a demo to tt-awesome.** If you've got something running on your QB2 that took more than an hour to figure out, it's worth sharing. A Jupyter notebook demonstrating a novel TTNN op, a generative art setup using tt-local-generator, a custom LED monitoring script — these are all valid contributions.
 
 **Share a VHS recording.** A terminal recording of your demo is worth more than a static screenshot. [VHS](https://github.com/charmbracelet/vhs) renders `.tape` files into `.gif` or `.mp4`. Record your tt-toplike flow mode demo, your first 70B query, your LED script responding to thermal changes. Share to Discord or embed in a tt-awesome entry.
+
+<div class="rcard-grid">
+
+{% card "tool", "https://github.com/charmbracelet/vhs", "VHS", "Renders .tape script files into .gif or .mp4 — turn a terminal demo into a shareable recording for Discord or a tt-awesome entry.", "" %}
+
+</div>
 
 **Write a lesson.** The [tt-vscode-toolkit lessons](https://docs.tenstorrent.com/tt-vscode-toolkit/) are written by people who built things and wanted to teach them. If you've worked through a non-trivial workflow on QB2, the lesson format is a good home for it.
 
