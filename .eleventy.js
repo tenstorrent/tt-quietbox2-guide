@@ -1,4 +1,5 @@
 const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
+const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
 const markdownIt = require("markdown-it");
 const markdownItContainer = require("markdown-it-container");
 
@@ -14,6 +15,9 @@ module.exports = function (eleventyConfig) {
   // Plugins
   // ---------------------------------------------------------------------------
   eleventyConfig.addPlugin(syntaxHighlight);
+  // Rewrites root-absolute URLs (/assets/…, /first-timer/…) to include pathPrefix, so the
+  // site works under its served subpath (GitHub Pages / docs.tenstorrent.com/tt-quietbox2-guide/).
+  eleventyConfig.addPlugin(EleventyHtmlBasePlugin);
 
   // ---------------------------------------------------------------------------
   // Markdown-it with callout containers
@@ -195,6 +199,10 @@ module.exports = function (eleventyConfig) {
   // Eleventy directory configuration
   // ---------------------------------------------------------------------------
   return {
+    // The site is served under a subpath everywhere (GitHub Pages and
+    // docs.tenstorrent.com/tt-quietbox2-guide/). Internal-host builds override
+    // this with `--pathprefix` on the CLI.
+    pathPrefix: "/tt-quietbox2-guide/",
     dir: {
       // Content lives in src/content/; _includes and _data are siblings of src/content/
       input: "src/content",

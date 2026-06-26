@@ -4,7 +4,7 @@
 
 ## Site
 
-- [Home](https://tenstorrent.github.io/qb2-guide/): Landing page with SVG Venn diagram path chooser
+- [Home](https://docs.tenstorrent.com/tt-quietbox2-guide/): Landing page with SVG Venn diagram path chooser
 
 ## Paths
 
