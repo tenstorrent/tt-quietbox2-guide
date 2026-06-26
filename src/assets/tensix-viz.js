@@ -168,7 +168,6 @@ var _TensixVizBundle = (() => {
   function TensixViz(canvas, opts) {
     opts = opts || {};
     this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
     this.arch = opts.arch || "wormhole";
     this.speed = opts.speed || 1;
     this.chip = CHIPS[this.arch] || CHIPS.wormhole;
@@ -187,6 +186,7 @@ var _TensixVizBundle = (() => {
     this._loopScript = null;
     this._showMemory = !!opts.showMemory;
     this._memOverride = null;
+    this._memPhase = null;
     this._currentMode = null;
     this._cellW = 0;
     this._cellH = 0;
@@ -195,9 +195,6 @@ var _TensixVizBundle = (() => {
     this._dram = [];
     this._compute = [];
     var dpr = typeof window !== "undefined" && window.devicePixelRatio || 1;
-    // Responsive sizing: cap logical dimensions to the container's actual width
-    // so the canvas never overflows narrow viewports. The HTML width/height
-    // attributes are the preferred size; clientWidth is the hard ceiling.
     var logicalW = canvas.width;
     var logicalH = canvas.height;
     if (typeof window !== "undefined" && canvas.parentElement) {
@@ -213,6 +210,7 @@ var _TensixVizBundle = (() => {
     canvas.height = Math.round(logicalH * dpr);
     canvas.style.width = logicalW + "px";
     canvas.style.height = logicalH + "px";
+    this.ctx = canvas.getContext("2d");
     if (dpr > 1) {
       this.ctx.scale(dpr, dpr);
     }
@@ -672,9 +670,10 @@ var _TensixVizBundle = (() => {
   };
   TensixViz.prototype._execStep = function(step, done) {
     const self = this;
-    // Accept both authoring schemas: {step, cores, ...} and {action, coords, ...}.
     const kind = step.step || step.action;
-    if (step.cores == null && step.coords != null) step.cores = step.coords;
+    if (step.cores == null && step.coords != null) {
+      step = Object.assign({}, step, { cores: step.coords });
+    }
     switch (kind) {
       case "highlight":
         return self._stepHighlight(step, done);
@@ -1050,10 +1049,11 @@ var _TensixVizBundle = (() => {
       ctx.font = "bold 11px sans-serif";
       const w = ctx.measureText(text).width + pad * 2;
       const h = 18;
-      // Clamp so the label box never overflows any canvas edge.
       const margin = 4;
-      const cx = Math.max(w / 2 + margin, Math.min(this._logicalW - w / 2 - margin, rawCx));
-      const cy = Math.max(h / 2 + margin, Math.min(this._logicalH - h / 2 - margin, rawCy));
+      const cxLo = w / 2 + margin, cxHi = this._logicalW - w / 2 - margin;
+      const cyLo = h / 2 + margin, cyHi = this._logicalH - h / 2 - margin;
+      const cx = cxLo <= cxHi ? Math.max(cxLo, Math.min(cxHi, rawCx)) : this._logicalW / 2;
+      const cy = cyLo <= cyHi ? Math.max(cyLo, Math.min(cyHi, rawCy)) : this._logicalH / 2;
       const T = this._theme;
       ctx.fillStyle = T.floatLabelBg;
       ctx.strokeStyle = T.teal;
