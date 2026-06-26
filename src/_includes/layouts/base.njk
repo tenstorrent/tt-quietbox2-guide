@@ -8,7 +8,7 @@
   <meta name="description" content="{{ description or 'Your guide to the Tenstorrent Quietbox 2 — from first boot to first model and beyond.' }}">
   <link rel="stylesheet" href="/assets/style.css">
   <link rel="stylesheet" href="/assets/tensix-viz.css">
-  <!-- PostHog analytics — same project as other docs.tenstorrent.com sites (e.g. tt-toplike) -->
+  <!-- PostHog analytics — same project as other docs.tenstorrent.com sites; only fires on real hostnames (not localhost/dev) -->
   <script>
     (function (t, e) {
       var o, n, p, r;
@@ -26,11 +26,13 @@
         }; e.__SV = 1;
       }
     })(document, window.posthog || []);
-    posthog.init("phc_9LMRmHrCFvQNvDkPDjYBP5dZ6WchZ5bcM6T4Qj6tb0U", {
-      api_host: "https://us.i.posthog.com",
-      defaults: "2025-05-24",
-      person_profiles: "identified_only"
-    });
+    if (["docs.tenstorrent.com", "tenstorrent.github.io", "users.local.tenstorrent.com"].indexOf(location.hostname) !== -1) {
+      posthog.init("phc_9LMRmHrCFvQNvDkPDjYBP5dZ6WchZ5bcM6T4Qj6tb0U", {
+        api_host: "https://us.i.posthog.com",
+        defaults: "2025-05-24",
+        person_profiles: "identified_only"
+      });
+    }
   </script>
 </head>
 <body>
