@@ -163,6 +163,8 @@ for chip in d.get('device_info', []):
 
 **Symptom:** `docker ps` hangs or errors; tt-inference-server container fails to launch.
 
+> tt-installer v3.2.0+ installs Docker by default. If you chose Podman instead (`--install-container-runtime=podman`), substitute `podman` for `docker` in the commands below.
+
 **Fix:**
 
 ```bash
