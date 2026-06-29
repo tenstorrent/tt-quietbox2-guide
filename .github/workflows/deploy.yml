@@ -34,6 +34,12 @@ jobs:
       - name: Build with Eleventy
         run: npm run build
 
+      - name: Install Chromium for PDF rendering
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate complete-guide PDF
+        run: npm run pdf
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

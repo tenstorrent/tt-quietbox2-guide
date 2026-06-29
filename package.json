@@ -4,12 +4,15 @@
   "description": "Interactive guide to the Tenstorrent Quietbox 2",
   "scripts": {
     "build": "eleventy",
-    "serve": "eleventy --serve --incremental"
+    "serve": "eleventy --serve --incremental",
+    "pdf": "node scripts/make-pdf.mjs",
+    "build:all": "eleventy && node scripts/make-pdf.mjs"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.1.6",
     "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
     "markdown-it": "^14.0.0",
-    "markdown-it-container": "^3.0.0"
+    "markdown-it-container": "^3.0.0",
+    "playwright": "^1.61.1"
   }
 }

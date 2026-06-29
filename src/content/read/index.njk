@@ -1,0 +1,55 @@
+---
+layout: layouts/base.njk
+title: "The Complete Guide"
+permalink: /read/
+isReadAll: true
+description: "The entire QB2 guide — all four paths, every chapter, on one page. Read straight through or download as a PDF."
+---
+{#— Map each persona to its ordered chapter collection (defined in .eleventy.js) —#}
+{% set trackChapters = {
+  "first-timer": collections.firstTimerChapters,
+  "ml-practitioner": collections.mlPractitionerChapters,
+  "builder-hacker": collections.builderHackerChapters,
+  "tinkerer": collections.tinkererChapters
+} %}
+
+<div class="site-main readall">
+  <header class="readall-head">
+    <div class="readall-eyebrow">The Complete Guide</div>
+    <h1>Everything about your QB2, on one page</h1>
+    <p class="readall-lede">All four paths and every chapter, start to finish — read straight through, search the whole guide in-page (⌘F / Ctrl-F), or take it with you as a PDF.</p>
+    <div class="readall-actions">
+      <a class="btn btn--primary" href="/assets/qb2-guide.pdf" download>↓ Download PDF</a>
+      <button class="btn btn--ghost" type="button" onclick="window.print()">Print this page</button>
+    </div>
+  </header>
+
+  <nav class="readall-toc" aria-label="Contents">
+    {% for persona in personas %}
+    <div class="readall-toc-track" data-persona="{{ persona.id }}">
+      <a class="readall-toc-title" href="#track-{{ persona.id }}">{{ persona.verb }}</a>
+      <ol class="readall-toc-chapters">
+        {% for chapter in trackChapters[persona.id] %}
+        <li><a href="#ch-{{ persona.id }}-{{ loop.index }}">{{ chapter.data.title }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endfor %}
+  </nav>
+
+  {% for persona in personas %}
+  <section class="readall-track" id="track-{{ persona.id }}" data-persona="{{ persona.id }}">
+    <div class="readall-track-banner">
+      <div class="readall-track-verb">{{ persona.verb }}</div>
+      <h2>{{ persona.goal }}</h2>
+      <p>{{ persona.support }}</p>
+    </div>
+    {% for chapter in trackChapters[persona.id] %}
+    <article class="read-chapter" id="ch-{{ persona.id }}-{{ loop.index }}">
+      <div class="read-chapter-number">{{ persona.verb }} · Chapter {{ loop.index }}</div>
+      {{ chapter.content | safe }}
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
