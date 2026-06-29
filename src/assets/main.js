@@ -51,9 +51,33 @@ function qb2Base() {
   if (!coupletEl) return;
 
   const defaultHTML = coupletEl.innerHTML;
+  const circles = document.querySelectorAll(".venn-circle");
+
+  // Reserve vertical space for the couplet so swapping between the default
+  // (one line) and the hover states (two paragraphs, which may wrap on narrow
+  // viewports) never reflows the page below it. We measure every possible
+  // state at the current width, take the tallest, and lock it in as a
+  // min-height. Re-running on resize keeps the reservation correct when
+  // wrapping changes. Content stays vertically centred within the reserved
+  // box (see .hero-couplet in style.css).
+  function reserveCoupletSpace() {
+    coupletEl.style.minHeight = ""; // clear so we measure natural heights
+    let tallest = coupletEl.offsetHeight; // default (one line) state
+    circles.forEach(function (circle) {
+      const line1 = circle.getAttribute("data-couplet-1");
+      const line2 = circle.getAttribute("data-couplet-2");
+      if (!line1) return;
+      coupletEl.innerHTML = `<p>${line1}</p><p>${line2 || ""}</p>`;
+      tallest = Math.max(tallest, coupletEl.offsetHeight);
+    });
+    coupletEl.innerHTML = defaultHTML; // restore
+    coupletEl.style.minHeight = tallest + "px";
+  }
+  reserveCoupletSpace();
+  window.addEventListener("resize", reserveCoupletSpace);
 
   // Couplets injected from personas.json via data-* on each circle
-  document.querySelectorAll(".venn-circle").forEach(function (circle) {
+  circles.forEach(function (circle) {
     circle.addEventListener("mouseenter", function () {
       const line1 = circle.getAttribute("data-couplet-1");
       const line2 = circle.getAttribute("data-couplet-2");
