@@ -79,7 +79,13 @@ python3 my_forge_script.py
 tt-forge python3 my_forge_script.py
 ```
 
-The forge environment has `TT_METAL_ARCH_NAME=blackhole` set. The compiler knows what hardware it's targeting.
+Forge needs `TT_METAL_ARCH_NAME=blackhole` to target the QB2's Blackhole chips — the same mandatory variable from the [first kernel](/builder-hacker/02-first-kernel/) chapter. The container wrapper sets it inside the container for you. With a source build, export it yourself before compiling:
+
+```bash
+export TT_METAL_ARCH_NAME=blackhole
+```
+
+Without it the runtime defaults to Wormhole and the compiler targets the wrong hardware.
 
 Here is a complete BEiT image classification example using the tt-forge-models zoo:
 

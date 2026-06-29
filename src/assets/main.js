@@ -56,25 +56,49 @@ function qb2Base() {
   // Reserve vertical space for the couplet so swapping between the default
   // (one line) and the hover states (two paragraphs, which may wrap on narrow
   // viewports) never reflows the page below it. We measure every possible
-  // state at the current width, take the tallest, and lock it in as a
-  // min-height. Re-running on resize keeps the reservation correct when
-  // wrapping changes. Content stays vertically centred within the reserved
-  // box (see .hero-couplet in style.css).
+  // state in an OFF-SCREEN CLONE — never touching the live element's text — so
+  // a resize that fires mid-hover can't reset what the reader is currently
+  // looking at. The tallest result becomes the live element's min-height.
+  // Content stays vertically centred within the reserved box (see
+  // .hero-couplet in style.css).
   function reserveCoupletSpace() {
-    coupletEl.style.minHeight = ""; // clear so we measure natural heights
-    let tallest = coupletEl.offsetHeight; // default (one line) state
+    // Shallow clone keeps the class (so font/width/CSS match) but no children;
+    // we drive its content via innerHTML below.
+    const probe = coupletEl.cloneNode(false);
+    probe.removeAttribute("id"); // never duplicate the live element's id
+    probe.style.minHeight = ""; // measure natural height, not a prior reservation
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.left = "-9999px";
+    probe.style.top = "0";
+    probe.style.width = coupletEl.clientWidth + "px"; // match wrapping width
+    coupletEl.parentNode.appendChild(probe);
+
+    // Default (one line) plus every persona's two-paragraph hover state.
+    const states = [defaultHTML];
     circles.forEach(function (circle) {
       const line1 = circle.getAttribute("data-couplet-1");
-      const line2 = circle.getAttribute("data-couplet-2");
       if (!line1) return;
-      coupletEl.innerHTML = `<p>${line1}</p><p>${line2 || ""}</p>`;
-      tallest = Math.max(tallest, coupletEl.offsetHeight);
+      const line2 = circle.getAttribute("data-couplet-2");
+      states.push(`<p>${line1}</p><p>${line2 || ""}</p>`);
     });
-    coupletEl.innerHTML = defaultHTML; // restore
+
+    let tallest = 0;
+    states.forEach(function (html) {
+      probe.innerHTML = html;
+      tallest = Math.max(tallest, probe.offsetHeight);
+    });
+
+    coupletEl.parentNode.removeChild(probe);
     coupletEl.style.minHeight = tallest + "px";
   }
   reserveCoupletSpace();
-  window.addEventListener("resize", reserveCoupletSpace);
+  // Debounce resize so a drag-resize doesn't force a reflow on every pixel.
+  let resizeTimer;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(reserveCoupletSpace, 150);
+  });
 
   // Couplets injected from personas.json via data-* on each circle
   circles.forEach(function (circle) {
