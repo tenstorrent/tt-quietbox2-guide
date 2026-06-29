@@ -80,7 +80,9 @@
   {{ content | safe }}
 
   <script src="/assets/main.js"></script>
+  <!-- tensix-viz self-initialises on DOMContentLoaded; do NOT call autoInit()
+       again here — a second pass builds a duplicate TensixViz on each single-chip
+       canvas (two animation loops → overlapping/"doubled" grid). -->
   <script src="/assets/tensix-viz.js"></script>
-  <script>if (typeof _TensixVizBundle !== 'undefined') _TensixVizBundle.autoInit();</script>
 </body>
 </html>
