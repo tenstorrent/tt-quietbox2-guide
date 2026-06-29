@@ -1,4 +1,6 @@
 _site/
+_site_qb2/
+_pdf/
 node_modules/
 generated/
 .eleventy-cache/

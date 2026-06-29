@@ -61,6 +61,43 @@ The QB2 runs Ubuntu 24.04 LTS. If this is your first time with it:
 - Your home directory is `~` — short for `/home/yourusername`
 - `sudo` runs a command as administrator — use it only when a command tells you to
 
+## Your Login, Password, and SSH
+
+Many QB2 units ship with a default login — username **`ttuser`**, password **`ttuser`**. If that's how yours arrived, change the password the moment you're in, before the machine is reachable on a shared network:
+
+```bash
+passwd
+```
+
+It asks for the current password (`ttuser`), then a new one twice.
+
+### Turn on SSH
+
+Later in this guide — and on every other path — you reach the QB2 from your own laptop over **SSH**: forwarding a model server's port back to your machine, copying files, running commands remotely. SSH isn't always running on a fresh box, so turn it on once:
+
+```bash
+# Install and enable the SSH server
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+
+# Confirm it's listening
+systemctl status ssh
+```
+
+Then find the address other machines use to reach you:
+
+```bash
+hostname -I     # the QB2's IP address on your network
+hostname        # its name — often <name>.local
+```
+
+From your laptop you can now run `ssh ttuser@<that-ip>`. This is what makes the remote-access steps in [Serving Models on QB2](/ml-practitioner/03-vllm-on-qb2/) — and bringing tt-studio's web UI to your own browser — work.
+
+<div class="callout callout--tip">
+<span class="callout-icon illustrated-only">💡</span>
+Ubuntu's <code>ufw</code> firewall is <strong>installed but inactive by default</strong>, so nothing on the QB2 is blocked out of the box. If you or your IT team turn it on (<code>sudo ufw status</code> tells you), remember to allow SSH with <code>sudo ufw allow 22/tcp</code> — and any service port you forward later, like <code>8000</code> for the inference server.
+</div>
+
 ## Python: A Field Guide to the Confusion
 
 This is where new Linux users often hit a wall. Ubuntu ships with its own Python. The Tenstorrent software has its own Python environments. These are separate and don't mix. Here's the landscape:

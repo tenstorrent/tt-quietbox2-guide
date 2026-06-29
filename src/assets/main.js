@@ -21,12 +21,26 @@
   }
 })();
 
+// Light / dark theme toggle. The initial value is applied by an inline <head>
+// script (to avoid a flash); here we just wire the button and persist changes.
+(function () {
+  const KEY = "qb2-guide-theme";
+  const html = document.documentElement;
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    const next = html.getAttribute("data-theme") === "light" ? "dark" : "light";
+    html.setAttribute("data-theme", next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+  });
+})();
+
 // Resolve the site's base path (pathPrefix) from a link Eleventy already
 // rewrote — the topbar logo points at the site root ("/" or "/tt-quietbox2-guide/").
 // JS navigation strings are NOT rewritten by EleventyHtmlBasePlugin, so we must
 // prepend this ourselves or links break when served under a subpath.
 function qb2Base() {
-  const logo = document.querySelector(".topbar-logo");
+  const logo = document.querySelector(".tt-nav-logo");
   const href = logo && logo.getAttribute("href");
   return href && href !== "#" ? href.replace(/\/$/, "") : "";
 }

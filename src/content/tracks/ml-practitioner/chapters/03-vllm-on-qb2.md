@@ -150,6 +150,40 @@ print()  # newline at end
 
 Each chunk arrives as a server-sent event; the OpenAI SDK unwraps them into delta objects. The pattern is identical to streaming from `api.openai.com` — because it's the same API.
 
+## Connect a Chat UI
+
+You don't have to write code to use the server. Because the API is OpenAI-compatible, any chat front-end that talks to OpenAI works — point it at `http://localhost:8000/v1` and your served model appears in its model picker.
+
+[**Open WebUI**](https://github.com/open-webui/open-webui) is the most common choice: a full ChatGPT-style interface in your browser. Run it in Docker on the QB2 and aim it at the server:
+
+```bash
+# Open WebUI, pointed at the local inference server
+docker run -d --network=host \
+  -e OPENAI_API_BASE_URL=http://localhost:8000/v1 \
+  -e OPENAI_API_KEY=not-checked \
+  -v open-webui:/app/backend/data \
+  --name open-webui ghcr.io/open-webui/open-webui:main
+
+# Open http://localhost:8080 — from your laptop, tunnel it first:
+# ssh -L 8080:localhost:8080 ttuser@your-qb2-hostname
+```
+
+:::callout type="tip"
+**Coming from Ollama?** Ollama itself doesn't run on Blackhole — but you don't need it. Any tool you'd normally point at Ollama (Open WebUI included) works pointed at tt-inference-server instead, because both speak the same OpenAI-compatible API.
+:::
+
+The same `:8000/v1` endpoint drives a whole ecosystem of clients — pick whatever fits your workflow:
+
+<div class="rcard-grid">
+
+{% card "tool", "https://github.com/open-webui/open-webui", "Open WebUI", "Self-hosted, ChatGPT-style web UI. Point it at the :8000/v1 endpoint and chat with your QB2.", "Docker · browser" %}
+
+{% card "tool", "https://www.librechat.ai/", "LibreChat", "Multi-model chat UI with conversation history, presets, and an OpenAI-compatible backend.", "Docker · browser" %}
+
+{% card "tool", "https://www.continue.dev/", "Continue.dev", "In-editor AI assistant for VS Code and JetBrains — set its API base to your QB2.", "IDE extension" %}
+
+</div>
+
 ## Continuous Batching
 
 This is one of the QB2's practical advantages in production. vLLM's continuous batching algorithm fills the KV-cache space as requests arrive, packing multiple users' decode steps into the same chip invocation. You're not running one request at a time — the server is interleaving decode steps from multiple concurrent clients across every chip cycle.
@@ -171,6 +205,10 @@ Keep these ports clear. Other services on the QB2 use them.
 | `8001` | tt-inference-server prompt server |
 
 If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`
+
+:::callout type="tip"
+**Firewall:** Ubuntu ships `ufw` **inactive** by default, so unless someone has turned it on, these ports are reachable on your LAN the moment a service binds them — there's nothing to open. Check with `sudo ufw status`; if it's active, allow what you serve (`sudo ufw allow 8000/tcp`). Don't want to widen the firewall at all? Keep services on `localhost` and reach them through the SSH tunnel below.
+:::
 
 ## Remote Access via SSH Port Forward
 

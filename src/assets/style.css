@@ -1,12 +1,29 @@
-/* ── Design tokens (matches tt-awesome exactly) ──────────────────────────── */
+/* ── Design tokens ───────────────────────────────────────────────────────────
+   Two themes share one set of token names so every component recolours by
+   swapping values. DARK is the default (Direction B: the docs.tenstorrent.com
+   Figma teal/green system, dark variant); LIGHT is opt-in via the theme toggle. */
 :root {
   color-scheme: dark;
-  --bg0: #0F2A35; --bg1: #1A3C47; --bg2: #2D3142; --bg3: #0a1e28;
-  --teal: #4FD1C5; --teal-lt: #81E6D9;
-  --pink: #EC96B8; --gold: #F4C471; --green: #27AE60;
-  --text: #E8F0F2; --text2: #B0C4DE; --muted: #607D8B;
+  --bg0: #0A1F1E; --bg1: #10302D; --bg2: #1E433F; --bg3: #061514;
+  --teal: #2BA7C9; --teal-lt: #5BBAD5;
+  --pink: #EC96B8; --gold: #F4C471; --green: #34C77B;
+  --text: #E3F0EE; --text2: #A7C3C0; --muted: #6E8B89;
   --red: #FF6B6B;
   --radius: 6px;
+  --nav-h: 56px;
+  /* Top-nav chrome — the dark TT bar, identical in both themes */
+  --nav-bg: #092221; --nav-text: #D9E8E5; --nav-muted: #8FAEAC;
+  --nav-border: rgba(199, 217, 216, 0.18);
+}
+
+/* LIGHT theme — full Figma teal/green light palette */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg0: #F1F8F8; --bg1: #FFFFFF; --bg2: #C7D9D8; --bg3: #EAF3F2;
+  --teal: #1B8EB1; --teal-lt: #1E86A9;
+  --pink: #C75B8A; --gold: #B07A1F; --green: #1E8E5A;
+  --text: #092221; --text2: #3A5452; --muted: #678583;
+  --red: #C0392B;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,29 +41,61 @@ body {
 ::-webkit-scrollbar-thumb        { background: rgba(79,209,197,0.2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover  { background: rgba(79,209,197,0.45); }
 
-/* ── Topbar ──────────────────────────────────────────────────────────────── */
-.topbar {
-  display: flex; align-items: center; gap: 16px; padding: 0 20px;
-  height: 52px; background: var(--bg3);
-  border-bottom: 1px solid rgba(79,209,197,0.15); position: sticky; top: 0; z-index: 100;
+/* ── Top nav (TT docs chrome — dark teal-green bar; lightweight guide build) ── */
+.tt-top-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 0 22px; height: var(--nav-h);
+  background: var(--nav-bg); border-bottom: 1px solid var(--nav-border);
+  position: sticky; top: 0; z-index: 200;
 }
-.topbar-logo {
-  font-weight: 800; font-size: 16px; color: var(--teal);
-  text-decoration: none; letter-spacing: -0.3px; white-space: nowrap;
+.tt-nav-left { display: flex; align-items: center; gap: 22px; min-width: 0; }
+.tt-nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; text-decoration: none; }
+.tt-nav-logo img { height: 22px; width: auto; }
+.tt-nav-logo span {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 14px; color: var(--nav-text); letter-spacing: 0.3px; white-space: nowrap;
 }
-.topbar-logo span { color: var(--text2); font-weight: 400; }
-.topbar-spacer { flex: 1; }
-.topbar-home { font-size: 14px; color: var(--muted); text-decoration: none; }
-.topbar-home:hover { color: var(--text); }
+.tt-nav-logo:hover { text-decoration: none; }
+.tt-nav-links { display: flex; align-items: center; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.tt-nav-links li { margin: 0; padding: 0; }
+.tt-nav-links a {
+  display: flex; align-items: center; height: 30px; padding: 0 10px;
+  color: var(--nav-text); text-decoration: none; font-size: 13.5px; letter-spacing: 0.2px;
+  border-radius: 4px; white-space: nowrap; transition: background 0.15s, color 0.15s;
+}
+.tt-nav-links a:hover { background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; }
+.tt-nav-links a.active { color: #fff; background: rgba(43,167,201,0.22); }
+.tt-nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.tt-nav-btn-github {
+  display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
+  color: var(--nav-text); text-decoration: none; font-size: 13.5px;
+  border: 1px solid var(--nav-border); border-radius: 4px;
+}
+.tt-nav-btn-github svg { width: 15px; height: 15px; fill: currentColor; }
+.tt-nav-btn-github:hover { background: rgba(255,255,255,0.06); text-decoration: none; }
+
+/* Light/dark theme toggle — sun/moon icon button, styled for the dark bar */
+.tt-theme-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0; cursor: pointer;
+  color: var(--nav-text); background: rgba(255,255,255,0.05);
+  border: 1px solid var(--nav-border); border-radius: 4px; transition: border-color 0.15s, color 0.15s;
+}
+.tt-theme-toggle:hover { border-color: var(--nav-text); color: #fff; }
+.tt-theme-toggle svg { width: 16px; height: 16px; }
+.tt-theme-toggle .icon-sun { display: none; }
+.tt-theme-toggle .icon-moon { display: block; }
+[data-theme="light"] .tt-theme-toggle .icon-sun { display: block; }
+[data-theme="light"] .tt-theme-toggle .icon-moon { display: none; }
 
 /* ── Personality toggle ──────────────────────────────────────────────────── */
 .mode-toggle {
   display: flex; align-items: center; gap: 8px;
-  font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
-  background: var(--bg1); border: 1px solid var(--bg2);
-  padding: 4px 10px; border-radius: 20px; transition: border-color 0.15s;
+  font-size: 12px; color: var(--nav-muted); cursor: pointer; user-select: none;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--nav-border);
+  padding: 4px 10px; border-radius: 20px; transition: border-color 0.15s, color 0.15s;
 }
-.mode-toggle:hover { border-color: var(--teal); color: var(--text); }
+.mode-toggle:hover { border-color: var(--nav-text); color: var(--nav-text); }
 .mode-toggle-pip {
   width: 28px; height: 14px; background: var(--bg2);
   border-radius: 7px; position: relative; transition: background 0.2s;
@@ -174,8 +223,8 @@ blockquote {
 .chapter-nav {
   width: 220px; flex-shrink: 0; background: var(--bg3);
   border-right: 1px solid rgba(79,209,197,0.12);
-  padding: 20px 0; position: sticky; top: 52px;
-  height: calc(100vh - 52px); overflow-y: auto;
+  padding: 20px 0; position: sticky; top: var(--nav-h);
+  height: calc(100vh - var(--nav-h)); overflow-y: auto;
 }
 .chapter-nav-label {
   font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
@@ -207,7 +256,7 @@ blockquote {
 
   .chapter-nav {
     width: 100%; height: auto;
-    position: sticky; top: 52px; z-index: 90;
+    position: sticky; top: var(--nav-h); z-index: 90;
     flex-shrink: 0; padding: 0;
     border-right: none;
     border-bottom: 1px solid rgba(79,209,197,0.12);
@@ -238,16 +287,19 @@ blockquote {
   .track-content { padding: 28px 20px 64px; max-width: none; }
 }
 
-/* ── Very narrow phones: keep the topbar from overflowing ─────────────────────
-   The logo + back link + personality toggle can exceed a ~320px viewport. Tighten
-   the padding and collapse the toggle to just its switch (the labels are decorative;
-   the control keeps its aria-label). */
+/* ── Responsive top nav ───────────────────────────────────────────────────────
+   The bar carries the logo, four path links, two toggles and a GitHub button.
+   Shed the lowest-value pieces as width drops so it never overflows a phone. */
+@media (max-width: 860px) {
+  .tt-nav-links { display: none; } /* paths reachable from home + the chapter strip */
+}
 @media (max-width: 480px) {
-  .topbar { padding: 0 14px; gap: 10px; }
+  .tt-top-nav { padding: 0 14px; gap: 8px; }
   .mode-toggle { padding: 4px 6px; }
+  .tt-nav-btn-github span { display: none; }   /* icon only */
   .mode-toggle-label-illustrated,
   [data-mode="illustrated"] .mode-toggle-label-illustrated,
-  .mode-toggle-label-facts { display: none; }
+  .mode-toggle-label-facts { display: none; }  /* toggle collapses to its switch */
 }
 
 /* ── Persona colors via data-persona ─────────────────────────────────────── */
@@ -501,7 +553,7 @@ figure.video-demo figcaption { margin-top: 8px; font-size: 13px; color: var(--mu
 
 /* ── Print styles ────────────────────────────────────────────────────────── */
 @media print {
-  .topbar, .chapter-nav, .mode-toggle, .persona-cards, .venn-wrap,
+  .tt-top-nav, .chapter-nav, .mode-toggle, .readall-actions, .persona-cards, .venn-wrap,
   .video-placeholder { display: none !important; }
   body { background: white; color: #111; font-size: 12pt; }
   a { color: #111; }
@@ -509,3 +561,55 @@ figure.video-demo figcaption { margin-top: 8px; font-size: 13px; color: var(--mu
   .read-chapter { page-break-before: always; }
   .read-chapter:first-child { page-break-before: avoid; }
 }
+
+/* ── Light-theme component tweaks ─────────────────────────────────────────────
+   Most components recolour from the token swap alone. These few need explicit
+   treatment because they pair light surfaces with dark code/widget panels: code
+   blocks stay dark-green so the (dark-tuned) syntax colors keep their contrast. */
+[data-theme="light"] pre { background: #092221; border-color: #0E3331; }
+[data-theme="light"] pre code { color: #D9E8E5; }
+[data-theme="light"] code { background: #E5F2F1; color: #10657f; }
+[data-theme="light"] .persona-card,
+[data-theme="light"] .rcard,
+[data-theme="light"] .compat-card,
+[data-theme="light"] .specsheet-wrap { box-shadow: 0 1px 3px rgba(9, 34, 33, 0.05); }
+[data-theme="light"] .venn-wrap { background: #ECF5F4; border: 1px solid var(--bg2); border-radius: 16px; padding: 24px; }
+[data-theme="light"] .venn-label { fill: #3A5452; }
+[data-theme="light"] table th { color: #10657f; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 18px;
+  border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer;
+  text-decoration: none; border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, filter 0.15s;
+}
+.btn--primary { background: var(--teal); color: var(--bg0); }
+.btn--primary:hover { filter: brightness(1.08); text-decoration: none; }
+.btn--ghost { background: transparent; color: var(--text2); border-color: var(--bg2); }
+.btn--ghost:hover { border-color: var(--teal); color: var(--text); }
+
+/* ── Read-all (complete guide) page ──────────────────────────────────────── */
+.readall-head { padding: 8px 0; border-bottom: 1px solid var(--bg2); }
+.readall-eyebrow { font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.readall-lede { color: var(--text2); font-size: 1.05rem; max-width: 640px; }
+.readall-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 4px; }
+
+.readall-toc {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px 28px;
+  margin: 28px 0 8px; padding: 22px 24px;
+  background: var(--bg1); border: 1px solid var(--bg2); border-radius: var(--radius);
+}
+.readall-toc-track[data-persona] { border-left: 3px solid var(--persona-color, var(--teal)); padding-left: 14px; }
+.readall-toc-title { display: block; font-weight: 700; font-size: 13px; color: var(--persona-color, var(--teal)); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+.readall-toc-chapters { list-style: none; margin: 0; padding: 0; }
+.readall-toc-chapters li { margin: 0 0 4px; font-size: 13px; line-height: 1.4; }
+.readall-toc-chapters a { color: var(--text2); }
+.readall-toc-chapters a:hover { color: var(--teal); }
+
+.readall-track { margin-top: 44px; scroll-margin-top: calc(var(--nav-h) + 12px); }
+.readall-track-banner { border-left: 4px solid var(--persona-color, var(--teal)); padding: 4px 0 4px 18px; margin-bottom: 8px; }
+.readall-track-verb { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--persona-color, var(--teal)); font-weight: 700; }
+.readall-track-banner h2 { margin: 4px 0 6px; }
+.readall-track-banner p { color: var(--text2); margin: 0; }
+.readall .read-chapter { scroll-margin-top: calc(var(--nav-h) + 12px); }
