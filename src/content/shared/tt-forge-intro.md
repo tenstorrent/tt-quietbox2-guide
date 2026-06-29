@@ -10,13 +10,15 @@ Three paths into the compiler stack:
 | **TT-XLA** | `jax.jit` + `pjrt_plugin_tt` | JAX / Flax models |
 | **TT-Forge-ONNX** | `tt_forge_onnx` | ONNX exports from any framework |
 
-All three run via the `tt-forge` container wrapper installed by tt-installer:
+Forge is **not** installed by default — confirm it's present (`which tt-forge` or `python3 -c "import forge"`) before running these. Two ways to get it: the container wrapper (`tt-installer --install-forge-container`) for running scripts, or a source build of `tt-forge-fe` (via `compiletron.py setup install-forge`) for a full `import forge` environment.
+
+All three backends then run via either the `tt-forge` container wrapper or an activated source build:
 
 ```bash
-# Run a forge script via the container
+# Container wrapper — run a forge script via the container
 tt-forge python3 my_model.py
 
-# Or activate the forge venv if tt-forge-fe is installed locally
+# Or activate the forge venv if tt-forge-fe was built from source
 source ~/tt-forge-fe/env/activate 2>/dev/null || tt-forge bash
 ```
 

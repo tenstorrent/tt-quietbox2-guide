@@ -24,13 +24,13 @@ On a QB2 from Tenstorrent, the stack is pre-installed. Here's your map:
 |-----------|----------|----------------|
 | TTNN venv | `~/tt-metal/python_env/` | Direct API work, TTNN operations, cookbook examples |
 | vLLM | `vllm` in `~/.tenstorrent-venv/` | Serving models via HTTP, OpenAI-compatible API |
-| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` | Compile PyTorch/JAX models via container |
+| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` *(only if installed)* | Compile PyTorch/JAX models — **not part of a default install**, see [TT-Forge](/ml-practitioner/06-tt-forge/) |
 | `tt-smi` | `~/.local/bin/tt-smi` (on PATH) | Hardware monitoring, always available |
 | Model storage | `~/models/` (convention) | Where you put downloaded model weights |
 | Scratch space | `~/tt-scratchpad/` | Working directory for scripts and experiments |
 
 :::callout type="tip"
-**Installing on a fresh Ubuntu machine?** `tt-installer` today uses Docker containers for Metalium and Forge — it creates `~/.tenstorrent-venv` with Python tools and installs `tt-metalium` / `tt-forge` wrapper scripts in `~/.local/bin/`. The paths here reflect a configured QB2; a fresh install may differ slightly.
+**Installing on a fresh Ubuntu machine?** A default `tt-installer` run gets you the driver, the Python tools (`tt-smi` / `tt-flash` in `~/.tenstorrent-venv` or `~/.local/bin/`), and the **tt-metalium** container with its `tt-metalium` wrapper. It does **not** install Forge by default — that's an opt-in (`--install-forge-container`) and, for the full `import forge` dev environment, a separate source build. See [TT-Forge](/ml-practitioner/06-tt-forge/) for both paths. The paths here reflect a configured QB2; a fresh install may differ slightly.
 :::
 
 Create the scratch directory if it doesn't exist yet:
@@ -63,16 +63,20 @@ vllm serve ~/models/Qwen3-0.6B --port 8000
 
 Or use `tt-studio` for a no-code UI that handles vLLM startup automatically.
 
-### TT-Forge (`tt-forge` wrapper)
+### TT-Forge (`tt-forge` wrapper) — *not installed by default*
 
-`tt-forge` is a Docker container wrapper installed to `~/.local/bin/` by tt-installer. It runs the TT-XLA/Forge compiler stack without requiring a local Python venv:
+Unlike TTNN and vLLM, Forge is **not** something a stock install hands you. There are two ways to get it, and they give you different things:
 
-```bash
-# Use the tt-forge wrapper directly
-tt-forge --help
-```
+- **Container wrapper** — newer `tt-installer` versions can drop a `tt-forge` wrapper into `~/.local/bin/` if you opt in (`tt-installer --install-forge-container`, or choose it at the interactive prompt). It runs the TT-XLA/Forge compiler stack in a container without a local venv:
 
-For scripting with `import forge` in Python, use the `tt-forge-fe` source tree or check [docs.tenstorrent.com/tt-forge](https://docs.tenstorrent.com/tt-forge-onnx/) for current installation instructions.
+  ```bash
+  tt-forge --help                 # works only if the forge container was installed
+  tt-forge python3 my_model.py    # run a forge script via the container
+  ```
+
+- **Source build** — for `import forge` inside your own scripts (not just the wrapper), you need `tt-forge-fe` built from source. That's a ~45–60 min build; see the full walkthrough in the [TT-Forge chapter](/ml-practitioner/06-tt-forge/).
+
+Don't assume `tt-forge` is on your PATH — check with `which tt-forge` first.
 
 ## Confirming Each Environment Works
 

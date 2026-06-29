@@ -15,6 +15,64 @@ If vLLM is the highway, TT-Forge is the ability to go anywhere.
 
 ---
 
+## Before You Begin — Is Forge Installed?
+
+Forge is **not** part of a default tt-installer run. TTNN and vLLM come pre-configured on a QB2; Forge does not. Before any of the examples below will work, confirm it's actually present:
+
+```bash
+# Container wrapper on PATH?
+which tt-forge
+
+# Or a source build importable in Python?
+python3 -c "import forge; print(forge.__version__)"
+```
+
+If neither responds, pick one of the two install paths. They give you different things:
+
+| Path | Command | You get | Best for |
+|------|---------|---------|----------|
+| **Container wrapper** | `tt-installer --install-forge-container` | A `tt-forge` wrapper in `~/.local/bin/` that runs the compiler in a container | Running existing scripts: `tt-forge python3 my_model.py` |
+| **Source build** | `python3 compiletron.py setup install-forge` | `tt-forge-fe` built at `~/tt-forge-fe`, with a real `import forge` Python env | Writing your own forge scripts, the model zoo, compiletron |
+
+### Path A — the tt-installer container (fastest)
+
+`tt-installer` **v3.1.0 or newer** can install a Forge container for you. The flag is **off by default**, so re-run the installer and opt in:
+
+```bash
+tt-installer --install-forge-container
+# (or select the Forge container at the interactive prompt)
+```
+
+This drops a `tt-forge` wrapper into `~/.local/bin/`. It's enough to *run* compiled models through the container — but because it's containerized, it won't satisfy a bare `import forge` in your own Python session. For that, build from source.
+
+:::callout type="tip"
+On an older `tt-installer` the flag won't exist (`tt-installer --help` won't list `--install-forge-container`). Update to the latest release from [tenstorrent/tt-installer](https://github.com/tenstorrent/tt-installer), or use the source build below.
+:::
+
+### Path B — build tt-forge-fe from source (full dev environment)
+
+This is the path that gives you `import forge` anywhere and powers the model zoo and compiletron below. The smoothest route follows the tips committed to [`tt-forge-compiletron`](https://github.com/tenstorrent/tt-forge-compiletron) (see its `docs/FORGE_SETUP.md`):
+
+```bash
+cd ~/code/tt-forge-compiletron
+python3 compiletron.py setup install-forge   # clones + builds tt-forge-fe (~45–60 min)
+```
+
+When it finishes, activate the environment and verify:
+
+```bash
+source ~/tt-forge-fe/env/activate
+python3 compiletron.py setup check           # ✓ Forge installed / activated / deps present
+```
+
+:::callout type="warn"
+The build needs **Python 3.12+**, the standard build tools (`gcc`, `g++`, `cmake`, `git`), and ~20 GB of free disk. If the build stalls, cap parallelism with `export MAX_JOBS=4` before re-running. Full troubleshooting lives in compiletron's `docs/FORGE_SETUP.md`.
+:::
+
+With Forge installed by either path, the rest of this chapter applies.
+
+---
+
 ## The Three Compilation Paths
 
 Every framework has an entry point into the stack. Run them via the `tt-forge` container wrapper:
@@ -33,7 +91,7 @@ tt-forge bash
 | TT-XLA (JAX) | `jax.jit` + PJRT plugin | `import pjrt_plugin_tt` | JAX / Flax models |
 | TT-Forge-ONNX | `tt_forge_onnx` | `import tt_forge_onnx` | ONNX exports from any framework |
 
-`tt-forge` is a Docker container wrapper installed to `~/.local/bin/` by tt-installer. It bundles Python 3.12 with all three backends. Keep it separate from TTNN work — the two environments conflict if mixed.
+`tt-forge` here is the container wrapper from Path A above (installed via `tt-installer --install-forge-container`). It bundles Python 3.12 with all three backends. If you built from source instead (Path B), activate that environment with `source ~/tt-forge-fe/env/activate` and run `python3 my_model.py` directly. Either way, keep Forge separate from TTNN work — the two environments conflict if mixed.
 
 :::callout type="warn"
 If you have `TT_METAL_HOME` set (from TTNN work), unset it before activating the forge venv: `unset TT_METAL_HOME`. Leaving it set can cause import errors.
