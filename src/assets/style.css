@@ -197,6 +197,59 @@ blockquote {
 .chapter-nav-item.active { color: var(--persona-color, var(--teal)); border-left-color: var(--persona-color, var(--teal)); background: rgba(79,209,197,0.06); font-weight: 600; }
 .track-content { flex: 1; min-width: 0; padding: 40px 40px 80px; max-width: 920px; }
 
+/* ── Mobile: collapse the chapter sidebar into a horizontal strip ─────────────
+   Below 768px the 220px sticky sidebar would crush the reading column to an
+   unusable width, so the nav stacks above the content as a sticky, horizontally
+   scrollable chapter strip (active chapter auto-centred via main.js) and the
+   content takes the full viewport width. */
+@media (max-width: 768px) {
+  .track-layout { flex-direction: column; min-height: 0; }
+
+  .chapter-nav {
+    width: 100%; height: auto;
+    position: sticky; top: 52px; z-index: 90;
+    flex-shrink: 0; padding: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(79,209,197,0.12);
+    background: var(--bg3);
+    display: flex; align-items: stretch;
+    overflow-x: auto; overflow-y: hidden; white-space: nowrap;
+    scrollbar-width: none; /* the strip scrolls by touch; hide the bar */
+  }
+  .chapter-nav::-webkit-scrollbar { display: none; }
+
+  /* The track name is implied by context on mobile — recover the space. */
+  .chapter-nav-label { display: none; }
+
+  .chapter-nav-back {
+    border-bottom: none; margin: 0; flex-shrink: 0;
+    align-self: center; padding: 10px 14px;
+  }
+  /* Tabs read horizontally: swap the left active-bar for an underline. */
+  .chapter-nav-item {
+    border-left: none; border-bottom: 3px solid transparent;
+    padding: 12px 14px; flex-shrink: 0;
+  }
+  .chapter-nav-item.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--persona-color, var(--teal));
+  }
+
+  .track-content { padding: 28px 20px 64px; max-width: none; }
+}
+
+/* ── Very narrow phones: keep the topbar from overflowing ─────────────────────
+   The logo + back link + personality toggle can exceed a ~320px viewport. Tighten
+   the padding and collapse the toggle to just its switch (the labels are decorative;
+   the control keeps its aria-label). */
+@media (max-width: 480px) {
+  .topbar { padding: 0 14px; gap: 10px; }
+  .mode-toggle { padding: 4px 6px; }
+  .mode-toggle-label-illustrated,
+  [data-mode="illustrated"] .mode-toggle-label-illustrated,
+  .mode-toggle-label-facts { display: none; }
+}
+
 /* ── Persona colors via data-persona ─────────────────────────────────────── */
 [data-persona="first-timer"]     { --persona-color: var(--teal); }
 [data-persona="ml-practitioner"] { --persona-color: var(--pink); }
