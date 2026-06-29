@@ -47,15 +47,45 @@ The convergence is intentional. TT-Forge was designed so that model-framework ch
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">The forge.compile() pipeline in motion. Weights arrive via PCIe, buffer in DRAM, dispatch to Tensix.</p>
 
-## forge.compile() in Practice
+## Prerequisite: Get Forge Installed
 
-Run forge scripts via the `tt-forge` container wrapper:
+Forge is **not** installed by default — a stock tt-installer run gives you the driver and the tt-metalium container, not Forge. Confirm what you have before compiling anything:
 
 ```bash
+which tt-forge                                   # container wrapper?
+python3 -c "import forge; print(forge.__version__)"   # source build?
+```
+
+For builder/hacker work you almost always want the **source build** — it's the only path that gives you a real `import forge` and the one compiletron drives. Follow the tips committed to [`tt-forge-compiletron`](https://github.com/tenstorrent/tt-forge-compiletron) (`docs/FORGE_SETUP.md`):
+
+```bash
+cd ~/code/tt-forge-compiletron
+python3 compiletron.py setup install-forge   # builds tt-forge-fe (~45–60 min)
+source ~/tt-forge-fe/env/activate
+python3 compiletron.py setup check           # verify the environment
+```
+
+If you only need to *run* a finished script and don't need `import forge` in your own session, the lighter container wrapper from `tt-installer --install-forge-container` works too. The [ML-practitioner TT-Forge chapter](/ml-practitioner/06-tt-forge/) walks through both paths in detail.
+
+## forge.compile() in Practice
+
+With a source build active (`source ~/tt-forge-fe/env/activate`), run forge scripts directly. If you installed the container wrapper instead, prefix them with `tt-forge`:
+
+```bash
+# Source build (env activated):
+python3 my_forge_script.py
+
+# Container wrapper:
 tt-forge python3 my_forge_script.py
 ```
 
-The container has `TT_METAL_ARCH_NAME=blackhole` set. The compiler knows what hardware it's targeting.
+Forge needs `TT_METAL_ARCH_NAME=blackhole` to target the QB2's Blackhole chips — the same mandatory variable from the [first kernel](/builder-hacker/02-first-kernel/) chapter. The container wrapper sets it inside the container for you. With a source build, export it yourself before compiling:
+
+```bash
+export TT_METAL_ARCH_NAME=blackhole
+```
+
+Without it the runtime defaults to Wormhole and the compiler targets the wrong hardware.
 
 Here is a complete BEiT image classification example using the tt-forge-models zoo:
 
