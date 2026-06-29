@@ -553,7 +553,7 @@ figure.video-demo figcaption { margin-top: 8px; font-size: 13px; color: var(--mu
 
 /* ── Print styles ────────────────────────────────────────────────────────── */
 @media print {
-  .tt-top-nav, .chapter-nav, .mode-toggle, .persona-cards, .venn-wrap,
+  .tt-top-nav, .chapter-nav, .mode-toggle, .readall-actions, .persona-cards, .venn-wrap,
   .video-placeholder { display: none !important; }
   body { background: white; color: #111; font-size: 12pt; }
   a { color: #111; }

@@ -13,7 +13,7 @@ import { execSync } from "node:child_process";
 import { createServer } from "node:http";
 import { readFile, mkdir, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join, extname, resolve } from "node:path";
+import { join, extname, resolve, normalize, sep } from "node:path";
 
 const ROOT = resolve(process.cwd());
 const PDF_BUILD = join(ROOT, "_pdf");
@@ -31,19 +31,25 @@ const MIME = {
 console.log("[pdf] building prefix-less site → _pdf");
 execSync("npx @11ty/eleventy --pathprefix=/ --output=_pdf", { cwd: ROOT, stdio: "inherit" });
 
-// 2. Minimal static server rooted at _pdf.
+// 2. Minimal static server rooted at _pdf (localhost only).
 const server = createServer(async (req, res) => {
   try {
     let p = decodeURIComponent(req.url.split("?")[0]);
     if (p.endsWith("/")) p += "index.html";
-    let file = join(PDF_BUILD, p);
+    // Resolve safely inside PDF_BUILD: drop leading slashes and reject any path
+    // that would escape the build dir (`..` traversal).
+    const rel = normalize(p).replace(/^([/\\]|\.\.[/\\])+/, "");
+    let file = resolve(PDF_BUILD, rel);
+    if (file !== PDF_BUILD && !file.startsWith(PDF_BUILD + sep)) {
+      res.statusCode = 403; res.end("forbidden"); return;
+    }
     if (existsSync(file) && (await stat(file)).isDirectory()) file = join(file, "index.html");
     if (!existsSync(file)) { res.statusCode = 404; res.end("not found"); return; }
     res.setHeader("Content-Type", MIME[extname(file)] || "application/octet-stream");
     res.end(await readFile(file));
   } catch (e) { res.statusCode = 500; res.end(String(e)); }
 });
-await new Promise((r) => server.listen(PORT, r));
+await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
 console.log(`[pdf] serving _pdf at http://localhost:${PORT}`);
 
 // 3. Render /read/ to PDF.
