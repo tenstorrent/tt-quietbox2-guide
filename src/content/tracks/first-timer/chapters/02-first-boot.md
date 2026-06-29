@@ -109,7 +109,7 @@ This is where new Linux users often hit a wall. Ubuntu ships with its own Python
 | System Python | `/usr/bin/python3` | Ubuntu's built-in Python — **don't pip install here** |
 | TTNN venv | `~/tt-metal/python_env/` | Pre-built environment for TTNN and the Direct API |
 | Tenstorrent venv | `~/.tenstorrent-venv/` | Main venv with vLLM and other tools |
-| TT-Forge wrapper | `~/.local/bin/tt-forge` | Container-based Forge/JAX (runs via Docker) |
+| TT-Forge (TT-XLA) | pip wheel in a Python 3.12 venv | Compile PyTorch/JAX models — install it yourself (see [TT-Forge](/ml-practitioner/06-tt-forge/)) |
 
 ### Why does this matter?
 

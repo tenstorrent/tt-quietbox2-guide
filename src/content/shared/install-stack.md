@@ -23,11 +23,11 @@ sudo reboot
 |------|-----------|
 | `~/tt-metal/python_env/` | TTNN / Direct API venv (pre-installed on QB2) |
 | `~/.tenstorrent-venv/` | Main Python environment with vLLM and other tools |
-| `~/.local/bin/tt-forge` | TT-Forge container wrapper (runs via Docker) — *only if you opted into the Forge container* |
+| `~/.local/bin/tt-forge` | Optional Forge container wrapper — *only if you opted in; for most users Forge installs as a pip wheel instead* |
 | `~/.local/bin/tt-smi` | Hardware monitoring CLI (on PATH) |
 | `~/models/` | Model weights storage (create it: `mkdir -p ~/models`) |
 
-As of `tt-installer` **v3.2.0**, Docker is the default container runtime (Podman is still supported — pass `--install-container-runtime=podman`). The Metalium container installs by default; the Forge container does **not** — it's opt-in via `--install-forge-container` (see the [TT-Forge chapter](/ml-practitioner/06-tt-forge/)). On a QB2 that shipped from Tenstorrent, the TTNN venv at `~/tt-metal/python_env/` is pre-built. The `~/tt-metal/` directory contains compiled environments — not the tt-metal source code.
+As of `tt-installer` **v3.2.0**, Docker is the default container runtime (Podman is still supported — pass `--install-container-runtime=podman`). The Metalium container installs by default. **Forge is not installed by default** — the TT-Forge docs install it as a pip wheel (`pip install pjrt-plugin-tt …` then `tt-forge-install`); tt-installer's `--install-forge-container` is an optional convenience, not the recommended path. See the [TT-Forge chapter](/ml-practitioner/06-tt-forge/) for the full install. On a QB2 that shipped from Tenstorrent, the TTNN venv at `~/tt-metal/python_env/` is pre-built. The `~/tt-metal/` directory contains compiled environments — not the tt-metal source code.
 
 <figure class="video-demo">
 <img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
