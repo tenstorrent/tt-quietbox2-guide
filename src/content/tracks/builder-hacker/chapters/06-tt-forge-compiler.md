@@ -20,20 +20,20 @@ Two entry points converge on the same Tensix machine code. Understanding both he
 **The PyTorch path:**
 
 ```
-Your nn.Module → forge.compile() → torch.fx trace → TT-MLIR dialect → Tensix kernels
+Your nn.Module → torch.compile(backend="tt") → torch-xla trace → StableHLO → TT-MLIR dialect → Tensix kernels
 ```
 
-`forge.compile()` uses PyTorch's `torch.fx` framework to trace the model as a computation graph. Each operation in that graph becomes a node. The node graph gets lowered into TT-MLIR, the Tenstorrent MLIR dialect — a structured intermediate representation that describes ops in terms the Tensix pipeline understands. The MLIR pipeline compiles that representation all the way to Tensix machine code.
+`torch.compile(model, backend="tt")` routes the model through `torch-xla`, which traces it into a StableHLO graph — a stable, framework-neutral IR. The TT-XLA PJRT plugin hands that StableHLO to TT-MLIR, the Tenstorrent MLIR dialect that describes ops in terms the Tensix pipeline understands. The MLIR pipeline compiles that representation all the way to Tensix machine code.
 
 **The JAX path:**
 
 ```
-Your JAX function → @jax.jit → PJRT plugin → TT-MLIR dialect → Tensix kernels
+Your JAX function → @jax.jit → PJRT plugin → StableHLO → TT-MLIR dialect → Tensix kernels
 ```
 
-JAX JIT compilation traces the decorated function to XLA HLO. The PJRT plugin registered by `import pjrt_plugin_tt` intercepts that HLO representation and routes it through the same TT-MLIR pipeline. Both paths land on the same compiler backend. Both produce the same class of Tensix kernels.
+JAX JIT compilation traces the decorated function to StableHLO. The PJRT plugin registered by `import pjrt_plugin_tt` routes that representation through the same TT-MLIR pipeline. Both paths land on the same compiler backend. Both produce the same class of Tensix kernels.
 
-The convergence is intentional. TT-Forge was designed so that model-framework choice doesn't divide the ecosystem. PyTorch users and JAX users compile to the same machine.
+The convergence is intentional — and it's why both frameworks share one frontend, **TT-XLA**, built on the [PJRT](https://github.com/openxla/xla/tree/main/xla/pjrt/c) interface and StableHLO. Model-framework choice doesn't divide the ecosystem: PyTorch users and JAX users compile to the same machine. (ONNX, TensorFlow, and PaddlePaddle take a separate TVM-based frontend, **TT-Forge-ONNX**, which still exposes the `forge.compile()` API and is single-chip only.)
 
 {% tensixviz "blackhole", [
   {"step": "highlight", "cores": [[8,1],[8,2],[8,3],[8,4],[8,5],[8,6],[8,7],[8,8],[8,9],[8,10]], "color": "pcie", "label": "Step 1: PCIe column — model weights transferring from host", "ms": 700},
@@ -45,83 +45,63 @@ The convergence is intentional. TT-Forge was designed so that model-framework ch
   {"step": "clear"}
 ] %}
 
-<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">The forge.compile() pipeline in motion. Weights arrive via PCIe, buffer in DRAM, dispatch to Tensix.</p>
+<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">The compile pipeline in motion. Weights arrive via PCIe, buffer in DRAM, dispatch to Tensix.</p>
 
-## Prerequisite: Get Forge Installed
+## Prerequisite: Install Forge
 
-Forge is **not** installed by default — a stock tt-installer run gives you the driver and the tt-metalium container, not Forge. Confirm what you have before compiling anything:
-
-```bash
-which tt-forge                                   # container wrapper?
-python3 -c "import forge; print(forge.__version__)"   # source build?
-```
-
-For builder/hacker work you almost always want the **source build** — it's the only path that gives you a real `import forge` and the one compiletron drives. Follow the tips committed to [`tt-forge-compiletron`](https://github.com/tenstorrent/tt-forge-compiletron) (`docs/FORGE_SETUP.md`):
+Forge is **not** installed by default — a stock tt-installer run gives you the driver and base environment, not Forge. The TT-Forge docs install it as a **pip wheel** from Tenstorrent's package index; for the PyTorch/JAX work in this chapter that's the TT-XLA frontend:
 
 ```bash
-cd ~/code/tt-forge-compiletron
-python3 compiletron.py setup install-forge   # builds tt-forge-fe (~45–60 min)
-source ~/tt-forge-fe/env/activate
-python3 compiletron.py setup check           # verify the environment
+source ~/.tenstorrent-venv/bin/activate
+pip install pjrt-plugin-tt --extra-index-url https://pypi.eng.aws.tenstorrent.com/
+tt-forge-install
 ```
 
-If you only need to *run* a finished script and don't need `import forge` in your own session, the lighter container wrapper from `tt-installer --install-forge-container` works too. The [ML-practitioner TT-Forge chapter](/ml-practitioner/06-tt-forge/) walks through both paths in detail.
-
-## forge.compile() in Practice
-
-With a source build active (`source ~/tt-forge-fe/env/activate`), run forge scripts directly. If you installed the container wrapper instead, prefix them with `tt-forge`:
+Confirm it imports:
 
 ```bash
-# Source build (env activated):
-python3 my_forge_script.py
-
-# Container wrapper:
-tt-forge python3 my_forge_script.py
+python3 -c "import torch_xla, tt_torch; print('TT-XLA ready')"
 ```
 
-Forge needs `TT_METAL_ARCH_NAME=blackhole` to target the QB2's Blackhole chips — the same mandatory variable from the [first kernel](/builder-hacker/02-first-kernel/) chapter. The container wrapper sets it inside the container for you. With a source build, export it yourself before compiling:
+Building from source (`tt-forge-fe`, `~/tt-forge-fe/env/activate`) is still an option, but the docs are clear it's for *developing the compiler itself* — not a prerequisite for running models. The [ML-practitioner TT-Forge chapter](/ml-practitioner/06-tt-forge/) covers the wheel, Docker-image, and ONNX install paths in detail.
 
-```bash
-export TT_METAL_ARCH_NAME=blackhole
-```
+## Compiling a Model in Practice
 
-Without it the runtime defaults to Wormhole and the compiler targets the wrong hardware.
-
-Here is a complete BEiT image classification example using the tt-forge-models zoo:
+Here is a complete BEiT image classification example using the tt-forge-models zoo, compiled through TT-XLA:
 
 ```python
 import torch
-import forge
+import torch_xla.core.xla_model as xm
+import torch_xla.runtime as xr
+import tt_torch  # registers "tt" as a torch.compile backend
 from third_party.tt_forge_models.beit.pytorch import ModelLoader
 
+# Point PyTorch/XLA at the Tenstorrent device
+xr.set_device_type("TT")
+device = xm.xla_device()
+
 # Load the BEiT-base-patch16-224 model at bfloat16 precision
-model = ModelLoader.load_model(dtype_override=torch.bfloat16)
+model = ModelLoader.load_model(dtype_override=torch.bfloat16).eval()
+inputs = ModelLoader.load_inputs(dtype_override=torch.bfloat16)
 
-# Load a standardized sample input from the model zoo
-inputs = ModelLoader.load_inputs()
+# Compile to Tensix machine code and move onto the device.
+# First call: torch-xla traces to StableHLO, the TT-MLIR pipeline compiles it
+# (seconds to minutes depending on model size). Later calls hit the cache.
+compiled = torch.compile(model, backend="tt").to(device)
+output = compiled(inputs.to(device))
 
-# Compile the model to Tensix machine code
-# First call: torch.fx traces the model, TT-MLIR pipeline compiles it
-# This takes seconds to minutes depending on model size
-compiled = forge.compile(model, sample_inputs=inputs)
-
-# Subsequent calls use the compiled kernel directly — no recompilation
-output = compiled(*inputs)
-
-# The ForgeModule returns the same output structure as the original model
+# Same output structure as the original model
 print(output.logits.argmax(-1))
 ```
 
-Walk through what happens at each line. `ModelLoader.load_model()` fetches BEiT-base from HuggingFace and returns a standard PyTorch `nn.Module`. The `dtype_override=torch.bfloat16` argument tells the loader to cast weights to bfloat16, which is the Blackhole chip's native float format.
+Walk through what happens at each line. `ModelLoader.load_model()` fetches BEiT-base from HuggingFace and returns a standard PyTorch `nn.Module`. The `dtype_override=torch.bfloat16` argument casts weights to bfloat16, the Blackhole chip's native float format.
 
-`forge.compile(model, sample_inputs=inputs)` is where the work happens. The tracer runs the model once with the sample inputs, recording every PyTorch operation as a `torch.fx` graph node. That graph gets lowered to TT-MLIR. The MLIR pipeline tunes tile shapes, assigns cores, schedules data movement, and emits Tensix machine code. The result is a `ForgeModule` object.
+`torch.compile(model, backend="tt")` is where the work happens. `torch-xla` traces the model into a StableHLO graph; the TT-MLIR pipeline tunes tile shapes, assigns cores, schedules data movement, and emits Tensix machine code. The compiled callable is API-identical to the original `nn.Module` — call it with inputs, get outputs — except the computation now executes on Blackhole hardware instead of your CPU.
 
-The `ForgeModule` is API-identical to the original `nn.Module`. Call it with inputs, get outputs. The difference is that the computation now executes on Blackhole hardware instead of on your CPU.
-
-First-call JIT time is real. BEiT compiles in a few seconds. A large vision transformer can take a few minutes. Subsequent calls skip the compilation phase entirely and hit the compiled kernel directly. In production workflows, compile once and checkpoint the compiled artifact.
+First-call JIT time is real. BEiT compiles in a few seconds; a large vision transformer can take a few minutes. Subsequent calls with the same input shapes skip compilation and hit the cached kernels directly.
 
 :::callout type="tip"
-`forge.compile()` respects `torch.bfloat16` inputs natively. Always pass `dtype_override=torch.bfloat16` when loading zoo models for Blackhole deployment. The chip has hardware-accelerated BFP8 and BFP16 math. FP32 works but runs slower.
+Always load in `torch.bfloat16` for Blackhole deployment. The chip has hardware-accelerated BFP8 and BFP16 math. FP32 works but runs slower.
 
 See the [TT-Forge intro lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-forge-intro/) for compilation flags and caching options.
 :::
@@ -136,7 +116,7 @@ See the [TT-Forge intro lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/l
 
 ## The ForgeModel Interface
 
-The `tt-forge-models` zoo at `~/code/tt-forge-models` defines a standardized interface for 200+ models. Every loader implements the `ForgeModel` abstract base class from `base.py`:
+The `tt-forge-models` zoo at `~/code/tt-forge-models` defines a standardized interface for 800+ model variants. Every loader implements the `ForgeModel` abstract base class from `base.py`:
 
 - `load_model(variant, dtype_override)` — fetches, instantiates, and returns a ready-to-compile `nn.Module`
 - `load_inputs()` — returns a tuple of sample tensors that match the model's expected input shape and dtype
@@ -155,14 +135,14 @@ This standardization exists so you can swap models without rewriting your compil
 ```python
 model = ModelLoader.load_model(variant=ModelLoader.ModelVariant.SOME_VARIANT)
 inputs = ModelLoader.load_inputs()
-compiled = forge.compile(model, sample_inputs=inputs)
+compiled = torch.compile(model, backend="tt").to(device)
 ```
 
 Read the full [forge-models zoo lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/) for traversal patterns and custom variant registration.
 
 <div class="rcard-grid">
 
-{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/", "forge-models zoo", "The standardized ForgeModel interface for 200+ models — traversal patterns and custom variant registration.", "" %}
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/", "forge-models zoo", "The standardized ForgeModel interface for 800+ model variants — traversal patterns and custom variant registration.", "" %}
 
 </div>
 
@@ -197,21 +177,25 @@ Three layers of the stack are now in front of you. They are not competing altern
 
 The most common pattern in practice: use TT-Forge for whole-model compilation. Drop to TTNN for custom ops that TT-Forge doesn't yet support or where you need tiling control. Drop to TT-Lang for the one inner loop that the profiler says dominates your runtime.
 
-Forge and TTNN are composable. A `ForgeModule` can call into TTNN ops. A TTNN program can use `forge.compile()` for the transformer backbone and hand-tuned TTNN ops for specialized attention variants. The layers were designed to coexist.
+Forge and TTNN are composable. A compiled model can call into TTNN ops, and a TTNN program can lean on `torch.compile(backend="tt")` for the transformer backbone while hand-tuning specialized attention variants in TTNN. The layers were designed to coexist.
 
 ## TT-Forge Compiletron
 
 The tt-forge-compiletron at `~/code/tt-forge-compiletron` is a roguelike model compilation game built on top of the forge pipeline. It is also a serious tool for surveying the compile-compatibility landscape of the zoo and of HuggingFace at large.
 
-Launch it:
+:::callout type="warn"
+Compiletron's `forge` backend drives the source-built `tt-forge-fe` / `forge.compile()` frontend — the legacy PyTorch path now being superseded by TT-XLA's `torch.compile(backend="tt")`. That's why its launch activates `~/tt-forge-fe/env/activate` rather than the wheel environment. The tool remains an excellent compiler stress-test; just note it's pinned to the older frontend.
+:::
+
+Set it up, then launch it:
 
 ```bash
 cd ~/code/tt-forge-compiletron
-source ~/tt-forge-fe/env/activate
+bash scripts/install.sh --forge   # installs forge venv + tt-forge-fe shim, clones tt-forge-models
 python3 expedition.py run --tui --seed-only --backend forge
 ```
 
-The three-screen Textual TUI shows the model queue, live compilation progress per chip, and a running score. The `--seed-only` flag restricts the model pool to the `tt-forge-models` zoo — 200+ curated models guaranteed to have standardized loaders. Drop `--seed-only` to enable `--frontier-only` mode, which discovers models live from HuggingFace based on download velocity and rarity signals.
+The three-screen Textual TUI shows the model queue, live compilation progress per chip, and a running score. The `--seed-only` flag restricts the model pool to the `tt-forge-models` zoo — hundreds of curated models guaranteed to have standardized loaders. Drop `--seed-only` to enable `--frontier-only` mode, which discovers models live from HuggingFace based on download velocity and rarity signals.
 
 Internally, `expedition.py` delegates to a router that reads `ModelConfig.task` and `ModelConfig.group` metadata from each zoo entry. That metadata informs backend selection (`forge` vs `xla`) and chip assignment. The `--backend mixed` flag alternates backends across the model queue, which is useful for cross-backend compile-rate comparison.
 

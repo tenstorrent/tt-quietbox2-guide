@@ -9,121 +9,97 @@ permalink: /ml-practitioner/06-tt-forge/
 
 vLLM is a curated serving runtime. It knows exactly which models it supports, it has them tuned and tested, and it presents a clean HTTP API for inference. Tremendous for what it does. But it covers a specific list.
 
-TT-Forge is the other gate. You bring the model — any PyTorch `nn.Module`, any JAX function, any ONNX export — and `forge.compile()` traces it, lowers it to Tensix operations, and returns a compiled artifact that runs on your QB2 hardware. One call. Hardware execution. No server, no model list to consult.
+TT-Forge is the other gate. You bring the model — any PyTorch `nn.Module`, any JAX function, any ONNX export — and the compiler traces it, lowers it to Tensix operations, and hands back something that runs on your QB2 hardware. One call. Hardware execution. No server, no model list to consult.
 
 If vLLM is the highway, TT-Forge is the ability to go anywhere.
 
 ---
 
-## Before You Begin — Is Forge Installed?
+## Before You Begin — Install Forge
 
-Forge is **not** part of a default tt-installer run. TTNN and vLLM come pre-configured on a QB2; Forge does not. Before any of the examples below will work, confirm it's actually present:
+Forge is **not** part of a default tt-installer run. tt-installer sets up the base — driver, firmware, hugepages, and the `~/.tenstorrent-venv` Python environment. Forge itself you install as a **pip wheel** from Tenstorrent's package index. That's how the [TT-Forge docs](https://docs.tenstorrent.com/tt-forge/) want you to do it — not a container wrapper, not a 45-minute source build.
 
-```bash
-# Container wrapper on PATH?
-which tt-forge
-
-# Or a source build importable in Python?
-python3 -c "import forge; print(forge.__version__)"
-```
-
-If neither responds, pick one of the two install paths. They give you different things:
-
-| Path | Command | You get | Best for |
-|------|---------|---------|----------|
-| **Container wrapper** | `tt-installer --install-forge-container` | A `tt-forge` wrapper in `~/.local/bin/` that runs the compiler in a container | Running existing scripts: `tt-forge python3 my_model.py` |
-| **Source build** | `python3 compiletron.py setup install-forge` | `tt-forge-fe` built at `~/tt-forge-fe`, with a real `import forge` Python env | Writing your own forge scripts, the model zoo, compiletron |
-
-### Path A — the tt-installer container (fastest)
-
-`tt-installer` **v3.1.0 or newer** can install a Forge container for you. The flag is **off by default**, so re-run the installer and opt in:
+First confirm the base is ready (Ubuntu 24.04, Python 3.12):
 
 ```bash
-tt-installer --install-forge-container
-# (or select the Forge container at the interactive prompt)
+source ~/.tenstorrent-venv/bin/activate
+tt-smi   # should show the System Management Interface
 ```
 
-This drops a `tt-forge` wrapper into `~/.local/bin/`. It's enough to *run* compiled models through the container — but because it's containerized, it won't satisfy a bare `import forge` in your own Python session. For that, build from source.
+Then install the frontend for your framework:
+
+**PyTorch & JAX — TT-XLA (the primary frontend):**
+
+```bash
+pip install pjrt-plugin-tt --extra-index-url https://pypi.eng.aws.tenstorrent.com/
+tt-forge-install     # pulls in any missing system dependencies
+```
+
+`pip install tt-forge` is the convenience meta-package that wraps the same thing.
+
+**ONNX / TensorFlow / PaddlePaddle — TT-Forge-ONNX (single-chip only):**
+
+```bash
+sudo apt-get install -y libgomp1 libmpc3
+uv pip install tt_forge_onnx tt_tvm --extra-index-url https://pypi.eng.aws.tenstorrent.com/
+```
 
 :::callout type="tip"
-On an older `tt-installer` the flag won't exist (`tt-installer --help` won't list `--install-forge-container`). Update to the latest release from [tenstorrent/tt-installer](https://github.com/tenstorrent/tt-installer), or use the source build below.
+Don't want to touch your host Python? Tenstorrent ships prebuilt images: `docker run -it --rm --device /dev/tenstorrent -v /dev/hugepages-1G:/dev/hugepages-1G ghcr.io/tenstorrent/tt-xla-slim:latest`. Building from source is documented too, but the docs are explicit that it's for *developing Forge itself*, not for running models.
 :::
 
-### Path B — build tt-forge-fe from source (full dev environment)
-
-This is the path that gives you `import forge` anywhere and powers the model zoo and compiletron below. The smoothest route follows the tips committed to [`tt-forge-compiletron`](https://github.com/tenstorrent/tt-forge-compiletron) (see its `docs/FORGE_SETUP.md`):
-
-```bash
-cd ~/code/tt-forge-compiletron
-python3 compiletron.py setup install-forge   # clones + builds tt-forge-fe (~45–60 min)
-```
-
-When it finishes, activate the environment and verify:
-
-```bash
-source ~/tt-forge-fe/env/activate
-python3 compiletron.py setup check           # ✓ Forge installed / activated / deps present
-```
-
 :::callout type="warn"
-The build needs **Python 3.12+**, the standard build tools (`gcc`, `g++`, `cmake`, `git`), and ~20 GB of free disk. If the build stalls, cap parallelism with `export MAX_JOBS=4` before re-running. Full troubleshooting lives in compiletron's `docs/FORGE_SETUP.md`.
-:::
-
-With Forge installed by either path, the rest of this chapter applies.
-
----
-
-## The Three Compilation Paths
-
-Every framework has an entry point into the stack. Run them via the `tt-forge` container wrapper:
-
-```bash
-# Run a script through the forge container
-tt-forge python3 my_model.py
-
-# Or drop into a forge shell
-tt-forge bash
-```
-
-| Path | Backend | Entry point | Use for |
-|------|---------|-------------|---------|
-| TT-Forge (PyTorch) | `forge.compile()` | `import forge` | Any PyTorch `nn.Module` |
-| TT-XLA (JAX) | `jax.jit` + PJRT plugin | `import pjrt_plugin_tt` | JAX / Flax models |
-| TT-Forge-ONNX | `tt_forge_onnx` | `import tt_forge_onnx` | ONNX exports from any framework |
-
-`tt-forge` here is the container wrapper from Path A above (installed via `tt-installer --install-forge-container`). It bundles Python 3.12 with all three backends. If you built from source instead (Path B), activate that environment with `source ~/tt-forge-fe/env/activate` and run `python3 my_model.py` directly. Either way, keep Forge separate from TTNN work — the two environments conflict if mixed.
-
-:::callout type="warn"
-If you have `TT_METAL_HOME` set (from TTNN work), unset it before activating the forge venv: `unset TT_METAL_HOME`. Leaving it set can cause import errors.
+**API note:** older material — including earlier drafts of this guide — used `import forge; forge.compile(model, sample_inputs=...)` for PyTorch via the `tt-forge-fe` frontend. That frontend has been superseded: `tt-forge-fe` now redirects to `tt-forge-onnx`, and **TT-XLA is the current PyTorch + JAX frontend**. PyTorch now compiles through `torch.compile(model, backend="tt")` (shown below). `forge.compile()` survives only in the ONNX frontend.
 :::
 
 ---
 
-## Your First forge.compile()
+## The Compilation Paths
 
-ResNet is the right first target. Well-understood architecture, small enough to compile fast, and it ships in tt-forge-models with everything wired up.
+Two frontends cover every framework. Both lower to the same TT-MLIR compiler and the same Tensix backend — the framework you start from doesn't change where you land.
+
+| Framework | Frontend | Entry point | Chips |
+|-----------|----------|-------------|-------|
+| **PyTorch** | TT-XLA | `torch.compile(model, backend="tt")` | single & multi |
+| **JAX / Flax** | TT-XLA | `jax.jit` (+ `pjrt_plugin_tt`) | single & multi |
+| **ONNX / TF / Paddle** | TT-Forge-ONNX | `forge.compile(model, inputs)` | single only |
+
+TT-XLA is the primary frontend and the one to reach for first: it takes both PyTorch (through `torch-xla`) and JAX (through `jax.jit`), and it's the only path that scales across multiple chips. TT-Forge-ONNX is the TVM-based route for models that arrive as ONNX, TensorFlow, or PaddlePaddle graphs, and it's single-chip only.
+
+---
+
+## Your First Compile
+
+ResNet-50 is the right first target — well-understood architecture, small enough to compile fast. This is the canonical PyTorch quickstart from the TT-Forge docs:
 
 ```python
 import torch
-import forge
-from third_party.tt_forge_models.resnet.pytorch import ModelLoader
+import torch_xla.core.xla_model as xm
+import torch_xla.runtime as xr
+import tt_torch  # registers "tt" as a torch.compile backend
+from torchvision.models import resnet50, ResNet50_Weights
 
-# Step 1: Load the model and a batch of representative inputs
-model = ModelLoader.load_model(dtype_override=torch.bfloat16)
-inputs = ModelLoader.load_inputs()
+# Point PyTorch/XLA at the Tenstorrent device
+xr.set_device_type("TT")
+device = xm.xla_device()
 
-# Step 2: Compile — forge traces the model graph and lowers to Tensix ops
-compiled_model = forge.compile(model, sample_inputs=inputs)
+# Load ResNet-50 in bfloat16 — Blackhole's native float format
+model = resnet50(weights=ResNet50_Weights.DEFAULT).to(torch.bfloat16).eval()
 
-# Step 3: Run inference — same call signature as the original PyTorch model
-output = compiled_model(*inputs)
+# Compile for Tensix and move the compiled model onto the device
+compiled_model = torch.compile(model, backend="tt").to(device)
 
-print(output.shape)   # torch.Size([1, 1000]) — standard ImageNet logits
+# Run inference on hardware
+input_tensor = torch.randn(1, 3, 224, 224, dtype=torch.bfloat16).to(device)
+with torch.no_grad():
+    output = compiled_model(input_tensor)
+
+print(output.cpu().argmax(dim=-1).item())   # predicted ImageNet class
 ```
 
-What `forge.compile()` does: it traces the model using `sample_inputs` to determine shapes, lowers the traced graph to TTNN operations, compiles those operations to Tensix kernels via Metalium, and returns a callable that dispatches to hardware. The first compilation is slow (tens of seconds for ResNet, longer for large models). Subsequent calls with the same input shapes hit a compiled cache and run fast.
+What `torch.compile(model, backend="tt")` does: `torch-xla` traces the model into a StableHLO graph, the TT-MLIR pipeline lowers that graph to Tensix kernels, and you get back a callable that dispatches to hardware. The first compilation is slow (tens of seconds for ResNet, longer for large models). Subsequent calls with the same input shapes hit a compiled cache and run fast.
 
-The `dtype_override=torch.bfloat16` argument requests a bfloat16 model. Blackhole is bfloat16-native. Running in bfloat16 gives you full hardware throughput. Running in float32 works, but leaves performance on the table.
+Loading in `torch.bfloat16` matters: Blackhole is bfloat16-native, so it gives you full hardware throughput. Float32 works, but leaves performance on the table.
 
 Here is the chip view during compilation and inference:
 
@@ -139,17 +115,17 @@ Here is the chip view during compilation and inference:
   {"step": "clear"}
 ] %}
 
-<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">forge.compile() dispatches weight loads from DRAM then fans work across the Tensix grid.</p>
+<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">The compile step dispatches weight loads from DRAM then fans work across the Tensix grid.</p>
 
 :::callout type="tip"
-`compiled_model` is a drop-in replacement for the original PyTorch model. Swap it into any existing inference loop — any code that calls `model(*inputs)` works unchanged. You don't need to change anything except the activation step and the compile call.
+`compiled_model` is a drop-in replacement for the original PyTorch model. Swap it into any existing inference loop — code that calls `model(input)` works unchanged once the model and its inputs are on the TT device. The only additions are the `torch_xla` device setup and the `torch.compile(..., backend="tt")` call.
 :::
 
 ---
 
 ## The tt-forge-models Zoo
 
-Writing `ModelLoader` boilerplate for 200 different models is tedious. Somebody already did it. `tt-forge-models` is the standardized model zoo for TT-Forge: 200+ pretrained models, every one loadable in two lines.
+Writing model-loading boilerplate for hundreds of architectures is tedious. Somebody already did it. `tt-forge-models` is the standardized model zoo for TT-Forge — 800+ model variants tested in CI, every one exposing the same `ModelLoader` interface and loadable in two lines.
 
 The repo lives at `~/code/tt-forge-models` and on GitHub at [tenstorrent/tt-forge-models](https://github.com/tenstorrent/tt-forge-models).
 
@@ -176,20 +152,19 @@ tt-forge-models/
       loader.py
 ```
 
-Every `loader.py` exports a `ModelLoader` class with two static methods:
+Every `loader.py` exports a `ModelLoader` class with two static methods. `load_model()` returns a standard PyTorch `nn.Module` and `load_inputs()` returns matching sample tensors — so you compile them exactly like any other model:
 
 ```python
+import torch, tt_torch
 from third_party.tt_forge_models.bert.pytorch import ModelLoader
 
-# Load the pretrained model
+# Load the pretrained model and representative inputs
 model = ModelLoader.load_model(dtype_override=torch.bfloat16)
+inputs = ModelLoader.load_inputs(dtype_override=torch.bfloat16)
 
-# Load representative inputs (correct shape and dtype for this model)
-inputs = ModelLoader.load_inputs()
-
-# compile and run — same as always
-compiled = forge.compile(model, sample_inputs=inputs)
-output = compiled(*inputs)
+# compile for Tensix and run — same torch.compile path as before
+compiled = torch.compile(model, backend="tt").to(device)
+output = compiled(inputs.to(device))
 ```
 
 Five models worth knowing immediately:
@@ -206,7 +181,7 @@ Models not on this table: BLOOM, GPT-2, LLaMA, YOLOv4, BEiT, and 190+ more. Brow
 
 <div class="rcard-grid">
 
-{% card "repo", "https://github.com/tenstorrent/tt-forge-models", "tt-forge-models", "The standardized model zoo for TT-Forge — 200+ pretrained models, every one loadable in two lines.", "~/code/tt-forge-models" %}
+{% card "repo", "https://github.com/tenstorrent/tt-forge-models", "tt-forge-models", "The standardized model zoo for TT-Forge — 800+ model variants tested in CI, every one loadable in two lines.", "~/code/tt-forge-models" %}
 
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/forge-models-zoo/", "forge-models-zoo", "Browse the full zoo — the 190+ models beyond the five worth knowing immediately.", "" %}
 
@@ -253,10 +228,15 @@ Someone at Tenstorrent decided the best way to stress-test the compiler stack ac
 
 **tt-forge-compiletron** is a model-compilation expedition game (it lives at `tenstorrent/tt-forge-compiletron`). You launch expeditions into the model zoo. Each expedition compiles a different model. The chip runs the compilation. You score points. You build a bestiary.
 
-Start it:
+:::callout type="warn"
+Compiletron drives the source-built `tt-forge-fe` / `forge.compile()` frontend (its `forge` backend), which is why its setup builds `~/tt-forge-fe` from source rather than using the wheels above. That's the legacy PyTorch path now being superseded by TT-XLA's `torch.compile(backend="tt")`. The tool still works and is a great compiler stress-test; just know it's pinned to the older frontend, not the pip-install flow this chapter opened with.
+:::
+
+Set it up, then start it:
 
 ```bash
-# From inside the tt-forge-compiletron directory
+cd ~/code/tt-forge-compiletron
+bash scripts/install.sh          # installs forge venv, XLA venv, clones tt-forge-models
 python3 expedition.py run --tui
 ```
 
