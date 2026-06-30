@@ -232,10 +232,11 @@ Someone at Tenstorrent decided the best way to stress-test the compiler stack ac
 Compiletron drives the source-built `tt-forge-fe` / `forge.compile()` frontend (its `forge` backend), which is why its setup builds `~/tt-forge-fe` from source rather than using the wheels above. That's the legacy PyTorch path now being superseded by TT-XLA's `torch.compile(backend="tt")`. The tool still works and is a great compiler stress-test; just know it's pinned to the older frontend, not the pip-install flow this chapter opened with.
 :::
 
-Start it:
+Set it up, then start it:
 
 ```bash
-# From inside the tt-forge-compiletron directory
+cd ~/code/tt-forge-compiletron
+bash scripts/install.sh          # installs forge venv, XLA venv, clones tt-forge-models
 python3 expedition.py run --tui
 ```
 

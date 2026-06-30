@@ -187,11 +187,11 @@ The tt-forge-compiletron at `~/code/tt-forge-compiletron` is a roguelike model c
 Compiletron's `forge` backend drives the source-built `tt-forge-fe` / `forge.compile()` frontend — the legacy PyTorch path now being superseded by TT-XLA's `torch.compile(backend="tt")`. That's why its launch activates `~/tt-forge-fe/env/activate` rather than the wheel environment. The tool remains an excellent compiler stress-test; just note it's pinned to the older frontend.
 :::
 
-Launch it:
+Set it up, then launch it:
 
 ```bash
 cd ~/code/tt-forge-compiletron
-source ~/tt-forge-fe/env/activate
+bash scripts/install.sh --forge   # installs forge venv + tt-forge-fe shim, clones tt-forge-models
 python3 expedition.py run --tui --seed-only --backend forge
 ```
 
