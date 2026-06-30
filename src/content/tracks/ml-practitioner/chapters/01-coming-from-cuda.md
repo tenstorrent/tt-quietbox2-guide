@@ -11,6 +11,21 @@ You know `cudaMalloc`. You know grid-dim and block-dim. You've tuned shared memo
 
 That mental model transfers here, but not intact. Some pieces map cleanly. Some don't exist. And some things you were papering over on the GPU are now explicit, visible, and tunable. The next ten minutes remaps the terrain.
 
+## Pick Your Altitude
+
+The first question a CUDA developer asks is "where's my `model.cuda()`?" The honest answer is that there isn't one entry point — there are three, and which one you reach for depends on how much control you want. CUDA has the same three tiers; you just rarely think about them as a stack because NVIDIA blurs the seams.
+
+| You want to… | On CUDA you'd use… | On Tensix, write at… |
+|---|---|---|
+| Just run my PyTorch/JAX model | `model.to("cuda")` + `torch.compile` | **TT-Forge / TT-XLA** — `torch.compile(model, backend="tt")` |
+| Call optimized library ops | cuBLAS / cuDNN / CUTLASS | **TTNN** — `ttnn.matmul`, `ttnn.conv2d`, fused attention |
+| Write a custom kernel, but in Python | a hand-rolled CUDA C kernel | **TT-Lang** — a Python DSL; explicit reader/compute/writer |
+| Drop all the way to the metal | raw CUDA C + PTX tuning | **TT-Metalium** — RISC-V kernels, hand-routed NoC moves |
+
+The closest thing to `model.cuda()` is the top tier: **TT-Forge** traces your graph and lowers it to Tensix automatically. That's [Chapter 6](/ml-practitioner/06-tt-forge/) — reach for it when you want the model to *just run*. The two bottom tiers are for the cases TTNN doesn't cover: **TT-Lang** lets you write a custom kernel in Python with no C++, and **TT-Metalium** is the C++ floor where every abstraction disappears. Both live in the [Builder/Hacker track](/builder-hacker/01-tt-metal-architecture/) — and, as the last section of this chapter explains, the TT-Lang tier is far more reachable than "write your own kernel" sounds on CUDA.
+
+**This track lives in the middle, at TTNN** — the tier where you have hand-optimized ops but still write Python, not kernels. It's the sweet spot for performance work that doesn't require descending to the metal, so that's where the rest of this chapter focuses.
+
 ## Thread Blocks vs. Tensix Tiles
 
 On a GPU, a thread block is the unit of cooperative work: a group of threads that can share L1/shared memory and synchronize. The programmer launches a grid of blocks; the hardware schedules them onto SMs.
@@ -18,6 +33,8 @@ On a GPU, a thread block is the unit of cooperative work: a group of threads tha
 On Blackhole, the unit is a **Tensix core**. There are 120 enabled per chip (a 12×10 block of the 14×10 physical Tensix grid), sitting inside a larger 17×12 NoC grid that also carries DRAM, Ethernet, and PCIe nodes. Each core has its own L1 SRAM, its own set of RISC-V processing cores (five of them), and its own connection to the Network-on-Chip (NoC) fabric that threads through the entire grid. Tensix cores don't share memory with each other. There's no "block-scope" shared memory. There's only what one core holds, and what it explicitly sends over the NoC to another.
 
 This is the fundamental shift. On CUDA, data sharing between threads in a block is cheap and implicit — shared memory just works. On Tensix, data movement is the thing you design around. Every byte a core receives came from somewhere specific, via a routed packet on the NoC. That movement is visible to you. It's also where the performance is.
+
+There's a deeper reason it's visible: **there is no warp scheduler hiding memory latency.** On a GPU, when one warp stalls waiting on a global-memory read, the SM scheduler instantly swaps in another resident warp — latency disappears behind oversubscription, and you mostly don't think about it. Tensix has no such trick. Instead, each core runs an explicit **reader → compute → writer** pipeline: one RISC-V core streams tiles into L1, the matrix engine works on them, another core streams results out, and they overlap by design rather than by lucky scheduling. At the TTNN level you don't write that pipeline — the ops do — but it's why tensor *layout* matters so much here. A layout that lets the reader stage clean tiles keeps the pipeline full; one that forces a reshuffle stalls it, and there's no spare warp to paper over the gap.
 
 ## L1 SRAM vs. Shared Memory
 
@@ -99,6 +116,10 @@ The four Blackhole chips in your QB2 sit on two p300c cards, linked by Warp cabl
 
 For multi-chip workloads, the four chips form a mesh using their Ethernet cores (the left and right columns of the chip grid). This is how tensor-parallel models distribute their KV-cache updates — not through the host CPU, but directly chip-to-chip.
 
+:::callout type="tip"
+If you've read benchmarks or write-ups based on a single Blackhole card (the P150b, for example), they transfer directly: every chip in your QB2 *is* that same Blackhole part. The per-chip mental model — Tensix grid, L1, NoC, the reader/compute/writer pipeline — is identical. What the QB2 adds on top is the four-chip mesh for scaling past a single card; nothing about the single-chip picture changes.
+:::
+
 {% tensixviz "blackhole", [
   {"action": "highlight", "coords": [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[9,2],[10,2],[11,2],[12,2],[13,2],[14,2],[15,2]], "color": "var(--muted)", "label": "DRAM row staging data into tiles"},
   {"action": "pause", "ms": 500},
@@ -114,6 +135,26 @@ For multi-chip workloads, the four chips form a mesh using their Ethernet cores 
 :::callout type="deep-dive"
 The Blackhole NoC is a 2D torus mesh, not a crossbar or bus. Two independent NoC overlays (NOC0 and NOC1) carry traffic in opposite directions to avoid deadlock. When you write Metalium kernels, you choose which NoC to use for which transfers. At the TTNN level, the compiler makes these choices. Understanding the topology helps you reason about why certain tensor layouts perform better — the ones that minimize cross-NoC traffic in the hot inner loops.
 :::
+
+## Custom Kernels Without the Dread — and the Agentic Shortcut
+
+On CUDA, "you'll need a custom kernel" is a sentence that ends a lot of afternoons. It means C++, it means reasoning about occupancy and warp divergence and memory coalescing, and it means racing against bugs that only show up at certain block sizes. It's also exactly the kind of code that AI coding agents are *bad* at: so much of a CUDA kernel's correctness lives in implicit, unstated assumptions — what's resident, what's coalesced, which warp got there first — that there's nothing concrete for an agent to verify against. The spec isn't in the source; it's in the programmer's head.
+
+The middle-lower tier, **TT-Lang**, inverts that. It's a Python DSL (no C++) for writing the one custom op TTNN doesn't expose — a fused pattern, a non-standard attention variant, an activation with a specific numerical property. And it's built around the same **reader → compute → writer** structure from earlier in this chapter, except now you write the three sections explicitly: the reader declares exactly which tiles arrive and from where, compute is pure tile math on those arrivals, the writer declares exactly what leaves. Nothing is implicit.
+
+That explicitness is the whole trick, and it's why agentic development gets you remarkably far here. Because the full spec lives *in the source* — arrivals in, math, departures out — an AI coding agent has something complete to generate against and something concrete to check its work against. You describe the kernel in those three terms, the agent fills in the TT-Lang syntax, and the structure itself eliminates most of the ambiguity that makes agent-written CUDA hallucinate. So the practical ladder for someone coming from CUDA looks like this:
+
+1. **Let TT-Forge compile the whole model** — most of the time you stop here.
+2. **Reach for TTNN ops** when you want to hand-tune a hot path in Python.
+3. **Hand an agent a reader/compute/writer spec and let it write the TT-Lang** for the rare custom kernel — instead of booking an afternoon to hand-write CUDA C.
+
+You can travel a long way down that ladder without ever becoming a full-time kernel author. When you do want to go deeper into TT-Lang yourself — the decorators, circular-buffer semantics, the browser-based simulator — that's the [TT-Lang chapter](/builder-hacker/03-ttlang-intro/) in the Builder/Hacker track.
+
+## Setting Expectations
+
+One more thing that won't transfer from a decade of CUDA: the assumption that the stack is finished. CUDA is twenty years mature; the TT software stack is young and moving fast. The top-tier compiler frontends in particular are still evolving — by the time you read Chapter 6 you'll see we already had to retire one PyTorch entry point in favor of TT-XLA. Expect occasional rough edges, expect the first run of a new op shape to JIT-compile for a few seconds before it caches, and expect to read the docs against the source now and then.
+
+That's not a warning to stay away — it's the texture of working close to the edge of an open stack. The flip side is that the layers are genuinely open, the team is reachable, and unanswered questions tend to get answers. When something doesn't behave the way this guide describes, the [Tenstorrent Discord](https://discord.gg/tenstorrent) and the GitHub issue trackers are where practitioners (and TT engineers) actually work problems out.
 
 ---
 
