@@ -83,19 +83,25 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
+Type "# 'Perl poetry' (perlmonks.org/?node_id=1111395) = Perl builtins used AS the words"
+Sleep 300ms
+Enter
+Type "# of a poem. The full prompt lives in scripts/vhs/prompts/perl-poetry.txt."
+Sleep 400ms
+Enter
+Sleep 200ms
+
 Type "# Run in a scratch dir so OpenCode doesn't index a big project (much faster):"
 Sleep 300ms
 Enter
-Type "mkdir -p /tmp/oc-demo && cd /tmp/oc-demo"
+Type "mkdir -p /tmp/oc-demo && cp scripts/vhs/prompts/perl-poetry.txt /tmp/oc-demo/ && cd /tmp/oc-demo"
 Sleep 300ms
 Enter
 Sleep 500ms
 
-# "Perl poetry" is the classic art of real, runnable Perl that reads as verse
-# (see perlmonks.org/?node_id=1111395) — so the prompt asks for valid Perl, not prose.
-Type `opencode run -m tt-studio/Qwen3-32B 'Write "Perl poetry" the classic way — a few lines of real, syntactically valid Perl (use strict optional) that runs yet reads as a poem — about a CGI script that dreamed of becoming an LLM. Output only the Perl, in one short code block.'`
+Type `opencode run -m tt-studio/Qwen3-32B "$(cat perl-poetry.txt)"`
 Sleep 500ms
 Enter
-# opencode shows a "build" spinner while Qwen3-32B works, then prints the poem
-# to stdout. Give it room to finish (a few lines take ~10-20s incl. startup).
-Sleep 26s
+# opencode shows a "build" spinner while Qwen3-32B works, then prints the poem —
+# real Perl builtins arranged as verse — to stdout. ~15-25s incl. startup.
+Sleep 30s

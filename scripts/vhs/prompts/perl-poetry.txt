@@ -1,0 +1,21 @@
+Write "Perl poetry" in the true perlmonks tradition: a poem whose SOURCE CODE *is* the poem — built from real Perl builtin functions and keywords used as if they were English words, so the code itself reads as verse. The code IS the poem; it does NOT print a poem. Match the terse, evocative style of this classic (a poem about eating fish):
+
+use Carp;
+unpack fish, spices;
+croak fish if $alive;
+study recipe, pop in, time;
+BEGIN {meal};
+tied %bib;
+scalar fish;
+fork, split;
+sqrt lemon;
+glob tartarsauce;
+chop, open(MOUTH), chomp;
+unlink flesh;
+truncate bone, chomp;
+untie %bib;
+push plate;
+END {meal};
+sleep now;
+
+Notice the craft: short lines, one or two builtins each, bare evocative words as arguments, an imperative mood, and a clear little story. Write a NEW poem in exactly this style telling the story of a CGI script that dreamed of becoming an LLM — it parses forms and reads input, studies and learns, wakes as a mind, and speaks language. Lean on builtins AS words: use, require, bless, study, read, open, chomp, chop, grep, map, sort, keys, values, wait, fork, exec, eval, local, our, ref, tie, untie, push, pop, shift, return, redo, last, wantarray, die, sleep, and BEGIN/END. It should look like plausible Perl (as the example does), but the art is the poem, not strict compilation. About 14-16 short lines. Output only the Perl, in one code block.
