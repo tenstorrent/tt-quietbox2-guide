@@ -18,6 +18,7 @@ Set FontSize 13
 Set Width 1100
 Set Height 660
 Set Theme "Catppuccin Mocha"
+Set TypingSpeed 15ms
 
 Type "# tt-studio v2.8.0 — run Claude Code against a model on your OWN chips"
 Sleep 500ms

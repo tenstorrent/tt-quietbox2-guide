@@ -20,6 +20,7 @@ Set FontSize 13
 Set Width 1100
 Set Height 660
 Set Theme "Catppuccin Mocha"
+Set TypingSpeed 15ms
 
 Type "# tt-studio v2.8.0 — run OpenCode against a model on your OWN chips"
 Sleep 500ms
@@ -71,25 +72,30 @@ Sleep 1500ms
 
 Type ""
 Enter
-Type "# 2) Launch OpenCode against your QB2-hosted model"
+Type "# 2) Ask it something. Bare 'opencode' opens the full TUI;"
+Sleep 300ms
+Enter
+Type "#    'opencode run' is one-shot — great for a quick demo (and for GIFs:"
+Sleep 300ms
+Enter
+Type "#    the TUI uses the alternate screen, which most recorders can't capture)."
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "opencode --model tt-studio/Qwen3-32B"
+Type "# Run in a scratch dir so OpenCode doesn't index a big project (much faster):"
 Sleep 300ms
 Enter
-# Let OpenCode start and show the tt-studio provider / model is selected.
-Sleep 5s
+Type "mkdir -p /tmp/oc-demo && cd /tmp/oc-demo"
+Sleep 300ms
+Enter
+Sleep 500ms
 
-# OPTIONAL money shot — uncomment to type a prompt and capture a live answer.
-# Type "Write a Python function that reverses a string."
-# Sleep 500ms
-# Enter
-# Sleep 10s
-
-# Exit OpenCode cleanly (adjust if your build uses a different quit key).
-Ctrl+C
-Sleep 400ms
-Ctrl+C
-Sleep 1s
+# "Perl poetry" is the classic art of real, runnable Perl that reads as verse
+# (see perlmonks.org/?node_id=1111395) — so the prompt asks for valid Perl, not prose.
+Type `opencode run -m tt-studio/Qwen3-32B 'Write "Perl poetry" the classic way — a few lines of real, syntactically valid Perl (use strict optional) that runs yet reads as a poem — about a CGI script that dreamed of becoming an LLM. Output only the Perl, in one short code block.'`
+Sleep 500ms
+Enter
+# opencode shows a "build" spinner while Qwen3-32B works, then prints the poem
+# to stdout. Give it room to finish (a few lines take ~10-20s incl. startup).
+Sleep 26s
