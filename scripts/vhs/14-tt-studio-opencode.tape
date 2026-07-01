@@ -18,7 +18,7 @@ Output src/assets/video/14-tt-studio-opencode.gif
 Set Shell "bash"
 Set FontSize 13
 Set Width 1100
-Set Height 660
+Set Height 860
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 15ms
 
@@ -86,18 +86,24 @@ Sleep 200ms
 Type "# 'Perl poetry' (perlmonks.org/?node_id=1111395) = Perl builtins used AS the words"
 Sleep 300ms
 Enter
-Type "# of a poem. The full prompt lives in scripts/vhs/prompts/perl-poetry.txt."
+Type "# of a poem. Run in a scratch dir so OpenCode doesn't index a big project:"
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "# Run in a scratch dir so OpenCode doesn't index a big project (much faster):"
-Sleep 300ms
-Enter
 Type "mkdir -p /tmp/oc-demo && cp scripts/vhs/prompts/perl-poetry.txt /tmp/oc-demo/ && cd /tmp/oc-demo"
 Sleep 300ms
 Enter
 Sleep 500ms
+
+Type "# Here's the full prompt we'll send — it asks for code that IS the poem:"
+Sleep 300ms
+Enter
+Type "clear; cat perl-poetry.txt"
+Sleep 300ms
+Enter
+# Pause so the whole prompt (from the first line) is readable before we run it.
+Sleep 6s
 
 Type `opencode run -m tt-studio/Qwen3-32B "$(cat perl-poetry.txt)"`
 Sleep 500ms
