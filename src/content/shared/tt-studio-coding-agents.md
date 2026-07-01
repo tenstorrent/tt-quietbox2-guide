@@ -70,7 +70,11 @@ curl http://<qb2-host>:4000/v1/chat/completions \
 ```
 
 :::callout type="tip"
-**Thinking models stay quiet.** Qwen3-32B is a reasoning model, so the gateway also exposes a `Qwen3-32B-thinking` variant. For the plain name, v2.8.0 **hides the `<think>` tokens from the agent** — you get clean tool calls and answers instead of a wall of chain-of-thought. Pick the `-thinking` variant when you actually want to see the reasoning.
+**Thinking is off for agents, on tap elsewhere.** Qwen3-32B is a reasoning model, so the gateway exposes it two ways. For the plain `Qwen3-32B`, v2.8.0 sets `enable_thinking=false` for you — the model skips its `<think>` phase entirely, so you get clean tool calls and answers instead of a wall of chain-of-thought. This isn't just cosmetic: with thinking off, agentic tool calls land reliably (10/10 in our streaming checks). Pick `Qwen3-32B-thinking` when you actually want to *see* the reasoning.
+:::
+
+:::callout type="warn"
+**Reasoning + tool calling don't mix yet — which is why agents use the plain name.** On the current tt-inference-server, Qwen3-32B with thinking *enabled* can intermittently drop tool calls and leak `</think>` into streamed content (tracked in tt-inference-server [#4386](https://github.com/tenstorrent/tt-inference-server/issues/4386), pending a tt-metal fix landing in a prod image). Setting `enable_thinking=false` — which the gateway does automatically for the plain `Qwen3-32B` — sidesteps it, so **use the plain name for Claude Code / OpenCode** and treat `-thinking` as a reasoning viewer rather than an agent backend for now. Note too that only `tool_choice: "auto"` is supported; `none` and `required` aren't yet.
 :::
 
 :::callout type="warn"

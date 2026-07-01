@@ -5,7 +5,7 @@
 #   1. tt-studio running with an eligible model DEPLOYED (Qwen3-32B).
 #   2. LiteLLM gateway healthy on :4000.
 #   3. Export the gateway key without printing it, so it never lands in the GIF:
-#        export LITELLM_MASTER_KEY=$(grep -E '^LITELLM_MASTER_KEY=' ~/tt-studio/.env | cut -d= -f2-)
+#        export LITELLM_MASTER_KEY=$(grep -E '^LITELLM_MASTER_KEY=' ~/.local/lib/tt-studio/.env | cut -d= -f2-)
 #   4. `opencode` installed and on PATH.
 #
 # NOTE: OpenCode has no model discovery, so its config must list the model
@@ -58,7 +58,7 @@ Enter
 Type "}"
 Sleep 100ms
 Enter
-Type "p.parent.mkdir(parents=True, exist_ok=True); p.write_text(json.dumps(cfg, indent=2) + '\\n')"
+Type "p.parent.mkdir(parents=True, exist_ok=True); p.write_text(json.dumps(cfg, indent=2))"
 Sleep 100ms
 Enter
 Type "print(f'Updated {p}')"

@@ -6,7 +6,7 @@
 #      pre-cached — deploy it from the Deploy Model dropdown).
 #   2. The LiteLLM gateway healthy on :4000 (check the Coding Agents page).
 #   3. Export the gateway key WITHOUT printing it, so it never lands in the GIF:
-#        export LITELLM_MASTER_KEY=$(grep -E '^LITELLM_MASTER_KEY=' ~/tt-studio/.env | cut -d= -f2-)
+#        export LITELLM_MASTER_KEY=$(grep -E '^LITELLM_MASTER_KEY=' ~/.local/lib/tt-studio/.env | cut -d= -f2-)
 #      (or copy it from the Coding Agents page). The tape references the
 #      variable, never the literal key.
 #   4. `claude` (Claude Code) installed and on PATH.
@@ -59,10 +59,10 @@ Enter
 Type '  -H "Content-Type: application/json" \'
 Sleep 150ms
 Enter
-Type "  -d '{\"model\":\"Qwen3-32B\",\"messages\":[{\"role\":\"user\",\"content\":\"Write hello world in Python\"}]}' \"
+Type `  -d '{"model":"Qwen3-32B","messages":[{"role":"user","content":"Write hello world in Python"}]}' \`
 Sleep 150ms
 Enter
-Type "  | python3 -c \"import sys,json; print(json.load(sys.stdin)['choices'][0]['message']['content'])\""
+Type `  | jq -r '.choices[0].message.content'`
 Sleep 300ms
 Enter
 # Give the model time to respond (first token can be a few seconds after idle).
