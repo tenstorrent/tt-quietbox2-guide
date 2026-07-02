@@ -13,6 +13,16 @@ layout: layouts/base.njk
        class="chapter-nav-item{% if ch.slug == currentChapter %} active{% endif %}">
       {{ loop.index }}. {{ ch.title }}
     </a>
+    {% if ch.slug == currentChapter %}
+    {% set _headings = content | chapterHeadings %}
+    {% if _headings.length %}
+    <ul class="chapter-subnav">
+      {% for h in _headings %}
+      <li><a class="chapter-subnav-item" href="#{{ h.id }}">{{ h.text }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
     {% endfor %}
     <div style="padding: 16px; margin-top: auto;">
       <a href="/read/{{ persona.id }}/" style="font-size:11px; color: var(--muted);">Read it all →</a>
