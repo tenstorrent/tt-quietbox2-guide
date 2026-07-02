@@ -28,7 +28,7 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "# tt-studio   (opens http://localhost:7860)"
+Type "# tt-studio   (wrapper for: git clone + python3 run.py — opens http://localhost:3000)"
 Sleep 400ms
 Enter
 Sleep 400ms
@@ -42,7 +42,7 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "# ssh -L 7860:localhost:7860 ttuser@qb2-hostname"
+Type "# ssh -L 3000:localhost:3000 -L 4000:localhost:4000 ttuser@qb2-hostname"
 Sleep 400ms
 Enter
 Sleep 500ms
@@ -51,7 +51,7 @@ Type ""
 Sleep 300ms
 Enter
 
-Type "# Then open http://localhost:7860 on your laptop"
+Type "# Then open http://localhost:3000 on your laptop"
 Sleep 400ms
 Enter
 Sleep 400ms

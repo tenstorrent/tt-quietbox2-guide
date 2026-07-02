@@ -15,7 +15,7 @@ There's a ladder of ways to serve a model on the QB2, from no-code to full contr
 
 | Approach | Reach for it when… |
 |---|---|
-| **[tt-studio](https://github.com/tenstorrent/tt-studio)** | You want a web UI — pick a model, click Run, no code. (Covered in [What Comes Next](/first-timer/06-what-comes-next/).) |
+| **[tt-studio](https://github.com/tenstorrent/tt-studio)** | You want a web UI — pick a model, click Run, no code. It can also back Claude Code / OpenCode against your chips (covered later in this chapter). (Intro in [What Comes Next](/first-timer/06-what-comes-next/).) |
 | **tt-inference-server** ← *this chapter* | You want one command and a production-ready, OpenAI-compatible API. **The default.** |
 | **vLLM directly** | You want to drive the server process yourself and tune its flags. |
 | **TT-Forge / Metalium** | You're compiling or hand-writing the model — the [Builder/Hacker track](/builder-hacker/). |
@@ -184,6 +184,8 @@ The same `:8000/v1` endpoint drives a whole ecosystem of clients — pick whatev
 
 </div>
 
+{% chunk "tt-studio-coding-agents" %}
+
 ## Continuous Batching
 
 This is one of the QB2's practical advantages in production. vLLM's continuous batching algorithm fills the KV-cache space as requests arrive, packing multiple users' decode steps into the same chip invocation. You're not running one request at a time — the server is interleaving decode steps from multiple concurrent clients across every chip cycle.
@@ -202,6 +204,7 @@ Keep these ports clear. Other services on the QB2 use them.
 |---|---|
 | `8000` | vLLM / tt-inference-server (OpenAI-compatible API) |
 | `3000` | tt-studio (web UI) |
+| `4000` | tt-studio coding-agent gateway (LiteLLM — Claude Code / OpenCode) |
 | `8001` | tt-inference-server prompt server |
 
 If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`

@@ -213,6 +213,16 @@ Scoring: a successful compile earns a +200 base score. First-ever compile of a m
 
 **Next steps:** The compiletron's First Voice feature runs a themed inference pass after each successful compile, printing the model's first decoded output on Tenstorrent silicon. It is genuinely entertaining as a throughput warm-up, but the underlying pattern — compile once, inference repeatedly, measure throughput via `perf_history.jsonl` — is the same pattern you use in production model benchmarking.
 
+:::callout type="tip"
+**Want an AI pair-programmer that runs on your own silicon?** tt-studio v2.8.0 can serve a deployed model to Claude Code or OpenCode through a local gateway — the coding agent runs against your Blackhole chips instead of a cloud API. The full setup is in [Serving Models on QB2](/ml-practitioner/03-vllm-on-qb2/).
+:::
+
+<div class="rcard-grid">
+
+{% card "lesson", "/ml-practitioner/03-vllm-on-qb2/", "Claude Code & OpenCode on your QB2", "Point a coding agent at a model deployed on your own chips — no cloud, no per-token bill. New in tt-studio v2.8.0.", "coding agents" %}
+
+</div>
+
 ---
 
 [← Profiling](/builder-hacker/04-profiling/) | [Going Deep →](/builder-hacker/05-going-deep/)
