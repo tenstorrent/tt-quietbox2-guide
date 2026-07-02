@@ -31,3 +31,21 @@ test("extractH2Headings decodes basic entities", () => {
     { id: "e", text: "Disk & Storage" },
   ]);
 });
+
+test("headingAnchors keeps a pre-existing id", () => {
+  const md = new MarkdownIt();
+  md.core.ruler.push("preset_id", (state) => {
+    for (const t of state.tokens) {
+      if (t.type === "heading_open") t.attrSet("id", "manual-anchor");
+    }
+    return true;
+  });
+  md.use(headingAnchors);
+  const html = md.render("## Some Title");
+  assert.match(html, /<h2 id="manual-anchor">Some Title<\/h2>/);
+});
+
+test("headingAnchors adds ids to h4 too", () => {
+  const md = new MarkdownIt().use(headingAnchors);
+  assert.match(md.render("#### Deep Note"), /<h4 id="deep-note">Deep Note<\/h4>/);
+});
