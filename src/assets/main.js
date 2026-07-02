@@ -136,3 +136,63 @@ function qb2Base() {
   if (!active || nav.scrollWidth <= nav.clientWidth) return;
   active.scrollIntoView({ inline: "center", block: "nearest" });
 })();
+
+// Chapter sub-nav scroll-spy: highlight the in-page section (h2) currently in
+// view within the active chapter's TOC, and smooth-scroll on click. The list is
+// rendered at build time (layouts/track.njk); this only adds the "you are here"
+// highlight. No-ops on pages without a sub-nav.
+(function () {
+  const subnav = document.querySelector(".chapter-subnav");
+  if (!subnav) return;
+
+  const links = Array.from(subnav.querySelectorAll(".chapter-subnav-item"));
+  const byEl = new Map();   // heading element -> link
+  const targets = [];       // heading elements, in document order
+  links.forEach((a) => {
+    const id = decodeURIComponent((a.getAttribute("href") || "").replace(/^#/, ""));
+    const el = id && document.getElementById(id);
+    if (el) { byEl.set(el, a); targets.push(el); }
+  });
+  if (!targets.length) return;
+
+  function setActive(link) {
+    links.forEach((l) => l.classList.toggle("active", l === link));
+  }
+
+  links.forEach((a) => {
+    a.addEventListener("click", function (e) {
+      const id = decodeURIComponent((a.getAttribute("href") || "").replace(/^#/, ""));
+      const el = document.getElementById(id);
+      if (!el) return;
+      e.preventDefault();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      history.replaceState(null, "", "#" + id);
+      setActive(a);
+    });
+  });
+
+  // Single observer: update the visible set, then pick the winner. Prefer the
+  // topmost heading currently in the trigger band; if none are, fall back to the
+  // last heading that has scrolled above the band.
+  const visible = new Set();
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((en) =>
+        en.isIntersecting ? visible.add(en.target) : visible.delete(en.target));
+      let current = null;
+      for (const el of targets) {
+        if (visible.has(el)) { current = el; break; }
+      }
+      if (!current) {
+        for (const el of targets) {
+          if (el.getBoundingClientRect().top < 100) current = el;
+        }
+      }
+      if (current && byEl.has(current)) setActive(byEl.get(current));
+    },
+    { rootMargin: "-80px 0px -70% 0px", threshold: 0 }
+  );
+  targets.forEach((el) => observer.observe(el));
+
+  setActive(byEl.get(targets[0])); // initial state
+})();
