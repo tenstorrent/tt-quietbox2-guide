@@ -51,7 +51,7 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "curl -s http://localhost:4000/v1/chat/completions \"
+Type `curl -s http://localhost:4000/v1/chat/completions \`
 Sleep 150ms
 Enter
 Type '  -H "Authorization: Bearer $LITELLM_MASTER_KEY" \'

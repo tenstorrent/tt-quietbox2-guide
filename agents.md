@@ -30,7 +30,8 @@ gateway on **port 4000** — no cloud, runs on the QB2's own chips.
   `chat_template_kwargs`), so agents get clean, reliable tool calls (verified 10/10).
 - **Agentic tool calling + thinking don't mix yet.** With thinking ON, Qwen3-32B on the
   current tt-inference-server intermittently drops tool calls and leaks `</think>` into
-  streamed content (tt-inference-server #4386; fix pending tt-metal #48458 landing in a
+  streamed content (tt-inference-server [#4386](https://github.com/tenstorrent/tt-inference-server/issues/4386);
+  fix pending tt-metal [#48458](https://github.com/tenstorrent/tt-metal/issues/48458) landing in a
   prod image). The plain `Qwen3-32B` avoids this because thinking is off — so point
   Claude Code / OpenCode at the **plain** name, not `-thinking`. Only `tool_choice:"auto"`
   works; `none`/`required` are unsupported in the TT vLLM fork.
