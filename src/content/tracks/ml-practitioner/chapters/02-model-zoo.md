@@ -22,6 +22,8 @@ The QB2 supports a focused set of model families, optimized for Blackhole silico
 
 The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with live benchmarks you can run against your own QB2: [tt-vscode-toolkit lessons →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/)
 
+{% chunk "tt-studio-media-gen" %}
+
 ## Picking a Starting Point
 
 **Qwen3-0.6B** is the fastest way to confirm the stack is working. It downloads in seconds, loads in under a minute, and produces real answers. For evaluation, prototyping, and smoke-testing your setup, this is the right choice. Think of it as the "hello world" of this hardware.

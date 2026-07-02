@@ -26,7 +26,7 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Start with **tt-to
 
 {% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips: temps, power, utilization, DRAM bandwidth, live in the terminal.", "cargo install tt-toplike · .deb on Releases" %}
 
-{% card "repo", "https://github.com/tenstorrent/tt-studio", "tt-studio", "Web UI for model serving. Pick a model, click Run, get tokens — it handles the container and compilation.", "tt-studio → localhost:3000" %}
+{% card "repo", "https://github.com/tenstorrent/tt-studio", "tt-studio", "Web UI for model serving. Pick a model, click Run, get tokens — and as of v2.8.0 it can back Claude Code / OpenCode and generate video and images too.", "tt-studio → localhost:3000" %}
 
 {% card "site", "https://docs.tenstorrent.com/tt-local-generator", "tt-local-generator", "GTK4 desktop app for video, image, and art generation on QB2, on top of tt-inference-server.", "tt-local-generator" %}
 
@@ -51,6 +51,8 @@ Pick a thing you want to do and jump straight in.
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/interactive-chat/", "Interactive Chat", "Chat with an LLM directly in Python.", "20 min" %}
 
 {% card "lesson", "/lessons/llama-70b/", "Running Llama-3.3-70B on QB2", "Run the biggest model QB2 supports, across all four chips.", "45 min" %}
+
+{% card "lesson", "/ml-practitioner/03-vllm-on-qb2/", "Claude Code on your QB2", "New in tt-studio v2.8.0 — point Claude Code or OpenCode at a model running on your own chips. No cloud, no per-token bill.", "coding agents" %}
 
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/qb2-local-agents/", "Local AI Agents on QB2", "Run AI agents locally on a 70B model.", "60 min" %}
 
