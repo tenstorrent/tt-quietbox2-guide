@@ -49,3 +49,9 @@ test("headingAnchors adds ids to h4 too", () => {
   const md = new MarkdownIt().use(headingAnchors);
   assert.match(md.render("#### Deep Note"), /<h4 id="deep-note">Deep Note<\/h4>/);
 });
+
+test("extractH2Headings ignores a data-id attribute (matches the real id)", () => {
+  assert.deepEqual(extractH2Headings('<h2 data-id="wrong" id="right">Title</h2>'), [
+    { id: "right", text: "Title" },
+  ]);
+});
