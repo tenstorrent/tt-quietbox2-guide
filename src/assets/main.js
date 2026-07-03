@@ -149,7 +149,9 @@ function qb2Base() {
   const byEl = new Map();   // heading element -> link
   const targets = [];       // heading elements, in document order
   links.forEach((a) => {
-    const id = decodeURIComponent((a.getAttribute("href") || "").replace(/^#/, ""));
+    // Use the href fragment verbatim (it holds the raw id emitted by the build);
+    // don't decode — decoding could throw or alter ids containing % sequences.
+    const id = (a.getAttribute("href") || "").replace(/^#/, "");
     const el = id && document.getElementById(id);
     if (el) { byEl.set(el, a); targets.push(el); }
   });
@@ -161,12 +163,12 @@ function qb2Base() {
 
   links.forEach((a) => {
     a.addEventListener("click", function (e) {
-      const id = decodeURIComponent((a.getAttribute("href") || "").replace(/^#/, ""));
-      const el = document.getElementById(id);
+      const href = a.getAttribute("href") || "";
+      const el = document.getElementById(href.replace(/^#/, ""));
       if (!el) return;
       e.preventDefault();
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-      history.replaceState(null, "", "#" + id);
+      history.replaceState(null, "", href); // reuse the fragment verbatim
       setActive(a);
     });
   });

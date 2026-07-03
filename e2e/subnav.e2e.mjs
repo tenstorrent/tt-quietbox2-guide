@@ -1,6 +1,6 @@
 // Integration check for the chapter sub-nav. Requires the dev server running:
 //   npm run serve      (serves at http://localhost:8080/tt-quietbox2-guide/)
-// then: node test/subnav.e2e.mjs
+// then: npm run test:e2e   (or: node e2e/subnav.e2e.mjs)
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE || "http://localhost:8080/tt-quietbox2-guide";
@@ -18,9 +18,9 @@ try {
   console.log(`OK: ${items.length} sub-nav items match ${h2s.length} H2s`);
 
   await items[2].click();
-  await page.waitForTimeout(700);
+  // Poll for the hash instead of a fixed wait — smooth-scroll timing varies.
+  await page.waitForFunction(() => location.hash !== "", null, { timeout: 5000 });
   const hash = await page.evaluate(() => location.hash);
-  if (!hash) throw new Error("clicking an item did not set location.hash");
   console.log("OK: click set hash", hash);
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
