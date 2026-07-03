@@ -2,6 +2,7 @@ const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
 const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
 const markdownIt = require("markdown-it");
 const markdownItContainer = require("markdown-it-container");
+const { headingAnchors, extractH2Headings } = require("./lib/headings.js");
 
 module.exports = function (eleventyConfig) {
   // ---------------------------------------------------------------------------
@@ -41,7 +42,10 @@ module.exports = function (eleventyConfig) {
       return `</div>\n`;
     },
   });
+  md.use(headingAnchors);
   eleventyConfig.setLibrary("md", md);
+  // TOC data for the active chapter's left-nav sub-nav (see layouts/track.njk).
+  eleventyConfig.addFilter("chapterHeadings", extractH2Headings);
 
   // ---------------------------------------------------------------------------
   // Shortcodes

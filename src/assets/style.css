@@ -244,6 +244,33 @@ blockquote {
 }
 .chapter-nav-item:hover { color: var(--text); background: var(--bg1); }
 .chapter-nav-item.active { color: var(--persona-color, var(--teal)); border-left-color: var(--persona-color, var(--teal)); background: rgba(79,209,197,0.06); font-weight: 600; }
+
+/* In-page section TOC under the active chapter (built in layouts/track.njk). */
+.chapter-subnav {
+  list-style: none;
+  margin: 2px 0 8px 30px;
+  padding-left: 12px;
+  border-left: 1px solid var(--bg2);
+}
+.chapter-subnav-item {
+  display: block;
+  padding: 3px 10px;
+  margin-left: -13px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+}
+.chapter-subnav-item:hover { color: var(--text); }
+.chapter-subnav-item.active {
+  color: var(--persona-color, var(--teal));
+  border-left-color: var(--persona-color, var(--teal));
+  font-weight: 600;
+}
+/* Anchored headings must clear the sticky top bar. */
+h2, h3, h4 { scroll-margin-top: 80px; }
+
 .track-content { flex: 1; min-width: 0; padding: 40px 40px 80px; max-width: 920px; }
 
 /* ── Mobile: collapse the chapter sidebar into a horizontal strip ─────────────
@@ -285,6 +312,8 @@ blockquote {
   }
 
   .track-content { padding: 28px 20px 64px; max-width: none; }
+
+  .chapter-subnav { display: none; }
 }
 
 /* ── Responsive top nav ───────────────────────────────────────────────────────
