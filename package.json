@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Interactive guide to the Tenstorrent Quietbox 2",
   "scripts": {
-    "test": "node --test test/*.test.js",
-    "test:e2e": "node test/subnav.e2e.mjs",
+    "test": "node --test",
+    "test:e2e": "node e2e/subnav.e2e.mjs",
     "build": "eleventy",
     "serve": "eleventy --serve --incremental",
     "pdf": "node scripts/make-pdf.mjs",
