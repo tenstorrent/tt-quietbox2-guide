@@ -16,8 +16,8 @@ Running a model is table stakes. Knowing how to interpret what the hardware is d
 ```bash
 # Install from the Tenstorrent apt PPA (set up by tt-installer)
 sudo apt update && sudo apt install tt-toplike
-# No PPA? .deb on https://github.com/tenstorrent/tt-toplike/releases
-# Or via cargo: cargo install tt-toplike
+# No PPA? Grab the .deb from https://github.com/tenstorrent/tt-toplike/releases
+# and install it with `sudo dpkg -i tt-toplike_*.deb` — or via cargo: cargo install tt-toplike
 
 # Launch in arcade mode — real-time chip visualization
 tt-toplike --mode arcade

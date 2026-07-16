@@ -34,8 +34,11 @@ Install tt-toplike if it isn't already present:
 ```bash
 # tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
 sudo apt update && sudo apt install tt-toplike
-# No PPA on this machine? Grab the .deb from
-# https://github.com/tenstorrent/tt-toplike/releases — or: cargo install tt-toplike
+
+# No PPA on this machine? Install the .deb from GitHub releases instead:
+# https://github.com/tenstorrent/tt-toplike/releases
+sudo dpkg -i tt-toplike_*.deb
+# Or: cargo install tt-toplike
 ```
 
 ## Demo 2: Flow Mode
