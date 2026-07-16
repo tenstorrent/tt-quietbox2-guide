@@ -82,7 +82,7 @@ For something richer than the built-in TUI, **tt-toplike** renders the same tele
 
 <div class="rcard-grid">
 
-{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips, as live ASCII art. More on it in What Comes Next.", "cargo install tt-toplike · .deb on Releases" %}
+{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips, as live ASCII art. More on it in What Comes Next.", "sudo apt install tt-toplike" %}
 
 </div>
 

@@ -24,7 +24,7 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Start with **tt-to
 
 <div class="rcard-grid">
 
-{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips: temps, power, utilization, DRAM bandwidth, live in the terminal.", "cargo install tt-toplike · .deb on Releases" %}
+{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips: temps, power, utilization, DRAM bandwidth, live in the terminal.", "sudo apt install tt-toplike" %}
 
 {% card "repo", "https://github.com/tenstorrent/tt-studio", "tt-studio", "Web UI for model serving. Pick a model, click Run, get tokens — and as of v2.8.0 it can back Claude Code / OpenCode and generate video and images too.", "tt-studio → localhost:3000" %}
 

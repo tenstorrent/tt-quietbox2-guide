@@ -210,10 +210,13 @@ tt-smi -s   # should now show four devices
 tt-toplike --mode normal
 ```
 
-If `tt-smi -s` works but tt-toplike still fails, reinstall it from GitHub releases or via cargo:
+If `tt-smi -s` works but `tt-toplike` still fails, reinstall it:
 
 ```bash
-# tt-toplike is not in the Tenstorrent apt PPA — reinstall from:
+# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
+sudo apt update && sudo apt install --reinstall tt-toplike
+
+# No PPA on this machine? Install the .deb from GitHub releases instead:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike --force
@@ -230,7 +233,7 @@ The `tenstorrent` kernel module is a loadable driver. If it was loaded for kerne
 
 <div class="rcard-grid">
 
-{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "The TUI visualizer — when it panics at startup, the chips are almost always invisible to the driver. Reinstall from Releases or via cargo.", "cargo install tt-toplike --force" %}
+{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "The TUI visualizer — when it panics at startup, the chips are almost always invisible to the driver. Reinstall via the Tenstorrent apt PPA.", "sudo apt install --reinstall tt-toplike" %}
 
 {% card "repo", "https://github.com/tenstorrent/tt-metal", "tt-metal", "The core compute stack and driver source — check here for the currently supported kernel range when chips go missing after an upgrade.", "" %}
 

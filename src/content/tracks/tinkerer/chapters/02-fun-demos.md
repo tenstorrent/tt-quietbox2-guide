@@ -32,7 +32,10 @@ The demo lands harder when the chips are busy. Start a model in one terminal, th
 Install tt-toplike if it isn't already present:
 
 ```bash
-# tt-toplike is not in the Tenstorrent apt PPA — install from GitHub releases or via cargo:
+# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
+sudo apt update && sudo apt install tt-toplike
+
+# No PPA on this machine? Install the .deb from GitHub releases instead:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike
