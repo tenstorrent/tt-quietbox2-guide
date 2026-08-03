@@ -39,12 +39,23 @@ The fastest path to actually generating text is vLLM. It handles model loading, 
 ```bash
 source ~/.tenstorrent-venv/bin/activate
 
-# Make sure the model is downloaded first (see above)
-# Then start the server:
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Qwen3-0.6B \
+export TT_METAL_ARCH_NAME=blackhole
+export MESH_DEVICE=P300              # one P300 card; P300x2 uses all four chips
+export VLLM_RPC_TIMEOUT=900000       # first compile exceeds the 10s default
+
+# HF_MODEL must match the --model path: tt-metal uses it as the checkpoint directory
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+
+vllm serve ~/models/Llama-3.1-8B-Instruct \
+  --served-model-name meta-llama/Llama-3.1-8B-Instruct \
   --port 8000
 ```
+
+:::callout type="tip"
+Llama-3.1-8B is the safer first model here. Very small models like Qwen3-0.6B will load — the
+plugin maps them by architecture — but they have no tuned implementation in tt-metal's
+`tt_transformers`, so output quality is not something to judge the hardware by.
+:::
 
 You'll see initialization messages as the model loads. This takes a minute or two on first run — the model weights are being compiled for the Blackhole architecture. Subsequent runs are faster.
 
@@ -54,7 +65,7 @@ Once you see `INFO: Application startup complete`, the server is ready. In a new
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Qwen3-0.6B",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
     "messages": [{"role": "user", "content": "What makes the Tenstorrent Blackhole chip different?"}]
   }' | python3 -m json.tool
 ```

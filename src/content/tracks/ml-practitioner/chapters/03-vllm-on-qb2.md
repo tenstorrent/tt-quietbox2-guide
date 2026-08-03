@@ -24,24 +24,46 @@ Both paths produce the same OpenAI-compatible API on port 8000. Which you use de
 ## Path 1: Direct vLLM
 
 ```bash
-# Activate the main tenstorrent venv (contains vLLM)
+# Activate the main tenstorrent venv
 source ~/.tenstorrent-venv/bin/activate
 
-# Set the Blackhole architecture flag
+# Blackhole architecture flag
 export TT_METAL_ARCH_NAME=blackhole
 
-# Start the server
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Qwen3-0.6B \
+# Mesh shape. This — not --tensor-parallel-size — is how you choose chips.
+# P300 = one card (2 chips). P300x2 = all four chips of a QB2.
+export MESH_DEVICE=P300
+
+# Model load and first compile far exceed vLLM's default RPC deadline (10s)
+export VLLM_RPC_TIMEOUT=900000
+
+# HF_MODEL is required when --model is a local path: tt-metal's tt_transformers
+# uses it as the checkpoint directory, not just a name.
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+
+vllm serve ~/models/Llama-3.1-8B-Instruct \
+  --served-model-name meta-llama/Llama-3.1-8B-Instruct \
   --port 8000
 ```
+
+:::callout type="warn"
+**If this is a fresh QB2, check what vLLM you actually have first.** Tenstorrent vLLM support
+moved from a patched fork to an out-of-tree **platform plugin**
+([tenstorrent/vllm-tt-plugin](https://github.com/tenstorrent/vllm-tt-plugin)), which runs against
+upstream vLLM. A box still carrying the old fork will fail in confusing ways. The
+[vLLM Production lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/vllm-production/)
+has a diagnostic that reports which one you have and how to transition.
+
+Startup logs `Platform plugin tt is activated` when the plugin is working. If you don't see
+that line, vLLM is running without Tenstorrent support.
+:::
 
 On first run: the model weights get compiled into Blackhole-optimized op graphs. This takes 3–5 minutes. Subsequent starts are fast — the compiled artifacts are cached.
 
 Watch the logs. When you see a line containing `Application startup complete`, the server is accepting requests.
 
 :::callout type="tip"
-The `TT_METAL_ARCH_NAME=blackhole` environment variable is required for Blackhole hardware. The vLLM TT fork needs it to select the correct device backend. If you see errors about unknown architecture or device initialization failures, this is the first thing to check.
+The `TT_METAL_ARCH_NAME=blackhole` environment variable is required for Blackhole hardware — the TT platform plugin needs it to select the correct device backend. If you see errors about unknown architecture or device initialization failures, this is the first thing to check.
 :::
 
 ## Path 2: tt-inference-server
@@ -52,14 +74,20 @@ The tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. 
 # Deploy Llama-3.1-8B-Instruct with one command
 python3 ~/.local/lib/tt-inference-server/run.py \
   --model Llama-3.1-8B-Instruct \
-  --tt-device p100
+  --tt-device p300x2 \
+  --workflow server --docker-server
 
-# The p100 flag targets QB2 P300c hardware
+# p300x2 = a QB2: two P300 cards, four Blackhole chips
 # On first run: Docker pull + weight compilation (~5 min)
 # Then: port 8000 is ready
 ```
 
-The `--tt-device p100` flag tells tt-inference-server you're running on QB2/P300c hardware. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
+`--tt-device p300x2` is what identifies a QB2 — two P300 cards, four chips. Use `p300` for a
+single card. **`p100` is a single Blackhole chip**, so it under-uses a QB2 rather than failing
+loudly. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
+
+On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
+derives them per model from its spec, and on a QB2 the correct value is model-dependent.
 
 ## Verifying the Server
 
@@ -137,7 +165,7 @@ This is one of the QB2's practical advantages in production. vLLM's continuous b
 For single-user interactive work, this doesn't matter. For serving a team, an API endpoint, or anything with concurrent load, it means the throughput numbers scale with parallelism rather than collapsing under it. A second concurrent user adds very little overhead up to the throughput ceiling of the chip.
 
 :::callout type="deep-dive"
-Continuous batching is fundamentally different from static batching. Static batching waits to collect N requests before dispatching — it adds latency to achieve throughput. Continuous batching inserts new decode sequences into the in-flight batch as slots open up, achieving throughput without adding per-request waiting time. vLLM pioneered this for transformer inference. The Tenstorrent vLLM fork implements it on Blackhole, where the KV-cache management happens in Tensix SRAM and DRAM across the chip grid.
+Continuous batching is fundamentally different from static batching. Static batching waits to collect N requests before dispatching — it adds latency to achieve throughput. Continuous batching inserts new decode sequences into the in-flight batch as slots open up, achieving throughput without adding per-request waiting time. vLLM pioneered this for transformer inference. The Tenstorrent platform plugin carries it onto Blackhole, where KV-cache management happens in L1 and DRAM across the chip grid.
 :::
 
 ## Port Map
@@ -173,23 +201,50 @@ Don't expose port 8000 directly to the internet without authentication. The Open
 
 ## Multi-Chip: Using All Four Cards
 
-For 70B models, add the `--tensor-parallel-size 4` flag to use all four Blackhole chips:
+:::callout type="warn"
+**`--tensor-parallel-size` does not work here.** The Tenstorrent platform rejects both tensor
+parallel and pipeline parallel outright, before anything reaches the device. Multi-chip is
+selected by the **mesh shape** instead. If you have seen `--tensor-parallel-size 4` in older
+QB2 notes — including earlier versions of this page — that is why it failed.
+:::
+
+For 70B models, set `MESH_DEVICE=P300x2` to put all four Blackhole chips in one mesh:
 
 ```bash
-# Direct vLLM, 4-chip tensor parallel
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Llama-3.1-70B-Instruct \
-  --tensor-parallel-size 4 \
+# Direct vLLM across all four chips
+export TT_METAL_ARCH_NAME=blackhole
+export MESH_DEVICE=P300x2            # (1,4) — two P300 cards, four chips
+export VLLM_RPC_TIMEOUT=900000
+export HF_MODEL=~/models/Llama-3.1-70B-Instruct
+
+vllm serve ~/models/Llama-3.1-70B-Instruct \
+  --served-model-name meta-llama/Llama-3.1-70B-Instruct \
   --port 8000
 
-# Or with tt-inference-server:
+# Or with tt-inference-server, which picks the mesh for you
 python3 ~/.local/lib/tt-inference-server/run.py \
   --model Llama-3.1-70B-Instruct \
-  --tt-device p100 \
-  --num_chips 4
+  --tt-device p300x2 \
+  --workflow server --docker-server
 ```
 
-The model weights distribute across all four chips' DRAM. The KV-cache splits across the chips' Tensix cores. From the client's perspective, the API is identical — same URL, same request format.
+The model weights distribute across all four chips' DRAM, and the KV cache is allocated per
+chip across the mesh. From the client's perspective the API is identical — same URL, same
+request format.
+
+The mesh names the plugin accepts on Blackhole are `P100` and `P150` (single chip), `P300` and
+`P150x2` (two chips), `P150x4` and `P300x2` (four chips), and `P150x8` (eight). Spelling
+matters: it is `P300x2` with a lowercase `x`.
+
+:::callout type="tip"
+**Status on our hardware.** The four-chip serving path brings up correctly — the plugin selects
+the TT platform, opens all four chips, loads weights and allocates the KV cache on the mesh, and
+the OpenAI-compatible endpoints respond. We have **not** yet signed off on output quality: in our
+testing generation degenerated into repetition, and we reproduced that across two vLLM versions,
+three models, and both one- and four-chip meshes — so it is not specific to the mesh. Our current
+suspicion is host firmware and driver versions running ahead of the tested pairings. Treat
+four-chip throughput numbers as unverified until that is resolved.
+:::
 
 <figure class="video-demo">
 <img src="/assets/video/09-vllm-demo.gif" alt="Activating the TTNN venv, checking hardware with tt-smi, vLLM serve command on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">

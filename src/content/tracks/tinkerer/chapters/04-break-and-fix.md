@@ -135,17 +135,18 @@ huggingface-cli download <model-id> --local-dir ~/models/<model-name>
 **Fix:**
 
 ```bash
-# Verify you're using all four chips for large models
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Llama-3.1-70B-Instruct \
-  --num_gpus 4 \           # this is required for 70B
-  --port 8000
+# Chips are chosen by the mesh shape — there is no --num_gpus or
+# --tensor-parallel-size on this platform.
 
-# For a smaller model that fits on fewer chips
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Qwen3-0.6B \
-  --num_gpus 1 \
-  --port 8000
+# All four chips, needed for a 70B
+export MESH_DEVICE=P300x2
+export HF_MODEL=~/models/Llama-3.1-70B-Instruct
+vllm serve ~/models/Llama-3.1-70B-Instruct --port 8000
+
+# A single card (two chips) for something smaller
+export MESH_DEVICE=P300
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+vllm serve ~/models/Llama-3.1-8B-Instruct --port 8000
 ```
 
 Also check that no other process is holding chip memory:
