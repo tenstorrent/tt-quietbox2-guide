@@ -81,7 +81,13 @@ The same command also runs these weight variants:
 </div>
 
 :::callout type="tip"
-The official tt-inference-server documentation for this model lists the target hardware as "BH 4xP150" — that's the same Blackhole chip count and DRAM configuration as your QB2 P300c cards. The device flag is `p150x4`.
+tt-inference-server used to list only "BH 4xP150" for this model, which is why older notes (and
+earlier versions of this page) used `--tt-device p150x4`. There is now a **dedicated P300X2
+spec**, so use `--tt-device p300x2` on a QuietBox 2.
+
+Both are four Blackhole chips, but they are different machines and different specs: `p150x4` is
+four P150 cards laid out as a 1x4 mesh, `p300x2` is two P300 cards as a 2x2. Each spec pins its
+own tt-metal and vLLM commits, so picking the wrong one gets you the wrong container too.
 :::
 
 ---
@@ -155,16 +161,33 @@ docker run \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
   --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
-  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
+  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
   --model Llama-3.3-70B-Instruct \
-  --tt-device p150x4
+  --tt-device p300x2
 ```
 
-Or via the `run.py` helper if you cloned the repo:
+`--tt-device p300x2` is what identifies a QuietBox 2 — two P300 cards, four Blackhole chips.
+Do not use `p150x4`: that is four *P150* cards, a different machine.
+
+The image tag encodes `{spec version}-{tt-metal commit}-{vLLM commit}`, and each model pins its
+own combination — so do not copy a tag between models or guess at it. Read the current one from
+tt-inference-server's generated page for your exact model and device, or let `run.py` pick it:
 
 ```bash
-cd ~/code/tt-inference-server
-python3 run.py --model Llama-3.3-70B-Instruct --device p150x4 --workflow server --docker-server
+python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 \
+  --workflow server --docker-server --print-docker-cmd
+```
+
+`--print-docker-cmd` prints the command it would run, including the image tag, without starting
+anything.
+
+Or run it for real via the `run.py` helper, from wherever tt-inference-server is installed
+(`~/.local/lib/tt-inference-server` on a stock QB2):
+
+```bash
+cd ~/.local/lib/tt-inference-server
+python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 \
+  --workflow server --docker-server
 ```
 
 <div class="warning-box">
@@ -328,10 +351,15 @@ docker run \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
   --volume volume_id_DeepSeek-R1-Distill-Llama-70B:/home/container_app_user/cache_root \
-  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
+  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
   --model DeepSeek-R1-Distill-Llama-70B \
-  --tt-device p150x4
+  --tt-device p300x2
 ```
+
+This model has no generated model-support page yet even though its P300X2 spec exists, so if
+that tag has moved on, get the current one from
+`run.py --model DeepSeek-R1-Distill-Llama-70B --tt-device p300x2 --workflow server --docker-server --print-docker-cmd`
+rather than editing the digits by hand.
 
 The HuggingFace model ID is `deepseek-ai/DeepSeek-R1-Distill-Llama-70B` — no gated license, so no need to request access. You do still need a HF token.
 
@@ -402,7 +430,7 @@ sudo modprobe tenstorrent
 
 **Server starts but requests return very slowly:**
 
-Confirm all four chips are active during inference using `tt-smi -s`. If only 1–2 show elevated aiclk, tensor parallelism isn't using all cards. Verify the `--tt-device p150x4` flag is present in your docker command.
+Confirm all four chips are active during inference using `tt-smi -s`. If only 1–2 show elevated aiclk, the mesh is smaller than you think — verify `--tt-device p300x2` is present in your docker command. (Chips are selected by mesh shape here; there is no tensor-parallel setting to check, as the Tenstorrent platform rejects tensor and pipeline parallelism.)
 
 **Out of disk space during Docker volume creation:**
 

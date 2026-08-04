@@ -89,9 +89,19 @@ docker run \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
   --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
-  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
+  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
   --model Llama-3.3-70B-Instruct \
-  --tt-device p150x4
+  --tt-device p300x2
+```
+
+`p300x2` is a QuietBox 2 — two P300 cards, four Blackhole chips. Older notes said `p150x4`,
+which is four *P150* cards and a different spec with different pinned commits. If that image tag
+has moved on, add `--print-docker-cmd` to the `run.py` equivalent to read the current one:
+
+```bash
+cd ~/.local/lib/tt-inference-server
+python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 \
+  --workflow server --docker-server --print-docker-cmd
 ```
 
 Wait for `Application startup complete` — first run downloads 140 GB of weights, so plan ahead. Then ask it something that requires reasoning:

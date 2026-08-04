@@ -58,8 +58,21 @@ Use this to run a model as a server with an OpenAI-compatible HTTP API. vLLM is 
 
 ```bash
 source ~/.tenstorrent-venv/bin/activate
-vllm serve ~/models/Qwen3-0.6B --port 8000
+
+export TT_METAL_ARCH_NAME=blackhole
+export MESH_DEVICE=P300              # one P300 card; P300x2 uses all four chips
+export VLLM_RPC_TIMEOUT=900000       # the 10s default is far too short for a first compile
+
+# HF_MODEL must match the --model path. tt-metal's tt_transformers reads it as the
+# checkpoint directory, so serving a local path without it fails outright.
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+
+vllm serve ~/models/Llama-3.1-8B-Instruct --port 8000
 ```
+
+You'll know the Tenstorrent plugin took over when the startup log says
+`Platform plugin tt is activated`. Without that line, vLLM is running but cannot see your
+hardware — see the [vLLM on QB2 chapter](/ml-practitioner/03-vllm-on-qb2/).
 
 Or use `tt-studio` for a no-code UI that handles vLLM startup automatically.
 
