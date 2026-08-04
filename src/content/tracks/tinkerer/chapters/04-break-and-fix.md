@@ -135,17 +135,18 @@ huggingface-cli download <model-id> --local-dir ~/models/<model-name>
 **Fix:**
 
 ```bash
-# Verify you're using all four chips for large models
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Llama-3.1-70B-Instruct \
-  --num_gpus 4 \           # this is required for 70B
-  --port 8000
+# Chips are chosen by the mesh shape — there is no --num_gpus or
+# --tensor-parallel-size on this platform.
 
-# For a smaller model that fits on fewer chips
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Qwen3-0.6B \
-  --num_gpus 1 \
-  --port 8000
+# All four chips, needed for a 70B
+export MESH_DEVICE=P300x2
+export HF_MODEL=~/models/Llama-3.1-70B-Instruct
+vllm serve ~/models/Llama-3.1-70B-Instruct --port 8000
+
+# A single card (two chips) for something smaller
+export MESH_DEVICE=P300
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+vllm serve ~/models/Llama-3.1-8B-Instruct --port 8000
 ```
 
 Also check that no other process is holding chip memory:
@@ -162,8 +163,6 @@ for chip in d.get('device_info', []):
 ### 6. Docker or tt-inference-server Won't Start
 
 **Symptom:** `docker ps` hangs or errors; tt-inference-server container fails to launch.
-
-> tt-installer v3.2.0+ installs Docker by default. If you chose Podman instead (`--install-container-runtime=podman`), substitute `podman` for `docker` in the commands below.
 
 **Fix:**
 
@@ -210,13 +209,10 @@ tt-smi -s   # should now show four devices
 tt-toplike --mode normal
 ```
 
-If `tt-smi -s` works but `tt-toplike` still fails, reinstall it:
+If `tt-smi -s` works but tt-toplike still fails, reinstall it from GitHub releases or via cargo:
 
 ```bash
-# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
-sudo apt update && sudo apt install --reinstall tt-toplike
-
-# No PPA on this machine? Install the .deb from GitHub releases instead:
+# tt-toplike is not in the Tenstorrent apt PPA — reinstall from:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike --force
@@ -225,19 +221,6 @@ sudo dpkg -i tt-toplike_*.deb
 :::callout type="deep-dive"
 The `tenstorrent` kernel module is a loadable driver. If it was loaded for kernel `6.x.y` and you're now on `6.x.z`, it may need to be rebuilt or reinstalled. `dmesg | grep tenstorrent` is your friend here — it shows exactly why the module failed to load.
 :::
-
-<figure class="video-demo">
-<img src="/assets/img/tt-toplike-arcade.png" alt="tt-toplike arcade mode — the four Blackhole chips under load" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike arcade mode — once the driver is healthy and tt-smi sees four devices, the chips come back to life</figcaption>
-</figure>
-
-<div class="rcard-grid">
-
-{% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "The TUI visualizer — when it panics at startup, the chips are almost always invisible to the driver. Reinstall via the Tenstorrent apt PPA.", "sudo apt install --reinstall tt-toplike" %}
-
-{% card "repo", "https://github.com/tenstorrent/tt-metal", "tt-metal", "The core compute stack and driver source — check here for the currently supported kernel range when chips go missing after an upgrade.", "" %}
-
-</div>
 
 ---
 

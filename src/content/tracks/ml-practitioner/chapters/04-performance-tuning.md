@@ -14,10 +14,10 @@ Running a model is table stakes. Knowing how to interpret what the hardware is d
 `tt-toplike` is htop for your Blackhole chips. Install it once, run it alongside inference, watch what the hardware does.
 
 ```bash
-# Install from the Tenstorrent apt PPA (set up by tt-installer)
-sudo apt update && sudo apt install tt-toplike
-# No PPA? Grab the .deb from https://github.com/tenstorrent/tt-toplike/releases
-# and install it with `sudo dpkg -i tt-toplike_*.deb` — or via cargo: cargo install tt-toplike
+# Install from GitHub releases (.deb) — not in the Tenstorrent apt PPA
+# https://github.com/tenstorrent/tt-toplike/releases
+sudo dpkg -i tt-toplike_*.deb
+# Or via cargo: cargo install tt-toplike
 
 # Launch in arcade mode — real-time chip visualization
 tt-toplike --mode arcade
@@ -102,8 +102,11 @@ Larger batches improve throughput at the cost of time-to-first-token. In vLLM's 
 You can influence this with `--max-num-seqs` (maximum concurrent sequences) when starting the server:
 
 ```bash
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Llama-3.1-8B-Instruct \
+export MESH_DEVICE=P300              # P300x2 for all four chips
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+export VLLM_RPC_TIMEOUT=900000
+
+vllm serve ~/models/Llama-3.1-8B-Instruct \
   --max-num-seqs 16 \
   --port 8000
 ```
@@ -125,11 +128,20 @@ import ttnn
 
 In vLLM, performance optimization happens at the model-loading stage. The compilation step at first run is when the kernels are tuned.
 
-## Tensor Parallelism and Attention Heads
+## Scaling Across Chips
 
-When you serve a model across all four chips (the `p300x2` device), its attention heads split evenly across them. Llama-3.1-70B has 64 attention heads — 16 per chip with 4-way tensor parallelism. The chips coordinate activations via their Ethernet cores (the left and right column on the chip grid) directly, without routing through the CPU.
+Chips are added by widening the **mesh**, not with `--tensor-parallel-size` — the Tenstorrent
+platform rejects tensor and pipeline parallel outright. On a QB2 that means
+`MESH_DEVICE=P300` for one card (two chips) or `MESH_DEVICE=P300x2` for all four.
 
-This matters for scaling intuition: tensor parallel across 4 chips doesn't give you 4x throughput, because the chips need to communicate partial activations at each layer boundary. What you gain is 4x the memory pool (fitting a model that wouldn't fit on one chip) and meaningful throughput improvement from the compute scale-out.
+Within the mesh, a model's weights and attention heads distribute across the chips, and the
+chips coordinate activations over their Ethernet cores directly, without routing through the
+CPU.
+
+This matters for scaling intuition: four chips does not mean 4x throughput, because partial
+activations have to cross chip boundaries at each layer. What you reliably gain is 4x the
+memory pool — fitting a model that would not fit on one chip — plus a real but sublinear
+throughput improvement from the compute scale-out.
 
 :::callout type="deep-dive"
 The [Explore TT-Metalium lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/) in tt-vscode-toolkit covers how tensor parallel communication is implemented at the kernel level — specifically how AllReduce operations route through the Ethernet cores rather than through the host. Worth reading once you've got inference running smoothly and want to understand the mechanics under vLLM.

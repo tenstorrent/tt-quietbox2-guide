@@ -32,10 +32,7 @@ The demo lands harder when the chips are busy. Start a model in one terminal, th
 Install tt-toplike if it isn't already present:
 
 ```bash
-# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
-sudo apt update && sudo apt install tt-toplike
-
-# No PPA on this machine? Install the .deb from GitHub releases instead:
+# tt-toplike is not in the Tenstorrent apt PPA — install from GitHub releases or via cargo:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike
@@ -54,11 +51,6 @@ Particle streams trace the NOC — Tenstorrent's Network on Chip. During inferen
 Watch what happens when you start or stop inference. The particle density changes. The path patterns change. You're watching the chip's actual communication graph in motion.
 
 This one tends to generate the most questions. "What are those things?" is how good conversations start.
-
-<figure class="video-demo">
-<img src="/assets/video/tt-toplike-memory-flow.gif" alt="tt-toplike memory-flow mode — DRAM channels animated across the four Blackhole chips" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike flow mode — particle streams trace data moving between DRAM and compute cores in real time</figcaption>
-</figure>
 
 ## Demo 3: AI Video Generation — Live Generative Art
 
@@ -83,14 +75,6 @@ For a polished installation setup — fullscreen display, auto-start on login, c
 The AnimateDiff integration in tt-local-generator also runs natively on QB2. Shorter clips, different aesthetic, same local-only principle. See [tt-animatediff](https://github.com/tenstorrent/tt-animatediff) for the standalone library.
 :::
 
-<div class="rcard-grid">
-
-{% card "repo", "https://github.com/tenstorrent/tt-local-generator", "tt-local-generator", "GTK4 desktop app for fully local video generation — the Wan2.2 text-to-video model produces 480×832 clips across all four Blackhole chips, no API key.", "dpkg -i tt-local-generator_*.deb" %}
-
-{% card "repo", "https://github.com/tenstorrent/tt-animatediff", "tt-animatediff", "Standalone AnimateDiff library that runs natively on QB2 — shorter clips, different aesthetic, same local-only principle.", "" %}
-
-</div>
-
 ## Demo 4: Local 70B with No Internet Required
 
 Four chips. A language model with 70 billion parameters. No API key. No latency spike from a datacenter on another continent.
@@ -105,9 +89,21 @@ docker run \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
   --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
-  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.10.1-555f240-22be241 \
+  ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
   --model Llama-3.3-70B-Instruct \
   --tt-device p300x2
+```
+
+`p300x2` is the spec matching a QuietBox 2 — two P300 cards, four Blackhole chips. Older notes
+said `p150x4`, which addresses the same four chips with a less card-aware fabric description.
+Both can load a model; they are separate spec entries with different pinned commits, and
+`p300x2` is the validated one for this model. If that image tag
+has moved on, add `--print-docker-cmd` to the `run.py` equivalent to read the current one:
+
+```bash
+cd ~/.local/lib/tt-inference-server
+python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 \
+  --workflow server --docker-server --print-docker-cmd
 ```
 
 Wait for `Application startup complete` — first run downloads 140 GB of weights, so plan ahead. Then ask it something that requires reasoning:

@@ -24,13 +24,13 @@ On a QB2 from Tenstorrent, the stack is pre-installed. Here's your map:
 |-----------|----------|----------------|
 | TTNN venv | `~/tt-metal/python_env/` | Direct API work, TTNN operations, cookbook examples |
 | vLLM | `vllm` in `~/.tenstorrent-venv/` | Serving models via HTTP, OpenAI-compatible API |
-| Forge / TT-XLA | pip wheel in a Python 3.12 venv *(install it yourself)* | Compile PyTorch/JAX models — **not part of a default install**, see [TT-Forge](/ml-practitioner/06-tt-forge/) |
+| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` | Compile PyTorch/JAX models via container |
 | `tt-smi` | `~/.local/bin/tt-smi` (on PATH) | Hardware monitoring, always available |
 | Model storage | `~/models/` (convention) | Where you put downloaded model weights |
 | Scratch space | `~/tt-scratchpad/` | Working directory for scripts and experiments |
 
 :::callout type="tip"
-**Installing on a fresh Ubuntu machine?** A default `tt-installer` run gets you the driver, the Python tools (`tt-smi` / `tt-flash` in `~/.tenstorrent-venv` or `~/.local/bin/`), and the **tt-metalium** container with its `tt-metalium` wrapper. It does **not** install Forge — the TT-Forge docs have you install that as a pip wheel (`pip install pjrt-plugin-tt …` then `tt-forge-install`). See [TT-Forge](/ml-practitioner/06-tt-forge/) for the full walkthrough. The paths here reflect a configured QB2; a fresh install may differ slightly.
+**Installing on a fresh Ubuntu machine?** `tt-installer` today uses Docker containers for Metalium and Forge — it creates `~/.tenstorrent-venv` with Python tools and installs `tt-metalium` / `tt-forge` wrapper scripts in `~/.local/bin/`. The paths here reflect a configured QB2; a fresh install may differ slightly.
 :::
 
 Create the scratch directory if it doesn't exist yet:
@@ -58,22 +58,34 @@ Use this to run a model as a server with an OpenAI-compatible HTTP API. vLLM is 
 
 ```bash
 source ~/.tenstorrent-venv/bin/activate
-vllm serve ~/models/Qwen3-0.6B --port 8000
+
+export TT_METAL_ARCH_NAME=blackhole
+export MESH_DEVICE=P300              # one P300 card; P300x2 uses all four chips
+export VLLM_RPC_TIMEOUT=900000       # the 10s default is far too short for a first compile
+
+# HF_MODEL must match the --model path. tt-metal's tt_transformers reads it as the
+# checkpoint directory, so serving a local path without it fails outright.
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+
+vllm serve ~/models/Llama-3.1-8B-Instruct --port 8000
 ```
+
+Watch the startup log for a line saying the `tt` platform has been selected. Without it,
+vLLM is running but cannot see your hardware — see the
+[vLLM on QB2 chapter](/ml-practitioner/03-vllm-on-qb2/).
 
 Or use `tt-studio` for a no-code UI that handles vLLM startup automatically.
 
-### TT-Forge — *install it yourself with pip*
+### TT-Forge (`tt-forge` wrapper)
 
-Unlike TTNN and vLLM, Forge is **not** something a stock install hands you. The [TT-Forge docs](https://docs.tenstorrent.com/tt-forge/) install it as a pip wheel into a Python 3.12 venv — TT-XLA is the frontend for PyTorch and JAX:
+`tt-forge` is a Docker container wrapper installed to `~/.local/bin/` by tt-installer. It runs the TT-XLA/Forge compiler stack without requiring a local Python venv:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
-pip install pjrt-plugin-tt --extra-index-url https://pypi.eng.aws.tenstorrent.com/
-tt-forge-install
+# Use the tt-forge wrapper directly
+tt-forge --help
 ```
 
-Models then compile via `torch.compile(model, backend="tt")` (PyTorch) or `jax.jit` (JAX). Prebuilt Docker images and an ONNX frontend exist too — the [TT-Forge chapter](/ml-practitioner/06-tt-forge/) has the full walkthrough.
+For scripting with `import forge` in Python, use the `tt-forge-fe` source tree or check [docs.tenstorrent.com/tt-forge](https://docs.tenstorrent.com/tt-forge-onnx/) for current installation instructions.
 
 ## Confirming Each Environment Works
 
