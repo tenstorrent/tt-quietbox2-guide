@@ -85,9 +85,21 @@ tt-inference-server used to list only "BH 4xP150" for this model, which is why o
 earlier versions of this page) used `--tt-device p150x4`. There is now a **dedicated P300X2
 spec**, so use `--tt-device p300x2` on a QuietBox 2.
 
-Both are four Blackhole chips, but they are different machines and different specs: `p150x4` is
-four P150 cards laid out as a 1x4 mesh, `p300x2` is two P300 cards as a 2x2. Each spec pins its
-own tt-metal and vLLM commits, so picking the wrong one gets you the wrong container too.
+**Both are genuinely valid ways to load across your four chips**, though — this is not one flag
+being for different hardware. tt-metal's mesh graph descriptors for `p150_x4` and `p300_x2` both
+describe a `2x2` mesh of four Blackhole chips. What differs is the `channels` count: four for
+`p150_x4`, two for `p300_x2`. `p300_x2` encodes that two of your dies share a P300 card, so it is
+the more *specific* description of how a QuietBox 2 is actually wired — much like you can address
+a single Blackhole chip as `p150` instead of describing the whole box.
+
+Greater specificity is not automatically better. For Gemma 4 on a QuietBox 2, upstream
+deliberately selects the `p150x4` descriptor, because the `p300_x2` one laid the collectives over
+the wrong fabric links and corrupted decode output. That is why the model spec, rather than you,
+should be choosing it.
+
+What the flag practically selects is a **spec entry**, and each spec pins its own tt-metal and
+vLLM commits and therefore its own container image. So the choice still matters — it just is not
+about which machine you own.
 :::
 
 ---
@@ -166,8 +178,10 @@ docker run \
   --tt-device p300x2
 ```
 
-`--tt-device p300x2` is what identifies a QuietBox 2 — two P300 cards, four Blackhole chips.
-Do not use `p150x4`: that is four *P150* cards, a different machine.
+`--tt-device p300x2` is the spec that matches a QuietBox 2 — two P300 cards, four Blackhole
+chips — and it is the one you want here. `p150x4` addresses the same four chips with a less
+card-aware fabric description; it is also a working configuration for some models, just not the
+validated pairing for this one.
 
 The image tag encodes `{spec version}-{tt-metal commit}-{vLLM commit}`, and each model pins its
 own combination — so do not copy a tag between models or guess at it. Read the current one from

@@ -94,8 +94,10 @@ docker run \
   --tt-device p300x2
 ```
 
-`p300x2` is a QuietBox 2 — two P300 cards, four Blackhole chips. Older notes said `p150x4`,
-which is four *P150* cards and a different spec with different pinned commits. If that image tag
+`p300x2` is the spec matching a QuietBox 2 — two P300 cards, four Blackhole chips. Older notes
+said `p150x4`, which addresses the same four chips with a less card-aware fabric description.
+Both can load a model; they are separate spec entries with different pinned commits, and
+`p300x2` is the validated one for this model. If that image tag
 has moved on, add `--print-docker-cmd` to the `run.py` equivalent to read the current one:
 
 ```bash
