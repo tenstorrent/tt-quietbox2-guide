@@ -197,7 +197,7 @@ Keep the SSH session open while you use the forwarded port. For a persistent set
 Don't expose port 8000 directly to the internet without authentication. The OpenAI-compatible API has no built-in auth layer — it trusts any caller. For internal network use or behind a VPN it's fine. For public exposure, put a reverse proxy with authentication in front of it.
 :::
 
-## Multi-Chip: Using All Four Cards
+## Multi-Chip: Using All Four Chips
 
 :::callout type="warn"
 **`--tensor-parallel-size` does not work here.** The Tenstorrent platform rejects both tensor
