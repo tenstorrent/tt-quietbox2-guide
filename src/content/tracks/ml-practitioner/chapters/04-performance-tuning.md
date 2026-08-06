@@ -102,11 +102,12 @@ Larger batches improve throughput at the cost of time-to-first-token. In vLLM's 
 You can influence this with `--max-num-seqs` (maximum concurrent sequences) when starting the server:
 
 ```bash
+export TT_METAL_ARCH_NAME=blackhole
 export MESH_DEVICE=P300              # P300x2 for all four chips
 export HF_MODEL=~/models/Llama-3.1-8B-Instruct
 export VLLM_RPC_TIMEOUT=900000
 
-vllm serve ~/models/Llama-3.1-8B-Instruct \
+vllm serve "$HF_MODEL" \
   --max-num-seqs 16 \
   --port 8000
 ```
