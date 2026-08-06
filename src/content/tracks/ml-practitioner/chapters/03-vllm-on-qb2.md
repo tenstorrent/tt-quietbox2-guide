@@ -1,85 +1,91 @@
 ---
-title: Serving Models on QB2
+title: vLLM on QB2
 currentChapter: 03-vllm-on-qb2
 permalink: /ml-practitioner/03-vllm-on-qb2/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
-# Serving Models on QB2
+# vLLM on QB2
 
 This is the chapter with the most practical density. By the end of it you'll have a running OpenAI-compatible inference server, a working curl command, and a Python client snippet you can drop into any application. Everything in this chapter is production-ready, not toy code.
 
-## Pick Your Rung
+## The Deployment Stack
 
-There's a ladder of ways to serve a model on the QB2, from no-code to full control. Start as high up as you can; drop a rung only when you need what the lower one gives you.
+The QB2 ships with two paths to running models as a server.
 
-| Approach | Reach for it when… |
-|---|---|
-| **[tt-studio](https://github.com/tenstorrent/tt-studio)** | You want a web UI — pick a model, click Run, no code. It can also back Claude Code / OpenCode against your chips (covered later in this chapter). (Intro in [What Comes Next](/first-timer/06-what-comes-next/).) |
-| **tt-inference-server** ← *this chapter* | You want one command and a production-ready, OpenAI-compatible API. **The default.** |
-| **vLLM directly** | You want to drive the server process yourself and tune its flags. |
-| **TT-Forge / Metalium** | You're compiling or hand-writing the model — the [Builder/Hacker track](/builder-hacker/). |
+The **direct vLLM path** activates the pre-built venv and launches the API server directly. More control, lower ceremony.
 
-Most of the time you want **tt-inference-server**: it wraps the TT fork of vLLM in a Docker container with one-command deploy, handling the image pull, environment, weight compilation, and port mapping for you. It's also exactly what tt-studio and tt-local-generator use under the hood. We'll lead with it, then drop to driving vLLM directly for when you want the control surface.
+The **tt-inference-server path** wraps the same vLLM backend in a Docker container with one-command deploy syntax. This is what tt-studio and tt-local-generator use internally. It handles Docker pulls, environment setup, and port mapping automatically.
 
-Both rungs below tt-studio produce the same OpenAI-compatible API on port 8000.
+Both paths produce the same OpenAI-compatible API on port 8000. Which you use depends on whether you want the control surface of running vLLM directly or the simplicity of a single command.
 
 <img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" class="spot-illustration" style="max-width:100%; margin: 2em 0;">
 
-## Path 1: tt-inference-server (recommended)
-
-The tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you — one command and you have a server.
+## Path 1: Direct vLLM
 
 ```bash
-# Deploy Llama-3.1-8B-Instruct with one command
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-8B-Instruct \
-  --tt-device p100
-
-# p100 = one Blackhole chip; QB2 has four — pass p300x2 to use them all
-# On first run: Docker pull + weight compilation (~5 min)
-# Then: port 8000 is ready
-```
-
-The `--tt-device p100` flag targets a single Blackhole chip — QB2 presents each of its four chips as a `p100`, which is plenty for an 8B model. To use the whole box (for a 70B, say), pass `p300x2` instead — see the Multi-Chip section below. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
-
-:::callout type="tip"
-**Instant first serve — no download.** Your QB2 ships with **Qwen3-32B** weights pre-cached on disk (it's the same model already loaded in tt-studio's Deploy dropdown), so you can serve it across all four chips right away:
-:::
-
-```bash
-# Serve the preloaded Qwen3-32B — weights are already on disk, no download
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Qwen3-32B \
-  --tt-device p300x2 \
-  --workflow server \
-  --docker-server
-```
-
-## Path 2: Direct vLLM (more control)
-
-When you want to drive the server process yourself — custom flags, no Docker layer between you and vLLM — activate the pre-built venv and launch the API server directly.
-
-```bash
-# Activate the main tenstorrent venv (contains vLLM)
+# Activate the main tenstorrent venv
 source ~/.tenstorrent-venv/bin/activate
 
-# Set the Blackhole architecture flag
+# Blackhole architecture flag
 export TT_METAL_ARCH_NAME=blackhole
 
-# Start the server
-python3 -m vllm.entrypoints.openai.api_server \
-  --model ~/models/Qwen3-0.6B \
+# Mesh shape. This — not --tensor-parallel-size — is how you choose chips.
+# P300 = one card (2 chips). P300x2 = all four chips of a QB2.
+export MESH_DEVICE=P300
+
+# Model load and first compile far exceed vLLM's default RPC deadline (10s)
+export VLLM_RPC_TIMEOUT=900000
+
+# HF_MODEL is required when --model is a local path: tt-metal's tt_transformers
+# uses it as the checkpoint directory, not just a name.
+export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+
+vllm serve ~/models/Llama-3.1-8B-Instruct \
+  --served-model-name meta-llama/Llama-3.1-8B-Instruct \
   --port 8000
 ```
+
+:::callout type="tip"
+**Check that vLLM actually claimed your hardware.** Whichever vLLM your box shipped with, the
+startup log tells you: look for a line naming the `tt` platform as it initialises. If vLLM
+starts but never mentions Tenstorrent, it is running without hardware support and every
+request will be slow or wrong rather than failing outright.
+
+If you want the newest Tenstorrent vLLM rather than what shipped, see
+[Running the latest vLLM plugin](#running-the-latest-vllm-plugin) at the end of this chapter.
+:::
 
 On first run: the model weights get compiled into Blackhole-optimized op graphs. This takes 3–5 minutes. Subsequent starts are fast — the compiled artifacts are cached.
 
 Watch the logs. When you see a line containing `Application startup complete`, the server is accepting requests.
 
 :::callout type="tip"
-The `TT_METAL_ARCH_NAME=blackhole` environment variable is required for Blackhole hardware. The vLLM TT fork needs it to select the correct device backend. If you see errors about unknown architecture or device initialization failures, this is the first thing to check.
+The `TT_METAL_ARCH_NAME=blackhole` environment variable is required for Blackhole hardware — vLLM's Tenstorrent backend needs it to select the correct device. If you see errors about unknown architecture or device initialization failures, this is the first thing to check.
 :::
+
+## Path 2: tt-inference-server
+
+The tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you.
+
+```bash
+# Deploy Llama-3.1-8B-Instruct with one command
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Llama-3.1-8B-Instruct \
+  --tt-device p300x2 \
+  --workflow server --docker-server
+
+# p300x2 = a QB2: two P300 cards, four Blackhole chips
+# On first run: Docker pull + weight compilation (~5 min)
+# Then: port 8000 is ready
+```
+
+`--tt-device p300x2` is what identifies a QB2 — two P300 cards, four chips. Use `p300` for a
+single card. **`p100` is a single Blackhole chip**, so it under-uses a QB2 rather than failing
+loudly. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
+
+On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
+derives them per model from its spec, and on a QB2 the correct value is model-dependent.
 
 ## Verifying the Server
 
@@ -150,42 +156,6 @@ print()  # newline at end
 
 Each chunk arrives as a server-sent event; the OpenAI SDK unwraps them into delta objects. The pattern is identical to streaming from `api.openai.com` — because it's the same API.
 
-## Connect a Chat UI
-
-You don't have to write code to use the server. Because the API is OpenAI-compatible, any chat front-end that talks to OpenAI works — point it at `http://localhost:8000/v1` and your served model appears in its model picker.
-
-[**Open WebUI**](https://github.com/open-webui/open-webui) is the most common choice: a full ChatGPT-style interface in your browser. Run it in Docker on the QB2 and aim it at the server:
-
-```bash
-# Open WebUI, pointed at the local inference server
-docker run -d --network=host \
-  -e OPENAI_API_BASE_URL=http://localhost:8000/v1 \
-  -e OPENAI_API_KEY=not-checked \
-  -v open-webui:/app/backend/data \
-  --name open-webui ghcr.io/open-webui/open-webui:main
-
-# Open http://localhost:8080 — from your laptop, tunnel it first:
-# ssh -L 8080:localhost:8080 ttuser@your-qb2-hostname
-```
-
-:::callout type="tip"
-**Coming from Ollama?** Ollama itself doesn't run on Blackhole — but you don't need it. Any tool you'd normally point at Ollama (Open WebUI included) works pointed at tt-inference-server instead, because both speak the same OpenAI-compatible API.
-:::
-
-The same `:8000/v1` endpoint drives a whole ecosystem of clients — pick whatever fits your workflow:
-
-<div class="rcard-grid">
-
-{% card "tool", "https://github.com/open-webui/open-webui", "Open WebUI", "Self-hosted, ChatGPT-style web UI. Point it at the :8000/v1 endpoint and chat with your QB2.", "Docker · browser" %}
-
-{% card "tool", "https://www.librechat.ai/", "LibreChat", "Multi-model chat UI with conversation history, presets, and an OpenAI-compatible backend.", "Docker · browser" %}
-
-{% card "tool", "https://www.continue.dev/", "Continue.dev", "In-editor AI assistant for VS Code and JetBrains — set its API base to your QB2.", "IDE extension" %}
-
-</div>
-
-{% chunk "tt-studio-coding-agents" %}
-
 ## Continuous Batching
 
 This is one of the QB2's practical advantages in production. vLLM's continuous batching algorithm fills the KV-cache space as requests arrive, packing multiple users' decode steps into the same chip invocation. You're not running one request at a time — the server is interleaving decode steps from multiple concurrent clients across every chip cycle.
@@ -193,7 +163,7 @@ This is one of the QB2's practical advantages in production. vLLM's continuous b
 For single-user interactive work, this doesn't matter. For serving a team, an API endpoint, or anything with concurrent load, it means the throughput numbers scale with parallelism rather than collapsing under it. A second concurrent user adds very little overhead up to the throughput ceiling of the chip.
 
 :::callout type="deep-dive"
-Continuous batching is fundamentally different from static batching. Static batching waits to collect N requests before dispatching — it adds latency to achieve throughput. Continuous batching inserts new decode sequences into the in-flight batch as slots open up, achieving throughput without adding per-request waiting time. vLLM pioneered this for transformer inference. The Tenstorrent vLLM fork implements it on Blackhole, where the KV-cache management happens in Tensix SRAM and DRAM across the chip grid.
+Continuous batching is fundamentally different from static batching. Static batching waits to collect N requests before dispatching — it adds latency to achieve throughput. Continuous batching inserts new decode sequences into the in-flight batch as slots open up, achieving throughput without adding per-request waiting time. vLLM pioneered this for transformer inference. Tenstorrent's vLLM backend carries it onto Blackhole, where KV-cache management happens in L1 and DRAM across the chip grid.
 :::
 
 ## Port Map
@@ -204,14 +174,9 @@ Keep these ports clear. Other services on the QB2 use them.
 |---|---|
 | `8000` | vLLM / tt-inference-server (OpenAI-compatible API) |
 | `3000` | tt-studio (web UI) |
-| `4000` | tt-studio coding-agent gateway (LiteLLM — Claude Code / OpenCode) |
 | `8001` | tt-inference-server prompt server |
 
 If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`
-
-:::callout type="tip"
-**Firewall:** Ubuntu ships `ufw` **inactive** by default, so unless someone has turned it on, these ports are reachable on your LAN the moment a service binds them — there's nothing to open. Check with `sudo ufw status`; if it's active, allow what you serve (`sudo ufw allow 8000/tcp`). Don't want to widen the firewall at all? Keep services on `localhost` and reach them through the SSH tunnel below.
-:::
 
 ## Remote Access via SSH Port Forward
 
@@ -234,27 +199,170 @@ Don't expose port 8000 directly to the internet without authentication. The Open
 
 ## Multi-Chip: Using All Four Chips
 
-A 70B-class model needs the whole box. With tt-inference-server that's the `p300x2` device — both p300c cards, all four chips — and it handles the mesh and the tensor-parallel split for you:
+:::callout type="warn"
+**`--tensor-parallel-size` does not work here.** The Tenstorrent platform rejects both tensor
+parallel and pipeline parallel outright, before anything reaches the device. Multi-chip is
+selected by the **mesh shape** instead. If you have seen `--tensor-parallel-size 4` in older
+QB2 notes — including earlier versions of this page — that is why it failed.
+:::
+
+For 70B models, set `MESH_DEVICE=P300x2` to put all four Blackhole chips in one mesh:
 
 ```bash
+# Direct vLLM across all four chips
+export TT_METAL_ARCH_NAME=blackhole
+export MESH_DEVICE=P300x2            # (1,4) — two P300 cards, four chips
+export VLLM_RPC_TIMEOUT=900000
+export HF_MODEL=~/models/Llama-3.1-70B-Instruct
+
+vllm serve ~/models/Llama-3.1-70B-Instruct \
+  --served-model-name meta-llama/Llama-3.1-70B-Instruct \
+  --port 8000
+
+# Or with tt-inference-server, which picks the mesh for you
 python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.3-70B-Instruct \
+  --model Llama-3.1-70B-Instruct \
   --tt-device p300x2 \
-  --workflow server \
-  --docker-server
+  --workflow server --docker-server
 ```
 
-The full walkthrough — prerequisites, weights, and an OpenAI-compatible client — is in [Running Llama-3.3-70B on QB2](/lessons/llama-70b/).
+The model weights distribute across all four chips' DRAM, and the KV cache is allocated per
+chip across the mesh. From the client's perspective the API is identical — same URL, same
+request format.
 
-<div class="rcard-grid">
+The mesh names the plugin accepts on Blackhole are `P100` and `P150` (single chip), `P300` and
+`P150x2` (two chips), `P150x4` and `P300x2` (four chips), and `P150x8` (eight). Spelling
+matters: it is `P300x2` with a lowercase `x`.
 
-{% card "lesson", "/lessons/llama-70b/", "Running Llama-3.3-70B on QB2", "The full walkthrough for the whole box — prerequisites, weights, and an OpenAI-compatible client.", "p300x2 · all four chips" %}
+:::callout type="tip"
+**Status on our hardware.** The four-chip serving path brings up correctly — the plugin selects
+the TT platform, opens all four chips, loads weights and allocates the KV cache on the mesh, and
+the OpenAI-compatible endpoints respond. We have **not** yet signed off on output quality: in our
+testing generation degenerated into repetition, and we reproduced that across two vLLM versions,
+three models, and both one- and four-chip meshes — so it is not specific to the mesh. Our current
+suspicion is host firmware and driver versions running ahead of the tested pairings. Treat
+four-chip throughput numbers as unverified until that is resolved.
+:::
 
-{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/", "TT-Inference-Server", "The full list of run.py options for one-command, OpenAI-compatible deploys.", "" %}
+## Running the latest vLLM plugin
 
-</div>
+*Advanced, and entirely optional.* Everything above works with the vLLM your QB2 shipped with.
+This section is for when you want to run ahead of it.
 
-The model weights distribute across all four chips' DRAM. The KV-cache splits across the chips' Tensix cores. From the client's perspective, the API is identical — same URL, same request format.
+Tenstorrent's vLLM support has been extracted into a standalone **platform plugin**,
+[tenstorrent/vllm-tt-plugin](https://github.com/tenstorrent/vllm-tt-plugin). It runs against
+*upstream* vLLM rather than a Tenstorrent fork: the plugin contributes a `tt` platform through
+vLLM's normal out-of-tree plugin mechanism, and vLLM selects it automatically whenever `ttnn`
+is importable.
+
+:::callout type="warn"
+**This is not what tt-inference-server uses.** As of v0.19.0 its images still clone the
+Tenstorrent vLLM fork and install the copy of the plugin that lives inside it, pinned per model.
+So "Path 2" above and this section are genuinely different stacks. Do this on a box you are
+happy to experiment on, not one you depend on.
+:::
+
+### What you gain
+
+Newer model support lands in the plugin before it reaches a tt-inference-server release, and
+you get a normal upstream vLLM underneath — so upstream features and fixes arrive without
+waiting for a fork to rebase.
+
+### Installing it
+
+Run this **inside an environment that already has a working `ttnn`** — on a QB2 that is
+`~/.tenstorrent-venv`. The plugin binds to whatever tt-metal that environment provides.
+
+```bash
+source ~/.tenstorrent-venv/bin/activate
+
+# uv is required: the installer uses `uv pip`'s --override, which pip has no equivalent for
+python3 -m pip install --upgrade pip setuptools wheel uv
+
+git clone https://github.com/tenstorrent/vllm-tt-plugin.git ~/vllm-tt-plugin
+cd ~/vllm-tt-plugin
+source docs/install-vllm-tt.sh
+```
+
+That installer pins upstream `vllm==0.24.0`, removes a CUDA `torchaudio` that cannot load beside
+a CPU torch, and installs the plugin itself.
+
+:::callout type="warn"
+**The `--override` in that script is not optional.** `ttnn` requires `numpy<2`, while vLLM's
+opencv dependency floor wants `numpy>=2`. Resolve vLLM without the override and the install
+*appears to succeed*, then `import ttnn` fails — and since the plugin only activates when `ttnn`
+imports, vLLM starts up quietly seeing no hardware. Running the shipped installer applies it
+for you; hand-rolling the pip commands is where people get bitten.
+:::
+
+Two dependencies the installer does not cover, because upstream assumes you are installing into
+a full tt-metal environment:
+
+```bash
+uv pip install --override docs/vllm-overrides.txt pytest
+uv pip install --override docs/vllm-overrides.txt \
+  --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match \
+  torchvision
+```
+
+`pytest` because tt-metal's `models/common/utility_functions.py` imports it at module scope, and
+`torchvision` because transformers' image processor imports it while vLLM inspects the TT model
+class. Missing either shows up as `Model architectures [...] failed to be inspected`, which does
+not obviously point at a missing test framework.
+
+### Checking what you already have
+
+Before installing, it is worth knowing what is on the box — some QB2s carry an older fork
+checkout. Run this in the environment you serve from. It only *locates* packages and never
+imports vLLM, because a stale install often fails on import and would hide the answer:
+
+```bash
+python3 - <<'EOF'
+import importlib.util
+from importlib.metadata import distributions
+
+def where(mod):
+    try:
+        spec = importlib.util.find_spec(mod)
+    except Exception:
+        return None
+    return spec.origin if spec and spec.origin else None
+
+def versions(name):
+    want = name.lower().replace("_", "-")
+    seen = []
+    for dist in distributions():
+        try:
+            if (dist.metadata["Name"] or "").lower().replace("_", "-") == want:
+                seen.append(dist.version)
+        except Exception:
+            pass
+    return list(dict.fromkeys(seen))
+
+for label, mod, dist in (("vllm", "vllm", "vllm"),
+                         ("plugin", "vllm_tt_plugin", "vllm-tt-plugin"),
+                         ("ttnn", "ttnn", "ttnn")):
+    print(f"{label:8}: {', '.join(versions(dist)) or 'not installed'} | {where(mod) or '-'}")
+EOF
+```
+
+A `vllm` outside `site-packages` (say under `~/tt-vllm`) is a fork checkout. To move across,
+uninstall first so the old one cannot shadow the new — `uv pip uninstall vllm vllm-tt-plugin`
+— then follow the install above. Old clones are harmless to leave on disk once uninstalled.
+
+### Status, honestly
+
+On our QB2 this brings up correctly: the plugin activates, `TTPlatform` is selected, all four
+Blackhole chips open, weights load, the KV cache allocates across the mesh, and the
+OpenAI-compatible endpoints respond.
+
+**We have not signed off on output quality.** In our testing generation degenerated into
+repetition, and that reproduced across two vLLM versions, three models, and both one- and
+four-chip meshes — so it is not specific to this plugin or to the mesh. Host firmware and driver
+versions running ahead of the tested pairings is the current suspicion. Treat this path as
+something to experiment with, not to benchmark against.
+
+---
 
 <figure class="video-demo">
 <img src="/assets/video/09-vllm-demo.gif" alt="Activating the TTNN venv, checking hardware with tt-smi, vLLM serve command on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">

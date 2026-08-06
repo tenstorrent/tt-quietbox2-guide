@@ -6,10 +6,14 @@ On a QB2 from Tenstorrent, the stack is already there. This section is for insta
 
 ```bash
 sudo apt update && sudo apt install -y curl jq
-/bin/bash -c "$(curl -fsSL https://github.com/tenstorrent/tt-installer/releases/latest/download/install.sh)"
+curl -fsSL https://github.com/tenstorrent/tt-installer/releases/latest/download/install.sh | /bin/bash -s -- --use-uv
 ```
 
 The installer handles drivers, firmware, kernel modules, and all three Python environments. Accept the defaults — they're right for a QB2.
+
+`--use-uv` tells the installer to build its Python environment with [uv](https://github.com/astral-sh/uv) instead of `python3 -m venv` + `pip`, which sidesteps the usual host-Python headaches — no `ensurepip`, no distro Python that's the wrong version, no `--break-system-packages`. It's the "just works" path Tenstorrent is moving toward — [tenstorrent.github.io#200](https://github.com/tenstorrent/tenstorrent.github.io/pull/200) adds it to the official [QB2 setup doc](https://docs.tenstorrent.com/systems/quietbox/quietbox-bh-2/setup.html), which today still runs the installer without it. Nothing else changes: the venv still lands at `~/.tenstorrent-venv`, and the installer fetches `uv` into `~/.local/bin/` if you don't already have it. The flag is available in current releases (v2.1.0+) and is what makes `--python-version 3.12` work if you ever need to pin an interpreter.
+
+Note the `<(…)` process substitution rather than `-c "$(…)"` — with `bash -c`, a trailing flag becomes `$0` and the installer never sees it. If you want a hands-off run, add `--mode-non-interactive`.
 
 After it finishes, reboot:
 
