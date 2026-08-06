@@ -6,7 +6,7 @@ On a QB2 from Tenstorrent, the stack is already there. This section is for insta
 
 ```bash
 sudo apt update && sudo apt install -y curl jq
-/bin/bash <(curl -fsSL https://github.com/tenstorrent/tt-installer/releases/latest/download/install.sh) --use-uv
+curl -fsSL https://github.com/tenstorrent/tt-installer/releases/latest/download/install.sh | /bin/bash -s -- --use-uv
 ```
 
 The installer handles drivers, firmware, kernel modules, and all three Python environments. Accept the defaults — they're right for a QB2.
