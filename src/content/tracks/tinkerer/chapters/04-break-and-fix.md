@@ -209,10 +209,13 @@ tt-smi -s   # should now show four devices
 tt-toplike --mode normal
 ```
 
-If `tt-smi -s` works but tt-toplike still fails, reinstall it from GitHub releases or via cargo:
+If `tt-smi -s` works but `tt-toplike` still fails, reinstall it:
 
 ```bash
-# tt-toplike is not in the Tenstorrent apt PPA — reinstall from:
+# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
+sudo apt update && sudo apt install --reinstall tt-toplike
+
+# No PPA on this machine? Install the .deb from GitHub releases instead:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike --force
