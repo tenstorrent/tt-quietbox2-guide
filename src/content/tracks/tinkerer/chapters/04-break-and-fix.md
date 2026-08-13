@@ -140,7 +140,7 @@ tt-smi -s
 
 If `sudo modprobe tenstorrent` fails with "module not found", the driver isn't built for the current kernel. You need to either roll back the kernel or rebuild the driver. Check the [tt-metal GitHub](https://github.com/tenstorrent/tt-metal) for the currently supported kernel range.
 
-### 5. Model Download Corrupted Mid-Way
+### 5. Model Download Corrupted Midway
 
 **Symptom:** Model fails to load. Error messages about unexpected EOF or missing shards.
 

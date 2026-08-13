@@ -81,7 +81,7 @@ deployed from the same Deploy Model dropdown as the language models.
 - 4 chips = 4 independent PCIe devices, not a mesh
 - No NVLink between chips on QB2 — but chips DO talk to each other, over on-die Ethernet cores
   (used for AllReduce during tensor-parallel), the same fabric described in
-  `shared/hardware-overview.md` and `ml-practitioner/02-model-zoo.md`
+  `src/content/shared/hardware-overview.md` and `src/content/tracks/ml-practitioner/chapters/02-model-zoo.md`
 - Use `ttnn.CreateDevices({0,1,2,3})` for multi-device work
 - `TT_METAL_ARCH_NAME=blackhole` required for environment variable checks
 - Host OS: Ubuntu 24.04 LTS
