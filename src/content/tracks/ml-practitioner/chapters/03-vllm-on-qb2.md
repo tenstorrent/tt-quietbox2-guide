@@ -87,6 +87,24 @@ loudly. The full list of options is in the [tt-inference-server lesson →](http
 On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
 derives them per model from its spec, and on a QB2 the correct value is model-dependent.
 
+:::callout type="tip"
+**Three more flags worth knowing on this path.** `--host-hf-cache` reuses weights you've already
+downloaded to the Hugging Face cache instead of re-pulling them into a fresh Docker volume — see
+["Check Space Before Downloading"](/ml-practitioner/02-model-zoo/) in the previous chapter for
+why that disk hit matters. `--no-auth` skips JWT authentication for
+local, unauthenticated serving (fine on a trusted LAN, not for internet exposure). `--service-port`
+sets the port the managed model's container API listens on — e.g. `--service-port 8002`. A full
+command combining them:
+
+```bash
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Qwen3-32B \
+  --tt-device p300x2 \
+  --workflow server --docker-server \
+  --no-auth --service-port 8002 --host-hf-cache
+```
+:::
+
 ## Verifying the Server
 
 Once the server reports ready, confirm it's working:
@@ -174,7 +192,9 @@ Keep these ports clear. Other services on the QB2 use them.
 |---|---|
 | `8000` | vLLM / tt-inference-server (OpenAI-compatible API) |
 | `3000` | tt-studio (web UI) |
-| `8001` | tt-inference-server prompt server |
+| `4000` | tt-studio's LiteLLM gateway (coding-agent surface — see `agents.md`) |
+| `8001` | tt-local-generator's prompt server — **not** tt-inference-server |
+| `8002` | a managed model's container API, when serving with `--service-port 8002` |
 
 If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`
 

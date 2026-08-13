@@ -22,9 +22,12 @@ Before reaching for dramatic solutions, follow this order:
 1. Run the failing command again (transient errors happen)
 2. Check the relevant log: `journalctl`, `docker logs`, or the service's own log file
 3. Restart the failing service: `systemctl restart <name>` or `docker restart <container>`
-4. Reload the driver: `sudo modprobe -r tenstorrent && sudo modprobe tenstorrent`
-5. Reboot: `sudo reboot`
-6. Post to the [Tenstorrent Discord](https://tenstorrent.com/community) with `tt-smi -s` output
+4. Reset the boards: `tt-smi -r` — clears a stuck Ethernet fabric or ARC state without a full
+   reboot. Cheaper than reloading the driver, and it's the fix for the suspend/resume pattern
+   below, so reach for it before step 5.
+5. Reload the driver: `sudo modprobe -r tenstorrent && sudo modprobe tenstorrent`
+6. Reboot: `sudo reboot`
+7. Post to the [Tenstorrent Discord](https://tenstorrent.com/community) with `tt-smi -s` output
 
 The vast majority of issues resolve at step 1, 2, or 3.
 
@@ -78,7 +81,41 @@ conda config --set auto_activate_base false
 
 Keep tt-metal environments and conda environments in separate shell sessions. They do not coexist gracefully.
 
-### 3. "No Devices Found" After a Kernel Upgrade
+### 3. Ethernet Fabric Stuck After Suspend/Resume
+
+**Symptom:** After suspending and resuming the QB2 — or stopping and starting a serving
+container without a device reset in between — the next model load or serve attempt fails with
+something like:
+
+```
+Device 0 ... ethernet core ... Try resetting the board
+```
+
+**Cause:** Suspend/resume leaves the on-die Ethernet fabric that links the four chips in a stuck
+state. The chips themselves are fine; it's the chip-to-chip links (the same ones AllReduce uses
+for tensor-parallel) that didn't come back up cleanly. A container stop→start without a device
+reset in between can trigger the same thing.
+
+**Fix:**
+
+```bash
+# Reset the boards BEFORE every (re)start after a suspend/resume — don't wait
+# for the error to show up
+tt-smi -r
+
+# Then bring the server/container back up as usual
+```
+
+If the fault recurs even after `tt-smi -r`, a full reboot (`sudo reboot`) is the durable fix —
+it's the only thing that reliably clears the fabric for good.
+
+:::callout type="tip"
+Right after `tt-smi -r`, running `tt-smi -s` immediately can transiently fail or print stale
+output — even though the reset actually took. Give it a few seconds and re-run `tt-smi -s`
+before concluding the reset didn't work.
+:::
+
+### 4. "No Devices Found" After a Kernel Upgrade
 
 **Symptom:** `tt-smi` returns no devices. `lsmod | grep tenstorrent` shows nothing.
 
@@ -103,7 +140,7 @@ tt-smi -s
 
 If `sudo modprobe tenstorrent` fails with "module not found", the driver isn't built for the current kernel. You need to either roll back the kernel or rebuild the driver. Check the [tt-metal GitHub](https://github.com/tenstorrent/tt-metal) for the currently supported kernel range.
 
-### 4. Model Download Corrupted Mid-Way
+### 5. Model Download Corrupted Midway
 
 **Symptom:** Model fails to load. Error messages about unexpected EOF or missing shards.
 
@@ -128,7 +165,7 @@ rm -rf ~/models/<model-name>
 huggingface-cli download <model-id> --local-dir ~/models/<model-name>
 ```
 
-### 5. OOM During Inference
+### 6. OOM During Inference
 
 **Symptom:** Python process crashes with out-of-memory error during model load or inference. The model may be too large for the chip DRAM, or you're only using one chip for a model that needs four.
 
@@ -162,7 +199,7 @@ for chip in d.get('device_info', []):
 "
 ```
 
-### 6. Docker or tt-inference-server Won't Start
+### 7. Docker or tt-inference-server Won't Start
 
 **Symptom:** `docker ps` hangs or errors; tt-inference-server container fails to launch.
 
@@ -190,7 +227,7 @@ docker pull <image-name>
 # Then re-run the server start command
 ```
 
-### 7. tt-toplike Crashes at Startup
+### 8. tt-toplike Crashes at Startup
 
 **Symptom:** `tt-toplike` exits immediately or produces a panic/error message.
 
@@ -211,10 +248,13 @@ tt-smi -s   # should now show four devices
 tt-toplike --mode normal
 ```
 
-If `tt-smi -s` works but tt-toplike still fails, reinstall it from GitHub releases or via cargo:
+If `tt-smi -s` works but `tt-toplike` still fails, reinstall it:
 
 ```bash
-# tt-toplike is not in the Tenstorrent apt PPA — reinstall from:
+# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
+sudo apt update && sudo apt install --reinstall tt-toplike
+
+# No PPA on this machine? Install the .deb from GitHub releases instead:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike --force

@@ -14,10 +14,10 @@ Running a model is table stakes. Knowing how to interpret what the hardware is d
 `tt-toplike` is htop for your Blackhole chips. Install it once, run it alongside inference, watch what the hardware does.
 
 ```bash
-# Install from GitHub releases (.deb) — not in the Tenstorrent apt PPA
-# https://github.com/tenstorrent/tt-toplike/releases
-sudo dpkg -i tt-toplike_*.deb
-# Or via cargo: cargo install tt-toplike
+# Install from the Tenstorrent apt PPA (set up by tt-installer)
+sudo apt update && sudo apt install tt-toplike
+# No PPA? Grab the .deb from https://github.com/tenstorrent/tt-toplike/releases
+# and install it with `sudo dpkg -i tt-toplike_*.deb` — or via cargo: cargo install tt-toplike
 
 # Launch in arcade mode — real-time chip visualization
 tt-toplike --mode arcade
@@ -112,7 +112,16 @@ vllm serve "$HF_MODEL" \
   --port 8000
 ```
 
-For single-user interactive use, lower values (4–8) reduce first-token latency. For batch workloads or multi-user serving, higher values (16–32) improve throughput.
+For single-user interactive use, lower values (4–8) reduce first-token latency. For batch workloads or multi-user serving, higher values improve throughput — but there is no single safe ceiling that applies across every model on a QB2.
+
+:::callout type="warn"
+**The safe `--max-num-seqs` ceiling is per-model, not a universal box number.** Don't carry a
+"16–32 is safe" rule from one model to the next. Qwen3-32B and Llama-3.3-70B-Instruct tolerate
+concurrency up to 8. gemma-4-31B-it and Qwen3.6-27B are single-stream — `--max-num-seqs 1` is the
+supported ceiling, and pushing past it is exactly the kind of sustained load that has crashed the
+runtime on gemma-4-31B-it in our testing. Check the [model zoo chapter](/ml-practitioner/02-model-zoo/)
+for the current model before assuming a concurrency setting carries over.
+:::
 
 ## TTNN Performance Mode
 

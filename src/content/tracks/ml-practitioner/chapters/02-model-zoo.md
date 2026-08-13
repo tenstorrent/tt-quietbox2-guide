@@ -16,8 +16,10 @@ The QB2 supports a focused set of model families, optimized for Blackhole silico
 | Model Family | Variants | Chips Required | Disk Space |
 |---|---|---|---|
 | Qwen3 | 0.6B, 8B, 14B | 1 (0.6B/8B), 2-4 (14B) | 1.5 GB / ~16 GB / 28 GB |
+| Qwen3 | 32B | 4 | ~64 GB |
 | Llama 3.1 | 8B-Instruct | 1 | ~16 GB |
 | Llama 3.1 | 70B-Instruct | 4 | ~140 GB |
+| Llama 3.3 | 70B-Instruct | 4 | ~140 GB |
 | Mistral | 7B-Instruct | 1 | ~14 GB |
 
 The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with live benchmarks you can run against your own QB2: [tt-vscode-toolkit lessons →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/)
@@ -34,6 +36,10 @@ The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with
 
 **Llama-3.1-70B-Instruct** requires all four chips and 140 GB of storage. It's the top-of-rack option for workloads where quality is the priority. Inference speed is lower than the 8B, but the output quality difference is real on complex tasks.
 
+**Qwen3-32B** is the best *zero-download* default: it comes pre-cached on QB2, so there's no multi-gigabyte pull standing between you and a real model. It needs all four chips (32B is the same size class as a 70B for chip-sizing purposes — use `--tt-device p300x2`), runs a 131K context window, and serves up to 8 concurrent requests. If you want a strong model running in the next sixty seconds, this is it.
+
+**Llama-3.3-70B-Instruct** is the flagship choice — the same four-chip, 131K-context, up-to-8-concurrent profile as Qwen3-32B, but Meta's newest 70B-class weights for maximum output quality. See the [dedicated Llama-3.3-70B lesson](/lessons/llama-70b/) for a full walkthrough.
+
 <div class="rcard-grid">
 
 {% card "model", "https://huggingface.co/Qwen/Qwen3-0.6B", "Qwen3-0.6B", "The fastest way to confirm the stack is working — the \"hello world\" of this hardware. Single chip.", "0.6B · 1.5 GB" %}
@@ -42,9 +48,33 @@ The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with
 
 {% card "model", "https://huggingface.co/Qwen/Qwen3-8B", "Qwen3-8B", "Qwen's 8B-class model — a strong single-chip alternative to Llama-3.1-8B for workloads that benefit from Qwen's architecture.", "8B · ~16 GB" %}
 
+{% card "model", "https://huggingface.co/Qwen/Qwen3-32B", "Qwen3-32B", "Pre-cached on QB2 — the best zero-download default. Four chips, 131K context, up to 8 concurrent requests.", "32B · ~64 GB" %}
+
 {% card "model", "https://huggingface.co/meta-llama/Llama-3.1-70B-Instruct", "Llama-3.1-70B-Instruct", "The top-of-rack option for quality-first workloads — requires all four chips and 140 GB of storage.", "70B · ~140 GB · gated" %}
 
+{% card "model", "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct", "Llama-3.3-70B-Instruct", "The flagship pick for maximum quality — Meta's newest 70B weights, same four-chip profile as Qwen3-32B.", "70B · ~140 GB · gated" %}
+
 </div>
+
+### Model-Suitability Caveats
+
+Two more models are worth knowing about *before* you reach for them — especially for agentic or tool-calling use (see [`agents.md`](/agents.md)'s Coding Agents section for the tt-studio gateway setup), because neither holds up well under sustained multi-step agent loops:
+
+:::callout type="warn"
+**gemma-4-31B-it — EXPERIMENTAL.** In our testing this model crashed the runtime under sustained
+agentic load. It's also the most context-limited of the models in this chapter (49K vs. 131K+
+for the Qwen3/Llama models) and only serves one request at a time
+(`max_num_seqs=1`, single-stream — no continuous-batching headroom). Fine for short, supervised
+sessions; don't point a long-running agent loop at it yet.
+:::
+
+:::callout type="warn"
+**Qwen3.6-27B — reasoning-first, not agent-first.** It has the longest context window here
+(262K) and a dedicated tool parser (`qwen3_coder`), but it's tuned to reason at length before
+acting, which tends to derail multi-step agent/tool loops that expect fast, decisive tool calls.
+Like gemma-4-31B-it, it's single-stream (`max_num_seqs=1`). Good for one-shot reasoning-heavy
+prompts; not the model to hand an autonomous coding agent.
+:::
 
 ## Downloading Models
 
