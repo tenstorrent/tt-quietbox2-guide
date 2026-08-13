@@ -9,9 +9,9 @@
 ## Paths
 
 - [Explore](/first-timer/): Explore Tenstorrent hardware & software for the first time. Covers unboxing, first boot, hardware verification, stack installation, and first model run. Fully written.
-- [Run & build](/ml-practitioner/): Run and build on top of models. Covers model zoo, vLLM deployment, and performance tuning. Outlined in v1.
-- [Tinker](/builder-hacker/): Tinker with models and the software & hardware stack — write kernels and go deep. Covers TT-Metal architecture, kernel writing, TT-Lang, and profiling. Outlined in v1.
-- [Customize](/tinkerer/): Customize your workstation and make it truly your own. Covers LEDs, demos, Ubuntu customization, and community. Outlined in v1.
+- [Run & build](/ml-practitioner/): Run and build on top of models. Covers the model zoo, vLLM deployment, and performance tuning. Fully written.
+- [Tinker](/builder-hacker/): Tinker with models and the software & hardware stack — write kernels and go deep. Covers TT-Metal architecture, kernel writing, TT-Lang, and profiling. Fully written.
+- [Customize](/tinkerer/): Customize your workstation and make it truly your own. Covers LEDs, demos, Ubuntu customization, break-and-fix recovery, and community. Fully written.
 
 ## Hardware
 

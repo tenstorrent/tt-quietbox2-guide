@@ -40,6 +40,10 @@ gateway on **port 4000** — no cloud, runs on the QB2's own chips.
   `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_MODEL`, `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`,
   then run `claude`. OpenCode: add a `tt-studio` provider to
   `~/.config/opencode/opencode.json`, then `opencode --model tt-studio/<model>`.
+- Beyond tt-studio's gateway: [`tt-warp`](https://github.com/tenstorrent/tt-warp) is a
+  Warp/Claude-Code plugin for pointing local-first agent forks straight at TT hardware, and
+  [`tsingletaryTT/tt-agents`](https://github.com/tsingletaryTT/tt-agents) is a public demo repo
+  with six local-agent demos running on a QB2.
 
 ### Media Generation (tt-studio v2.8.0+)
 tt-studio now also serves **WAN** (text-to-video) and **Flux** (image generation),
@@ -75,7 +79,9 @@ deployed from the same Deploy Model dropdown as the language models.
 
 - Chip family: Blackhole (not Wormhole — different APIs apply)
 - 4 chips = 4 independent PCIe devices, not a mesh
-- No NVLink/Ethernet between chips on QB2 (unlike T3K or Galaxy)
+- No NVLink between chips on QB2 — but chips DO talk to each other, over on-die Ethernet cores
+  (used for AllReduce during tensor-parallel), the same fabric described in
+  `shared/hardware-overview.md` and `ml-practitioner/02-model-zoo.md`
 - Use `ttnn.CreateDevices({0,1,2,3})` for multi-device work
 - `TT_METAL_ARCH_NAME=blackhole` required for environment variable checks
 - Host OS: Ubuntu 24.04 LTS

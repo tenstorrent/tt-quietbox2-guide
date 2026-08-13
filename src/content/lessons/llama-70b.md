@@ -204,6 +204,19 @@ python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 \
   --workflow server --docker-server
 ```
 
+:::callout type="tip"
+**Already have the weights on disk?** Add `--host-hf-cache` to reuse your existing Hugging Face
+cache instead of re-downloading the 140 GB into a fresh Docker volume — a real saving given the
+disk-space warnings above. For local, unauthenticated serving, `--no-auth` skips JWT auth and
+`--service-port` picks the port the container listens on, e.g.:
+
+```bash
+python3 run.py --model Llama-3.3-70B-Instruct --tt-device p300x2 \
+  --workflow server --docker-server \
+  --no-auth --service-port 8002 --host-hf-cache
+```
+:::
+
 <div class="warning-box">
 <strong>First run takes a long time.</strong> Docker will pull the container image (~15 GB), then download the model weights from HuggingFace (~140 GB). On a 500 Mbps connection, expect 40–60 minutes total. Subsequent starts use the cached Docker volume and take about 3–5 minutes.
 </div>
