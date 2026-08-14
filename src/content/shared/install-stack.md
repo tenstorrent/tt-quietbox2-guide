@@ -6,14 +6,10 @@ On a QB2 from Tenstorrent, the stack is already there. This section is for insta
 
 ```bash
 sudo apt update && sudo apt install -y curl jq
-curl -fsSL https://github.com/tenstorrent/tt-installer/releases/latest/download/install.sh | /bin/bash -s -- --use-uv
+/bin/bash -c "$(curl -fsSL https://tenstorrent.ai/install.sh)"
 ```
 
 The installer handles drivers, firmware, kernel modules, and all three Python environments. Accept the defaults — they're right for a QB2.
-
-`--use-uv` tells the installer to build its Python environment with [uv](https://github.com/astral-sh/uv) instead of `python3 -m venv` + `pip`, which sidesteps the usual host-Python headaches — no `ensurepip`, no distro Python that's the wrong version, no `--break-system-packages`. It's the "just works" path Tenstorrent is moving toward — [tenstorrent.github.io#200](https://github.com/tenstorrent/tenstorrent.github.io/pull/200) adds it to the official [QB2 setup doc](https://docs.tenstorrent.com/systems/quietbox/quietbox-bh-2/setup.html), which today still runs the installer without it. Nothing else changes: the venv still lands at `~/.tenstorrent-venv`, and the installer fetches `uv` into `~/.local/bin/` if you don't already have it. The flag is available in current releases (v2.1.0+) and is what makes `--python-version 3.12` work if you ever need to pin an interpreter.
-
-Note the `<(…)` process substitution rather than `-c "$(…)"` — with `bash -c`, a trailing flag becomes `$0` and the installer never sees it. If you want a hands-off run, add `--mode-non-interactive`.
 
 After it finishes, reboot:
 
@@ -31,9 +27,9 @@ sudo reboot
 | `~/.local/bin/tt-smi` | Hardware monitoring CLI (on PATH) |
 | `~/models/` | Model weights storage (create it: `mkdir -p ~/models`) |
 
-As of `tt-installer` **v3.2.0**, Docker is the default container runtime (Podman is still supported — pass `--install-container-runtime=podman`). The Metalium container installs by default. **Forge is not installed by default** — the TT-Forge docs install it as a pip wheel (`pip install pjrt-plugin-tt …` then `tt-forge-install`); tt-installer's `--install-forge-container` is an optional convenience, not the recommended path. See the [TT-Forge chapter](/ml-practitioner/06-tt-forge/) for the full install. On a QB2 that shipped from Tenstorrent, the TTNN venv at `~/tt-metal/python_env/` is pre-built. The `~/tt-metal/` directory contains compiled environments — not the tt-metal source code.
+As of `tt-installer` **v3.2.0**, Docker is the default container runtime (Podman is still supported — pass `--install-container-runtime=podman`). The Metalium container installs by default. **Forge** installs as a pip wheel into the main venv (`~/.tenstorrent-venv/`) unless you pass `--forge-container`, in which case a container image is pulled and the `tt-forge` wrapper script lands at `~/.local/bin/tt-forge`.
 
 <figure class="video-demo">
-<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--border);" />
 <figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">After tt-installer and reboot — venvs, tt-smi, and hf are ready</figcaption>
 </figure>
