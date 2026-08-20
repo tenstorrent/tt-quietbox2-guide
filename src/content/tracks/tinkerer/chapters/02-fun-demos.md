@@ -32,10 +32,14 @@ The demo lands harder when the chips are busy. Start a model in one terminal, th
 Install tt-toplike if it isn't already present:
 
 ```bash
-# tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
+# tt-toplike is in the Tenstorrent apt repository (set up by tt-installer):
 sudo apt update && sudo apt install tt-toplike
 
-# No PPA on this machine? Install the .deb from GitHub releases instead:
+# "Repository is not signed"? The signing key is missing — see
+# /tinkerer/04-break-and-fix/ pattern 9, or re-download it:
+#   sudo curl -fsSL -o /etc/apt/keyrings/tt-pkg-key.asc https://ppa.tenstorrent.com/tt-pkg-key.asc
+
+# No repository on this machine? Install the .deb from GitHub releases instead:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike

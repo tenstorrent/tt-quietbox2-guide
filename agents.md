@@ -50,6 +50,11 @@ tt-studio now also serves **WAN** (text-to-video) and **Flux** (image generation
 deployed from the same Deploy Model dropdown as the language models.
 
 ### Install Troubleshooting
+- apt says the Tenstorrent repository "is not signed" / `NO_PUBKEY`: the signing key is
+  missing from `/etc/apt/keyrings/tt-pkg-key.asc`. Fix:
+  `sudo mkdir -p /etc/apt/keyrings && sudo curl -fsSL -o /etc/apt/keyrings/tt-pkg-key.asc https://ppa.tenstorrent.com/tt-pkg-key.asc && sudo apt-get update`.
+  The repository line in `/etc/apt/sources.list.d/tenstorrent.list` must reference that exact
+  path via `signed-by=`. Nothing from Tenstorrent installs via apt until the key is present.
 - Driver not loaded: `sudo modprobe tenstorrent` or check `lsmod | grep tenstorrent`
 - PCIe AER errors: BIOS must have PCIe AER set to "OS First" (pre-set on QB2, check if BIOS was reset)
 - Firmware mismatch: use `tt-flash` from https://github.com/tenstorrent/tt-flash
@@ -61,6 +66,7 @@ deployed from the same Deploy Model dropdown as the language models.
 | `DispatchCoreAxis.ROW` error | Code uses wrong dispatch config | Use `ttnn.DispatchCoreConfig(ttnn.DispatchCoreType.WORKER)` |
 | `~/tt-metal` not found | QB2 ships without source tree | Clone from https://github.com/tenstorrent/tt-metal |
 | venv not found | Path may differ | Try `~/tt-metal/python_env` (TTNN) or `~/.tenstorrent-venv` (vLLM), or re-run tt-installer |
+| `apt` refuses Tenstorrent packages | `cat /etc/apt/keyrings/tt-pkg-key.asc` | Re-download the key to `/etc/apt/keyrings/tt-pkg-key.asc` from `https://ppa.tenstorrent.com/tt-pkg-key.asc`, then `sudo apt-get update` |
 
 ## Content Map by Task
 
@@ -68,6 +74,7 @@ deployed from the same Deploy Model dropdown as the language models.
 |-----------------|-------------|
 | Verify hardware works | Explore Ch3: Is This Thing On? |
 | Install the stack | Explore Ch4: Installing the Stack |
+| Fix an apt/repository signing error | Customize: Breaking & Fixing Things (pattern 9) |
 | Run first model | Explore Ch5: Your First Model |
 | Serve models via API | Run & build: Serving Models on QB2 |
 | Run Claude Code / OpenCode on local models | Run & build: Serving Models on QB2 (coding-agents section) |
