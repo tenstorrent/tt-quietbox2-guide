@@ -3,6 +3,7 @@ const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
 const markdownIt = require("markdown-it");
 const markdownItContainer = require("markdown-it-container");
 const { headingAnchors, extractH2Headings } = require("./lib/headings.js");
+const { flattenBlankLines } = require("./lib/chunks.js");
 
 module.exports = function (eleventyConfig) {
   // ---------------------------------------------------------------------------
@@ -56,6 +57,8 @@ module.exports = function (eleventyConfig) {
    * Usage in templates: {% chunk "install-stack" %}
    * The file src/content/shared/install-stack.md will be rendered as HTML and
    * inserted inline — no extra HTTP round-trip, no iframe.
+   * Output is passed through flattenBlankLines() so the including page's
+   * Markdown pass can't split it mid-element (test/chunks.test.js guards this).
    */
   eleventyConfig.addNunjucksAsyncShortcode("chunk", async function (name) {
     const fs = require("fs");
@@ -65,7 +68,12 @@ module.exports = function (eleventyConfig) {
       throw new Error(`Shared chunk not found: ${name}`);
     }
     const raw = fs.readFileSync(filePath, "utf8");
-    return md.render(raw);
+    // The including page is itself a Markdown template, so this HTML gets
+    // parsed a second time — and a raw HTML block ends at the first blank line.
+    // Strip blank lines (keeping in-<pre> ones as empty spans) so a blank line
+    // inside a fenced code block can't split the block and leave the rest to be
+    // re-parsed as Markdown. See lib/chunks.js for the full explanation.
+    return flattenBlankLines(md.render(raw));
   });
 
   /**
