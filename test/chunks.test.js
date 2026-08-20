@@ -57,6 +57,18 @@ test("flattenBlankLines keeps blank lines inside <pre> as empty spans", () => {
   assert.equal(out.replace(/<[^>]*>/g, ""), "one\n\ntwo");
 });
 
+test("flattenBlankLines preserves whitespace-only lines inside <pre> verbatim", () => {
+  // A whitespace-only line is blank to markdown-it but is real content inside a
+  // code block, so the placeholder is appended rather than substituted.
+  const out = flattenBlankLines("<pre><code>def f():\n    x = 1\n    \n    return x</code></pre>");
+  assert.equal(
+    out.replace(/<[^>]*>/g, ""),
+    "def f():\n    x = 1\n    \n    return x",
+    "the code text, indentation included, must survive unchanged"
+  );
+  assert.ok(!/\n[ \t]*\n/.test(out), "and the line must no longer be blank to markdown-it");
+});
+
 test("flattenBlankLines tracks <pre> with attributes and same-line close", () => {
   const out = flattenBlankLines('<pre class="language-bash"><code>a\n\nb</code></pre>\n\n<p>after</p>');
   assert.match(out, new RegExp(`a\\n${BLANK_LINE_PLACEHOLDER}\\nb`));
