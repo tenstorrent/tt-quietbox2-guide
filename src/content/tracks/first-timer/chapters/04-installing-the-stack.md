@@ -124,11 +124,13 @@ On a QB2 it shouldn't be missing, but on another Ubuntu system:
 # Option A — public PyPI (any machine, no PPA needed):
 pip install tt-smi
 
-# Option B — via apt (requires Tenstorrent PPA, set up by tt-installer):
+# Option B — via apt (requires the Tenstorrent repository, set up by tt-installer):
 sudo apt install tt-smi
 ```
 
 Both install the same tool. Option A works anywhere with Python; option B integrates with your system package manager. On a freshly installed Ubuntu machine without tt-installer, option A is the easier path.
+
+Option B needs the Tenstorrent repository *and* its signing key at `/etc/apt/keyrings/tt-pkg-key.asc` — see [The Tenstorrent apt repository](#the-tenstorrent-apt-repository-and-its-signing-key) above. If `apt` complains the repository isn't signed, that key is what's missing.
 
 ## Disk Space and Model Storage
 

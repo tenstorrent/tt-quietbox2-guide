@@ -254,7 +254,9 @@ If `tt-smi -s` works but `tt-toplike` still fails, reinstall it:
 # tt-toplike is in the Tenstorrent apt PPA (set up by tt-installer):
 sudo apt update && sudo apt install --reinstall tt-toplike
 
-# No PPA on this machine? Install the .deb from GitHub releases instead:
+# apt says the repository isn't signed? See pattern 9 below.
+
+# No repository on this machine? Install the .deb from GitHub releases instead:
 # https://github.com/tenstorrent/tt-toplike/releases
 sudo dpkg -i tt-toplike_*.deb
 # Or: cargo install tt-toplike --force
@@ -263,6 +265,44 @@ sudo dpkg -i tt-toplike_*.deb
 :::callout type="deep-dive"
 The `tenstorrent` kernel module is a loadable driver. If it was loaded for kernel `6.x.y` and you're now on `6.x.z`, it may need to be rebuilt or reinstalled. `dmesg | grep tenstorrent` is your friend here — it shows exactly why the module failed to load.
 :::
+
+### 9. apt Won't Install Tenstorrent Packages ("repository is not signed")
+
+**Symptom:** `sudo apt update` or `sudo apt install tt-smi` (or `tt-toplike`, `tenstorrent-dkms`, `tt-flash`, …) fails with one of:
+
+```
+E: The repository 'https://ppa.tenstorrent.com/ubuntu noble InRelease' is not signed.
+W: GPG error: https://ppa.tenstorrent.com/ubuntu noble InRelease: ... NO_PUBKEY ...
+N: Updating from such a repository can't be done securely, and is therefore disabled by default.
+```
+
+**Cause:** The repository line in `/etc/apt/sources.list.d/tenstorrent.list` is pinned to a key at `/etc/apt/keyrings/tt-pkg-key.asc`, and that file is missing, empty, or unreadable. apt won't touch a repository it can't verify, so *nothing* from Tenstorrent installs until the key is back. Usually this means the repository was added by hand and the key step was skipped — or the download was intercepted and left a zero-byte file behind.
+
+**Fix:**
+
+```bash
+sudo mkdir -p /etc/apt/keyrings
+sudo chmod 755 /etc/apt/keyrings
+sudo curl -fsSL -o /etc/apt/keyrings/tt-pkg-key.asc https://ppa.tenstorrent.com/tt-pkg-key.asc
+
+# Confirm before retrying: a PGP block, non-zero size, mode 644
+head -1 /etc/apt/keyrings/tt-pkg-key.asc
+ls -l /etc/apt/keyrings/tt-pkg-key.asc
+
+sudo apt-get update
+```
+
+Still broken? Work down this list:
+
+| What you see | Why | Fix |
+|---|---|---|
+| Key file is 0 bytes, or starts with `<html` | A proxy or captive portal answered instead of the server | `sudo -E curl ...` — plain `sudo` drops your `HTTPS_PROXY` |
+| `Could not open file ... Permission denied` | `_apt` can't read the key | `sudo chmod 644 /etc/apt/keyrings/tt-pkg-key.asc` |
+| Still "not signed" after re-downloading | `signed-by=` path and the actual filename disagree (`.gpg` vs `.asc`, different name) | `cat /etc/apt/sources.list.d/tenstorrent.list` and make them match |
+| `404` fetching `InRelease` | Wrong release codename in the repository line | `. /etc/os-release && echo "$VERSION_CODENAME"` — must match |
+| Warning persists alongside a working key | Stale legacy `apt-key` entry | `sudo apt-key del <keyid>`; `signed-by=` is the supported mechanism now |
+
+The full setup — repository line, key, and the Debian/Fedora variants — is in [Installing the Stack](/first-timer/04-installing-the-stack/#the-tenstorrent-apt-repository-and-its-signing-key).
 
 ---
 
