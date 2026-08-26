@@ -27,11 +27,14 @@ Most of what the installer puts on the machine — the `tenstorrent-dkms` kernel
 # 1. Keyring directory
 sudo mkdir -p /etc/apt/keyrings
 sudo chmod 755 /etc/apt/keyrings
+
 # 2. The signing key — this is the step that gets skipped
 sudo curl -fsSL -o /etc/apt/keyrings/tt-pkg-key.asc https://ppa.tenstorrent.com/tt-pkg-key.asc
-# 3. The repository, pinned to that key ($VERSION_CODENAME is your release, e.g. noble)
-. /etc/os-release
-echo "deb [signed-by=/etc/apt/keyrings/tt-pkg-key.asc] https://ppa.tenstorrent.com/ubuntu/ $VERSION_CODENAME main" | sudo tee /etc/apt/sources.list.d/tenstorrent.list
+
+# 3. The repository, pinned to that key
+echo "deb [signed-by=/etc/apt/keyrings/tt-pkg-key.asc] https://ppa.tenstorrent.com/ubuntu/ $(. /etc/os-release && echo "$VERSION_CODENAME") main" \
+  | sudo tee /etc/apt/sources.list.d/tenstorrent.list > /dev/null
+
 # 4. Refresh
 sudo apt-get update
 ```
@@ -41,9 +44,13 @@ On Debian, swap `/ubuntu/` for `/debian/`. On Fedora, write `/etc/yum.repos.d/te
 Check it took:
 
 ```bash
-head -1 /etc/apt/keyrings/tt-pkg-key.asc   # -----BEGIN PGP PUBLIC KEY BLOCK-----
+# The key: a PGP block, non-zero size, readable by _apt (mode 644)
+head -1 /etc/apt/keyrings/tt-pkg-key.asc
+ls -l /etc/apt/keyrings/tt-pkg-key.asc
+
+# The repository line, and where packages now resolve from
 cat /etc/apt/sources.list.d/tenstorrent.list
-apt-cache policy tt-smi                    # should resolve to ppa.tenstorrent.com
+apt-cache policy tt-smi
 ```
 
 :::callout type="warn"
