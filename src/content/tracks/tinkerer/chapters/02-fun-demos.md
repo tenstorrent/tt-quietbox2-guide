@@ -29,6 +29,11 @@ To exit: `q` or `Ctrl-C`.
 The demo lands harder when the chips are busy. Start a model in one terminal, then open arcade mode in another. The activity you see reflects real computation.
 :::
 
+<figure class="video-demo">
+<img src="/assets/video/16-tt-toplike-arcade-demo.gif" alt="tt-toplike arcade mode — a hero character moving on screen driven live by real chip telemetry" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike arcade mode — the hero's position, speed, and direction are all real hardware readings</figcaption>
+</figure>
+
 Install tt-toplike if it isn't already present:
 
 ```bash
@@ -78,6 +83,11 @@ No repository on this machine? Install the `.deb` from GitHub releases instead �
 ```bash
 sudo dpkg -i tt-local-generator_*.deb
 ```
+
+<figure class="video-demo">
+<img src="/assets/video/17-tt-local-generator-demo.gif" alt="tt-local-generator quickstart — the GTK4 app generating a video clip on Tenstorrent hardware" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-local-generator's quickstart flow — pick a model, write a prompt, watch it generate</figcaption>
+</figure>
 
 :::callout type="tip"
 `tt-local-generator-models-all` is also in the PPA — a metapackage that pulls every supported model family (~360 GB). Worth knowing it exists; not something to `apt install` on a whim. Pull individual model weights as you need them instead.
@@ -179,6 +189,11 @@ python3 expedition.py run --tui --seed-only --limit 8 --chips 4
 :::callout type="tip"
 First Voice is the payoff. After each successful compile, the game runs one inference pass and prints the model's decoded output. A sentiment classifier labeling its first sentence. A ResNet identifying its first image. A GPT-2 generating its first token. Watch the chip do something real with what it just learned to run.
 :::
+
+<figure class="video-demo">
+<img src="/assets/video/18-tt-forge-compiletron-demo.gif" alt="tt-forge-compiletron — a live expedition compiling models across chips with a scoreboard and First Voice banners" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">A live tt-forge-compiletron expedition — model queue, per-chip status, and the scoreboard, all in one TUI</figcaption>
+</figure>
 
 {% tensixsystem "qb2", "Four chips, four models — your QB2's two p300c cards" %}
 
