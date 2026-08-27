@@ -16,7 +16,5 @@ module.exports = {
     { label: "tt-metal", value: "v0.77.0" },
     { label: "tt-studio", value: "v2.9.1" },
     { label: "tt-inference-server", value: "main@2aa7f72" },
-    { label: "tt-local-generator", value: "0.96.1" },
-    { label: "tt-toplike", value: "0.8.1" },
   ],
 };
