@@ -30,8 +30,8 @@ The demo lands harder when the chips are busy. Start a model in one terminal, th
 :::
 
 <figure class="video-demo">
-<img src="/assets/video/16-tt-toplike-arcade-demo.gif" alt="tt-toplike arcade mode — a hero character moving on screen driven live by real chip telemetry" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-toplike arcade mode — the hero's position, speed, and direction are all real hardware readings</figcaption>
+<img src="/assets/video/16-tt-toplike-arcade-demo.gif" alt="tt-toplike arcade mode's hero-vs-snake duel — a telemetry-true tug-of-war between chip power/utilization and the serving model's tokens/s" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Arcade mode's hero ⚔ snake duel — chip power and utilization vs. the serving model's tokens/s and queue depth, live</figcaption>
 </figure>
 
 Install tt-toplike if it isn't already present:
@@ -84,11 +84,6 @@ No repository on this machine? Install the `.deb` from GitHub releases instead �
 sudo dpkg -i tt-local-generator_*.deb
 ```
 
-<figure class="video-demo">
-<img src="/assets/video/17-tt-local-generator-demo.gif" alt="tt-local-generator quickstart — the GTK4 app generating a video clip on Tenstorrent hardware" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-local-generator's quickstart flow — pick a model, write a prompt, watch it generate</figcaption>
-</figure>
-
 :::callout type="tip"
 `tt-local-generator-models-all` is also in the PPA — a metapackage that pulls every supported model family (~360 GB). Worth knowing it exists; not something to `apt install` on a whim. Pull individual model weights as you need them instead.
 :::
@@ -99,6 +94,11 @@ For a polished installation setup — fullscreen display, auto-start on login, c
 
 :::callout type="tip"
 The AnimateDiff integration in tt-local-generator also runs natively on QB2. Shorter clips, different aesthetic, same local-only principle. See [tt-animatediff](https://github.com/tenstorrent/tt-animatediff) for the standalone library.
+
+<figure class="video-demo">
+<img src="/assets/video/17-tt-local-generator-demo.gif" alt="tt-local-generator's AnimateDiff integration finishing a generation across four Blackhole chips, with the live hardware monitor visible" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-local-generator's AnimateDiff integration finishing across four Blackhole chips, live hardware monitor included</figcaption>
+</figure>
 :::
 
 ## Demo 4: Local 70B with No Internet Required
