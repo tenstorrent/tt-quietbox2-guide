@@ -166,7 +166,12 @@ def set_led(device_id: int, mode: str):
 
 def classify(chip: dict) -> str:
     """Decide LED mode from a device_info entry — temperature lives under telemetry."""
-    temp = float(chip.get("telemetry", {}).get("asic_temperature", 0.0))
+    try:
+        temp = float(chip.get("telemetry", {}).get("asic_temperature", 0.0))
+    except (TypeError, ValueError):
+        # Telemetry field missing or non-numeric (transient tt-smi hiccup) —
+        # treat as unknown rather than crashing the monitor loop.
+        return "cool"
     if temp > TEMP_HOT_THRESHOLD:
         return "hot"
     if temp > TEMP_ACTIVE_THRESHOLD:

@@ -69,12 +69,14 @@ Set up a continuous generation loop and you have a generative art installation:
 # tt-local-generator is in the Tenstorrent apt repository (set up by tt-installer):
 sudo apt update && sudo apt install tt-local-generator
 
-# No repository on this machine? Install the .deb from GitHub releases instead:
-# https://github.com/tenstorrent/tt-local-generator/releases
-sudo dpkg -i tt-local-generator_*.deb
-
 # Launch the app
 tt-local-generator
+```
+
+No repository on this machine? Install the `.deb` from GitHub releases instead — [releases page](https://github.com/tenstorrent/tt-local-generator/releases):
+
+```bash
+sudo dpkg -i tt-local-generator_*.deb
 ```
 
 :::callout type="tip"

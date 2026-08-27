@@ -9,7 +9,6 @@
  */
 module.exports = {
   date: "Aug 26, 2026",
-  host: "tsingletaryTT-quietbox",
   components: [
     { label: "Firmware", value: "19.13.1.0" },
     { label: "tt-kmd", value: "2.10.0" },
