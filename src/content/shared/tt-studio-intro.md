@@ -10,6 +10,8 @@ tt-studio
 
 Then open `http://localhost:3000` in your browser, pick a model from the Deploy Model dropdown, and click Run. **On a QB2, Qwen3-32B is already there with its weights pre-cached** — its first deploy skips the multi-GB download and is ready in a few minutes. Other models download on first use; after that, every run loads fast from the on-disk cache. (tt-studio v2.8.0 also fixed the cold first-chat delay after an idle model, so that first token comes back quickly.)
 
+tt-studio is at **v2.10.0** as of this writing. Since v2.8.0 it's added an OpenClaw general agent you can deploy like any model (v2.9.0), and an Apps Marketplace connecting deployed chat models to external tools plus hybrid RAG retrieval with reranking (v2.10.0).
+
 <div class="callout callout--info">
 <span class="callout-icon illustrated-only">ℹ</span>
 <strong>What the wrapper does:</strong> <code>tt-studio</code> is a convenience command the QB2 ships. Under the hood it launches the same stack you'd get by cloning the repo and running <code>python3 run.py</code> — that sets up the submodule and <code>.env</code>, prompts for your Hugging Face token, selects the right Docker overlays for your hardware, and brings up the Django + React app plus the model containers, then serves the UI at <code>localhost:3000</code>. On any other machine, that clone-and-<code>run.py</code> flow is how you'd start it.
@@ -34,7 +36,7 @@ For a deeper look at how the inference server is wired up, the [tt-vscode-toolki
 
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">🤖</span>
-<strong>New in v2.8.0 — your QB2 as a coding backend:</strong> tt-studio can now serve a deployed model to <strong>Claude Code and OpenCode</strong> through a built-in gateway, so a coding agent runs against your own chips instead of a cloud API. It also added text-to-video (WAN) and image (Flux) generation. See <a href="/ml-practitioner/03-vllm-on-qb2/">Serving Models on QB2</a> for the coding-agent setup.
+<strong>New since v2.8.0 — your QB2 as a coding backend:</strong> tt-studio can serve a deployed model to <strong>Claude Code and OpenCode</strong> through a built-in gateway, so a coding agent runs against your own chips instead of a cloud API. v2.8.0 also added text-to-video (WAN) and image (Flux) generation; v2.9.0 added a deployable OpenClaw general agent; v2.10.0 added an Apps Marketplace and hybrid RAG. See <a href="/ml-practitioner/03-vllm-on-qb2/">Serving Models on QB2</a> for the coding-agent setup.
 </div>
 
 <figure class="video-demo">

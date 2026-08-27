@@ -64,6 +64,10 @@ Watch the logs. When you see a line containing `Application startup complete`, t
 The `TT_METAL_ARCH_NAME=blackhole` environment variable is required for Blackhole hardware — vLLM's Tenstorrent backend needs it to select the correct device. If you see errors about unknown architecture or device initialization failures, this is the first thing to check.
 :::
 
+:::callout type="warn"
+**`ImportError` before hardware is even touched** (e.g. `cannot import name '...' from 'transformers...'`) means the venv's `transformers` version has drifted out of sync with the pinned Tenstorrent vLLM fork — not a device or driver problem. This venv accumulates whatever else gets `pip install`ed into it over time, and vLLM forks pin transformers tightly. Check `pip show transformers vllm` for a sane pairing, and if it's drifted, re-run the vLLM+plugin installer to re-sync the two rather than upgrading `transformers` alone.
+:::
+
 ## Path 2: tt-inference-server
 
 The tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you.

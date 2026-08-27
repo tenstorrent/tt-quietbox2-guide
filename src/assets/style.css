@@ -74,6 +74,18 @@ body {
 .tt-nav-btn-github svg { width: 15px; height: 15px; fill: currentColor; }
 .tt-nav-btn-github:hover { background: rgba(255,255,255,0.06); text-decoration: none; }
 
+/* ── Verified-on-hardware footer — one line, every page, via base.njk ── */
+.tt-verified-footer {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  flex-wrap: wrap; text-align: center;
+  padding: 14px 22px 22px; margin-top: 24px;
+  font-size: 12px; color: var(--muted); letter-spacing: 0.1px;
+}
+.tt-verified-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+}
+
 /* Light/dark theme toggle — sun/moon icon button, styled for the dark bar */
 .tt-theme-toggle {
   display: flex; align-items: center; justify-content: center;

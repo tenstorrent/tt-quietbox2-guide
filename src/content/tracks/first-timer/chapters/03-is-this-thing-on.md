@@ -15,10 +15,10 @@ Before running a model, confirm the hardware is alive and the software can see i
 
 A healthy QB2 shows four entries in `device_info`. Look at each one for:
 
-- **`"board_type": "BLACKHOLE"`** — confirms chip family. If you see anything else, something's wrong.
-- **`"pcie_speed": "GEN4"`** — PCIe link is up at full speed. GEN3 would mean a slot compatibility issue.
-- **`"pcie_width": "x16"`** — full-width link. Narrower means lower bandwidth.
-- **Temperature in the 35–55°C range** — normal at idle. Higher under load is fine.
+- **`board_info.board_type: "p300c"`** — the board SKU for a QB2 (two chips per card, two cards). "BLACKHOLE" doesn't appear literally anywhere in the output — that's the chip family the p300c board carries.
+- **`board_info.pcie_speed: 4`** — an integer PCIe generation, not the string `"GEN4"`. `4` is full speed; `3` would mean a slot compatibility issue.
+- **`board_info.pcie_width: "4"`** — the link width in lanes (as a string). Narrower (lower number) means lower bandwidth.
+- **`telemetry.asic_temperature` in the 35–55°C range** — normal at idle. Higher under load is fine. `board_info` and `telemetry` are nested sub-objects on each device entry, not flat fields — see the JSON sample above.
 
 Count the entries:
 
@@ -39,13 +39,14 @@ A missing device usually means one of three things:
 
 **PCIe link not established:**
 ```bash
-dmesg | grep -i tenstorrent | tail -20
+sudo dmesg | grep -i tenstorrent | tail -20
 ```
+`sudo` is required here — Ubuntu 24.04 restricts the kernel log buffer by default, and a plain `dmesg` fails with "read kernel buffer failed: Operation not permitted."
 Look for errors about PCIe enumeration or firmware loading failure. A loose card is possible — the QB2 ships with cards seated, but transit happens.
 
 **Firmware mismatch:**
 ```bash
-tt-smi -s | python3 -m json.tool | grep -i fw_version
+tt-smi -s | python3 -m json.tool | grep -i fw_bundle_version
 ```
 If firmware versions differ across devices, or show 0.0.0, you may need to reflash. See the [tt-flash documentation](https://github.com/tenstorrent/tt-flash) for instructions.
 

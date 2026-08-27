@@ -79,6 +79,12 @@
 
   {{ content | safe }}
 
+  <footer class="tt-verified-footer">
+    <span class="tt-verified-dot" aria-hidden="true"></span>
+    Last verified against a live TT-QuietBox&nbsp;2 on {{ verified.date }} —
+    {% for c in verified.components %}{{ c.label }} {{ c.value }}{% if not loop.last %} · {% endif %}{% endfor %}
+  </footer>
+
   <script src="/assets/main.js"></script>
   <script src="/assets/tensix-viz.js"></script>
   <script>if (typeof _TensixVizBundle !== 'undefined') _TensixVizBundle.autoInit();</script>

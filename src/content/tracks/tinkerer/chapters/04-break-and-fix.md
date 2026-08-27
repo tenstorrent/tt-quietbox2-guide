@@ -127,8 +127,9 @@ before concluding the reset didn't work.
 # Check if the driver module exists for the current kernel
 ls /lib/modules/$(uname -r)/extra/ | grep tenstorrent
 
-# If missing, reinstall the tt-metal driver package
-sudo apt install --reinstall tt-firmware   # adjust package name as needed
+# If missing, reinstall the kernel driver package (this is the actual
+# package name — "tt-firmware" doesn't exist)
+sudo apt install --reinstall tenstorrent-dkms
 # or re-run the tt-installer if you used that for initial setup
 
 # Reload the driver
@@ -147,22 +148,20 @@ If `sudo modprobe tenstorrent` fails with "module not found", the driver isn't b
 **Fix:**
 
 ```bash
-# The Hugging Face CLI supports resumable downloads
-huggingface-cli download <model-id> \
-  --local-dir ~/models/<model-name> \
-  --resume-download
+# hf (not huggingface-cli) — the CLI this guide standardizes on; it resumes
+# partial downloads automatically, no flag needed
+hf download <model-id> --local-dir ~/models/<model-name>
 
 # Example for Llama-3.1-8B:
-huggingface-cli download meta-llama/Llama-3.1-8B-Instruct \
-  --local-dir ~/models/Llama-3.1-8B-Instruct \
-  --resume-download
+hf download meta-llama/Llama-3.1-8B-Instruct \
+  --local-dir ~/models/Llama-3.1-8B-Instruct
 ```
 
 If the download is severely corrupted, delete the partial directory and start fresh:
 
 ```bash
 rm -rf ~/models/<model-name>
-huggingface-cli download <model-id> --local-dir ~/models/<model-name>
+hf download <model-id> --local-dir ~/models/<model-name>
 ```
 
 ### 6. OOM During Inference
@@ -188,16 +187,19 @@ export HF_MODEL=~/models/Llama-3.1-8B-Instruct
 vllm serve "$HF_MODEL" --port 8000
 ```
 
-Also check that no other process is holding chip memory:
+Also check that DRAM on every chip is actually up (`tt-smi -s` doesn't report a per-chip usage figure, only link health — `board_id` and `dram_status` live under the nested `board_info` object, not at the top level):
 
 ```bash
 tt-smi -s | python3 -c "
 import json, sys
 d = json.load(sys.stdin)
 for chip in d.get('device_info', []):
-    print(chip.get('board_id', '?'), '— mem used:', chip.get('dram_usage', '?'))
+    bi = chip.get('board_info', {})
+    print(bi.get('board_id', '?'), '— DRAM up:', bi.get('dram_status', '?'))
 "
 ```
+
+If a process is still holding chip memory, `fuser /dev/tenstorrent/*` (or checking for orphaned Python/docker processes) will find it — a stuck reservation, not something `tt-smi -s` surfaces directly.
 
 ### 7. Docker or tt-inference-server Won't Start
 

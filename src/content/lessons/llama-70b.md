@@ -172,9 +172,9 @@ docker run \
   --publish 8000:8000 \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
-  --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
+  --volume volume_id_tt_transformers-Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
-  --model Llama-3.3-70B-Instruct \
+  --model meta-llama/Llama-3.3-70B-Instruct \
   --tt-device p300x2
 ```
 
@@ -182,6 +182,15 @@ docker run \
 chips — and it is the one you want here. `p150x4` addresses the same four chips with a less
 card-aware fabric description; it is also a working configuration for some models, just not the
 validated pairing for this one.
+
+:::callout type="warn"
+The volume name carries the `tt_transformers-` implementation prefix and the `--model` flag
+takes the fully-qualified HuggingFace ID — both are exactly what `run.py --print-docker-cmd`
+(below) generates. If you hand-type either differently, switching between this manual command
+and the `run.py` helper later gets you a *different* Docker volume — an empty one, meaning the
+140 GB download repeats. When in doubt, copy `run.py`'s generated command verbatim instead of
+retyping this one.
+:::
 
 The image tag encodes `{spec version}-{tt-metal commit}-{vLLM commit}`, and each model pins its
 own combination — so do not copy a tag between models or guess at it. Read the current one from
@@ -377,11 +386,15 @@ docker run \
   --publish 8000:8000 \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
-  --volume volume_id_DeepSeek-R1-Distill-Llama-70B:/home/container_app_user/cache_root \
+  --volume volume_id_tt_transformers-DeepSeek-R1-Distill-Llama-70B:/home/container_app_user/cache_root \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
-  --model DeepSeek-R1-Distill-Llama-70B \
+  --model deepseek-ai/DeepSeek-R1-Distill-Llama-70B \
   --tt-device p300x2
 ```
+
+Same caveat as the Llama-3.3-70B command above: the volume name's `tt_transformers-` prefix and
+the fully-qualified `--model` ID both match what `run.py --print-docker-cmd` generates — prefer
+copying that output verbatim over retyping this command by hand.
 
 This model has no generated model-support page yet even though its P300X2 spec exists, so if
 that tag has moved on, get the current one from
