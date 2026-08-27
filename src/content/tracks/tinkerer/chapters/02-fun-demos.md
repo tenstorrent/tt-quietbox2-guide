@@ -208,6 +208,11 @@ It also supports newer structure-prediction and binder-design models — ESMFold
 
 For the demo-floor version of this, there's [tt-bio-demo](https://github.com/tsingletaryTT/tt-bio-demo): a native GTK4/OpenGL booth app that renders a protein condensing out of noise into its folded structure live, with per-residue confidence coloring and a Tensix core grid alongside the render. Its quad view runs four independent folds on four chips at once — one per Blackhole on a QB2 — which makes the same "the monitor is the demo" point as arcade mode, but for structural biology instead of telemetry.
 
+<figure class="video-demo">
+<img src="/assets/video/15-tt-bio-demo.gif" alt="tt-bio-demo booth app — a protein folding from noise into its structure live on Blackhole, with confidence coloring and a Tensix core grid" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">tt-bio-demo's booth loop — a protein condensing into its folded structure, live on Blackhole</figcaption>
+</figure>
+
 :::callout type="tip"
 This is the demo for a room that's already seen an LLM answer a question. Watching silicon fold a protein in real time tends to land differently — it's a visibly *physical* computation, not a chat response.
 :::
