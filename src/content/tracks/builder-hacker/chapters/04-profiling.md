@@ -57,27 +57,23 @@ If `tt-smi -s` shows `aiclk` significantly below spec during a compute-heavy run
 
 ## TTNN Op Profiling
 
-For per-operation timing at the Python level, TTNN exposes a profiler API:
+For per-operation timing at the Python level, TTNN exposes a profiler — it lives at top-level `ttnn.profiler`, not `ttnn.experimental.profiler` (that namespace doesn't have a profiler at all), and it's a Tracy-based interface rather than a `start`/`stop`/`get_report` cycle:
 
 ```python
 import ttnn
 
 device = ttnn.open_device(device_id=0)
 
-# Enable profiling
-ttnn.experimental.profiler.start(device)
-
 # ... your ops here ...
 a = ttnn.from_torch(...)
 b = ttnn.from_torch(...)
 c = ttnn.matmul(a, b)
 
-# Capture the trace
-ttnn.experimental.profiler.stop(device)
-report = ttnn.experimental.profiler.get_report(device)
+# Pull the perf data TTNN has already been collecting for dispatched ops
+report = ttnn.profiler.get_all_programs_perf_data()
 
-for op in report:
-    print(f"{op['name']:40s}  {op['duration_us']:8.1f} µs")
+for entry in report:
+    print(entry)
 
 ttnn.close_device(device)
 ```

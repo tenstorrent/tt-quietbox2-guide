@@ -74,21 +74,17 @@ Full source, architecture notes, and troubleshooting: [github.com/tsingletaryTT/
 
 ---
 
-## Discover Your LED Options
+## What tt-smi Can (and Can't) Do
 
-`tt-smi` ships with a `--help` flag that reveals everything the current firmware supports. The LED interface can evolve across firmware versions, so this is the canonical starting point:
+Worth saying plainly: `tt-smi` has **no LED control of its own**. Check for yourself:
 
 ```bash
 tt-smi --help | grep -i led
 ```
 
-Run that first. Jot down the commands and flags it lists. Then explore the full help to understand flag ordering:
+Nothing prints — current `tt-smi` (v6.1.0) has zero LED-related flags, and there's no `--set-led` or equivalent hiding under a different name. `tt-smi`'s job is telemetry: it reads chip state and reports it. Driving actual lights is a separate concern, handled by whatever RGB control stack your hardware uses — which is exactly what **tt-qb-lights** above already wires up for you via OpenRGB.
 
-```bash
-tt-smi --help
-```
-
-The general shape of LED commands is `tt-smi --set-led <device_id> <state>` or similar. Firmware determines the exact vocabulary. The pattern is consistent: device ID, action, optional parameter.
+What follows is the DIY version of the same idea, for anyone who wants a different RGB setup or a starting point to hack on: read chip telemetry from `tt-smi -s`, and drive your own LEDs through whatever tool actually controls them (OpenRGB's CLI/API, a vendor tool, a GPIO script — not `tt-smi`).
 
 :::callout type="tip"
 Run `tt-smi -s` to get a JSON snapshot of all chip state before you start scripting. This gives you the live field names you'll be parsing.
@@ -96,20 +92,21 @@ Run `tt-smi -s` to get a JSON snapshot of all chip state before you start script
 
 ## What tt-smi -s Gives You
 
-Every 1-second pulse of `tt-smi -s` returns a JSON document with per-chip entries. The fields that matter for LED-driving logic:
+Every 1-second pulse of `tt-smi -s` returns a JSON document with a `device_info` list — one entry per chip, each with **nested** sub-objects rather than flat fields. The ones that matter for LED-driving logic live under `telemetry`:
 
-- `temperature` — ASIC die temperature in Celsius
-- `current` — current draw in amps
-- `power` — power consumption in watts
-- `voltage` — chip supply voltage
-- `aiclk` — AI clock frequency (higher when actively computing)
-- `arc_fw_version` — firmware version (important for knowing what LED commands are available)
+- `telemetry.asic_temperature` — ASIC die temperature in Celsius (as a string, e.g. `"40.3"`)
+- `telemetry.current` — current draw in amps
+- `telemetry.power` — power consumption in watts
+- `telemetry.voltage` — chip supply voltage
+- `telemetry.aiclk` — AI clock frequency in MHz (higher when actively computing)
 
-A chip sitting idle has low `aiclk`. A chip running inference has elevated `aiclk` and rising `temperature`. Those two signals alone let you build a three-state indicator: idle, working, hot.
+Firmware version lives separately, under `firmwares.fw_bundle_version` — there's no `arc_fw_version` field.
+
+A chip sitting idle has low `aiclk`. A chip running inference has elevated `aiclk` and rising `asic_temperature`. Those two signals alone let you build a three-state indicator: idle, working, hot.
 
 ## A Monitoring Script
 
-This script reads `tt-smi -s` every two seconds and calls LED commands based on chip temperature. Adjust the temperature thresholds and LED command syntax to match your firmware's actual interface (discovered via `tt-smi --help`):
+This script reads `tt-smi -s` every two seconds and calls your RGB tool's own command based on chip temperature. It assumes OpenRGB's CLI is on your PATH (`openrgb --help` to check) — swap in whatever you actually have:
 
 ```python
 #!/usr/bin/env python3
@@ -122,8 +119,9 @@ Temperature thresholds:
   60-80°C → pulsing amber (active inference)
   > 80°C  → rapid blink red (thermal throttle zone)
 
-LED command syntax comes from: tt-smi --help | grep -i led
-Adjust LED_CMD_* below to match your firmware's actual syntax.
+This targets OpenRGB's CLI (`openrgb --help` to see its own device/mode/color flags —
+there is no tt-smi LED command to discover; that was never real).
+Adjust LED_CMD_* below to match your RGB tool's actual syntax.
 """
 
 import subprocess
@@ -132,11 +130,11 @@ import time
 import sys
 
 # ── LED command templates ─────────────────────────────────────────────────────
-# Fill these in from `tt-smi --help` output on your system.
-# Typical shapes: tt-smi --set-led <id> on/off  OR  tt-smi led <id> <state>
-LED_CMD_COOL   = "tt-smi --set-led {device_id} on"       # steady
-LED_CMD_ACTIVE = "tt-smi --set-led {device_id} blink"    # slow blink
-LED_CMD_HOT    = "tt-smi --set-led {device_id} blink-fast"  # fast blink
+# Fill these in from your RGB tool's own --help output (e.g. `openrgb --help`).
+# There is no tt-smi equivalent — tt-smi only reports telemetry.
+LED_CMD_COOL   = "openrgb --device {device_id} --mode static --color 00FF80"   # steady teal
+LED_CMD_ACTIVE = "openrgb --device {device_id} --mode breathing --color FFA000" # pulsing amber
+LED_CMD_HOT    = "openrgb --device {device_id} --mode flashing --color FF0000" # rapid red
 
 TEMP_ACTIVE_THRESHOLD = 60.0   # °C — above this = chip is working
 TEMP_HOT_THRESHOLD    = 80.0   # °C — above this = thermal warning
@@ -152,9 +150,7 @@ def get_chip_state():
         return []
     try:
         data = json.loads(result.stdout)
-        # tt-smi -s returns a dict with a "device_info" list (or similar)
-        # Field name may vary — inspect tt-smi -s output on your machine
-        return data.get("device_info", data.get("devices", []))
+        return data.get("device_info", [])
     except (json.JSONDecodeError, AttributeError):
         return []
 
@@ -169,8 +165,13 @@ def set_led(device_id: int, mode: str):
     subprocess.run(cmd.split(), capture_output=True)
 
 def classify(chip: dict) -> str:
-    """Decide LED mode from chip telemetry dict."""
-    temp = float(chip.get("temperature", 0.0))
+    """Decide LED mode from a device_info entry — temperature lives under telemetry."""
+    try:
+        temp = float(chip.get("telemetry", {}).get("asic_temperature", 0.0))
+    except (TypeError, ValueError):
+        # Telemetry field missing or non-numeric (transient tt-smi hiccup) —
+        # treat as unknown rather than crashing the monitor loop.
+        return "cool"
     if temp > TEMP_HOT_THRESHOLD:
         return "hot"
     if temp > TEMP_ACTIVE_THRESHOLD:
@@ -189,7 +190,7 @@ def main():
             mode = classify(chip)
             if prev_modes.get(i) != mode:
                 set_led(i, mode)
-                temp = chip.get("temperature", "?")
+                temp = chip.get("telemetry", {}).get("asic_temperature", "?")
                 print(f"  chip {i}: {mode} (temp={temp}°C)")
                 prev_modes[i] = mode
         time.sleep(POLL_INTERVAL_SEC)

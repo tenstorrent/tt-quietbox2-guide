@@ -122,13 +122,22 @@ These are collectively small downloads, collectively large quality-of-life gains
 sudo apt install \
   htop \       # interactive process monitor
   ncdu \       # disk usage navigator
-  bat \        # cat with syntax highlighting
+  bat \        # cat with syntax highlighting — binary installs as `batcat`
   ripgrep \    # blazing grep replacement (rg)
-  fd-find \    # fast find replacement (fd)
+  fd-find \    # fast find replacement — binary installs as `fdfind`
   fzf \        # fuzzy finder — attach to shell history, file browsing
   jq \         # JSON processor — useful for tt-smi -s output
   tmux         # terminal multiplexer — see below
 ```
+
+:::callout type="warn"
+On Debian/Ubuntu, `bat` and `fd-find` ship their binaries under different names — `batcat` and `fdfind`, not `bat`/`fd` (both names were already taken by other packages when these were added to the archive). Typing `bat` or `fd` after installing gets you "command not found." Add these to your `.bashrc`/`.zshrc`:
+
+```bash
+alias bat=batcat
+alias fd=fdfind
+```
+:::
 
 `fzf` in particular integrates with shell history (`Ctrl-R`) and file search (`Ctrl-T`) to make terminal navigation dramatically faster. Add these lines to your `.bashrc` or `.zshrc` after installing:
 

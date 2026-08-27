@@ -1,6 +1,6 @@
 ## Point Claude Code or OpenCode at your QB2
 
-As of **tt-studio v2.8.0**, your QB2 can be the backend for a coding agent. Deploy a model, and tt-studio exposes it through a built-in [LiteLLM](https://github.com/BerriAI/litellm) gateway that speaks two protocols at once:
+Since **tt-studio v2.8.0** (current is v2.10.0), your QB2 can be the backend for a coding agent. Deploy a model, and tt-studio exposes it through a built-in [LiteLLM](https://github.com/BerriAI/litellm) gateway that speaks two protocols at once:
 
 - an **Anthropic** surface (`http://<qb2-host>:4000`) that [Claude Code](https://docs.claude.com/en/docs/claude-code) talks to natively, and
 - an **OpenAI-compatible** surface (`http://<qb2-host>:4000/v1`) for [OpenCode](https://opencode.ai/) and any other OpenAI client.

@@ -49,6 +49,31 @@ The VS Code extension ships lessons that run against your QB2 directly — not s
 
 </div>
 
+## Custom Training on QB2
+
+Everything so far has been inference — download weights, serve them, measure them. The QB2 also builds and trains models, via **tt-train** (the `ttml` library), and the tt-vscode-toolkit lesson set for this has grown into a full arc, not a single lesson:
+
+<div style="display:grid; gap:12px; margin: 1.5em 0;">
+
+<a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/ct1-understanding-training/" style="display:block; background:var(--bg1); border-left:3px solid var(--pink); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
+  <div style="color:var(--pink); font-weight:700;">1–3 · Foundations</div>
+  <div style="font-size:13px; color:var(--text2); margin-top:4px;">Understanding Custom Training, Dataset Fundamentals, Configuration Patterns — fine-tuning vs. training from scratch, JSONL dataset quality, and the YAML model/training-config split tt-train reads.</div>
+</a>
+
+<a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/ct4-finetuning-basics/" style="display:block; background:var(--bg1); border-left:3px solid var(--pink); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
+  <div style="color:var(--pink); font-weight:700;">4–6 · Run and Track a Real Job</div>
+  <div style="font-size:13px; color:var(--text2); margin-top:4px;">Fine-tuning Basics (a real <code>train_nanogpt.py</code> checkpoint, then <code>--resume</code> to continue it), Multi-Device Training (near-linear DDP scaling to all four Blackhole chips on a QB2), and Experiment Tracking (WandB, hyperparameter comparison).</div>
+</a>
+
+<a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/ct7-architecture-basics/" style="display:block; background:var(--bg1); border-left:3px solid var(--pink); padding:16px 18px; border-radius:var(--radius); text-decoration:none; color:var(--text);">
+  <div style="color:var(--pink); font-weight:700;">7–8 · From Scratch</div>
+  <div style="font-size:13px; color:var(--text2); margin-top:4px;">Model Architecture Basics (RoPE, GQA, SwiGLU, RMSNorm, built by hand) and Training from Scratch — a modern nanollama3-style config, a real loss curve on Blackhole p300c, and an honest look at what driving loss down on a tiny corpus actually buys you.</div>
+</a>
+
+</div>
+
+The multi-device lesson is the one worth calling out on a QB2 specifically: it documents near-linear data-parallel scaling across all four chips, which is exactly the hardware you have.
+
 ## Three Things to Try Next
 
 **[Run Llama-3.3-70B with all four chips.](/lessons/llama-70b/)** The largest model QB2 officially supports: 70 billion parameters, 128K context, tensor-parallel across all four Blackhole chips. The lesson has the exact Docker command, prerequisites checklist, and a variant for the DeepSeek-R1 reasoning model that uses the same infrastructure. Download the weights (140 GB — plan ahead), start the server, and run a request that would be genuinely difficult to answer. Watch `tt-smi -s` while it generates — the hardware doing real work looks different from the hardware doing toy work.

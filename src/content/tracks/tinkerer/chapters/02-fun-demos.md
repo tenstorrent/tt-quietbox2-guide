@@ -66,13 +66,22 @@ This one tends to generate the most questions. "What are those things?" is how g
 Set up a continuous generation loop and you have a generative art installation:
 
 ```bash
-# Install tt-local-generator from GitHub releases (not in the Tenstorrent apt PPA)
-# https://github.com/tenstorrent/tt-local-generator/releases
-sudo dpkg -i tt-local-generator_*.deb
+# tt-local-generator is in the Tenstorrent apt repository (set up by tt-installer):
+sudo apt update && sudo apt install tt-local-generator
 
 # Launch the app
 tt-local-generator
 ```
+
+No repository on this machine? Install the `.deb` from GitHub releases instead — [releases page](https://github.com/tenstorrent/tt-local-generator/releases):
+
+```bash
+sudo dpkg -i tt-local-generator_*.deb
+```
+
+:::callout type="tip"
+`tt-local-generator-models-all` is also in the PPA — a metapackage that pulls every supported model family (~360 GB). Worth knowing it exists; not something to `apt install` on a whim. Pull individual model weights as you need them instead.
+:::
 
 In the app, open the video generation panel. Write a prompt. Let it run. The app has an "attractor mode" that generates clips continuously and plays them fullscreen. Walk away. Come back to a wall of generated cinema.
 
@@ -95,9 +104,9 @@ docker run \
   --publish 8000:8000 \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
-  --volume volume_id_Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
+  --volume volume_id_tt_transformers-Llama-3.3-70B-Instruct:/home/container_app_user/cache_root \
   ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-src-release-ubuntu-22.04-amd64:0.16.0-669d59e-3334377 \
-  --model Llama-3.3-70B-Instruct \
+  --model meta-llama/Llama-3.3-70B-Instruct \
   --tt-device p300x2
 ```
 
@@ -174,6 +183,34 @@ First Voice is the payoff. After each successful compile, the game runs one infe
 {% tensixsystem "qb2", "Four chips, four models — your QB2's two p300c cards" %}
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;">Four genuine Blackhole chips across two p300c cards, joined by the Samtec link. The model-zoo game compiles a different model on each, in parallel.</p>
+
+## Demo 6: tt-bio — Watch a Protein Fold in Real Time
+
+Not every demo has to be about tokens. [tt-bio](https://github.com/moritztng/tt-bio) runs Boltz-2 — a biomolecular structure and binding-affinity model — on Blackhole, approaching physics-based free-energy-perturbation accuracy at roughly 1000× the speed. It scales from a single card up through a full QuietBox (4×) to a Galaxy (32×), and it's an actively released project, not a one-off port.
+
+```bash
+# The [tenstorrent] extra is required — without it, install-deps refuses with
+# "needs the ttnn wheel, which is not installed"
+pip install "tt-bio[tenstorrent] @ git+https://github.com/moritztng/tt-bio.git"
+tt-bio install-deps
+
+# Fold a protein from a sequence spec — MSA runs automatically by default
+# (local DB, falling back to a public server); no flag needed for that.
+# --single_sequence skips MSA entirely if you want a fast, lower-accuracy pass.
+tt-bio predict your-protein.yaml --model boltz2
+```
+
+:::callout type="warn"
+`tt-bio install-deps` pins a specific `ttnn` build and will silently **downgrade your system's `sfpi` package** to match it (observed: 7.67.0 → 7.35.3 on a QB2 with the current apt-installed `sfpi`). Check `dpkg -l sfpi` before and after if you have other tt-metal work depending on a specific `sfpi` version, and reinstall the version you need afterward if it matters (`sudo apt install --allow-downgrades sfpi=<version>`).
+:::
+
+It also supports newer structure-prediction and binder-design models — ESMFold-2, Protenix v2, OpenFold3 (AlphaFold3-style folding of protein/RNA/DNA), and design tools like BoltzGen and RFdiffusion3 (`tt-bio design INPUT --model boltzgen`).
+
+For the demo-floor version of this, there's [tt-bio-demo](https://github.com/tsingletaryTT/tt-bio-demo): a native GTK4/OpenGL booth app that renders a protein condensing out of noise into its folded structure live, with per-residue confidence coloring and a Tensix core grid alongside the render. Its quad view runs four independent folds on four chips at once — one per Blackhole on a QB2 — which makes the same "the monitor is the demo" point as arcade mode, but for structural biology instead of telemetry.
+
+:::callout type="tip"
+This is the demo for a room that's already seen an LLM answer a question. Watching silicon fold a protein in real time tends to land differently — it's a visibly *physical* computation, not a chat response.
+:::
 
 ---
 

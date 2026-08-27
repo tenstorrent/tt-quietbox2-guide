@@ -6,31 +6,42 @@
 tt-smi -s
 ```
 
-A healthy QB2 returns four entries — one per Blackhole chip:
+A healthy QB2 returns four entries — one per Blackhole chip. The real shape is nested, not flat — `board_info` and `telemetry` are their own sub-objects:
 
 ```json
 {
   "device_info": [
     {
-      "board_type": "BLACKHOLE",
-      "board_id": "AA-BHXY-0001",
-      "pcie_speed": "GEN4",
-      "pcie_width": "x16",
-      "temperature": { "asic": 44.1, "inlet": 31.0 },
-      "voltage": { "core": 0.85 },
-      "power": { "total": 42.0 }
+      "board_info": {
+        "bus_id": "0000:01:00.0",
+        "board_type": "p300c",
+        "board_id": "0000046131924062",
+        "dram_status": true,
+        "pcie_speed": 4,
+        "pcie_width": "4"
+      },
+      "telemetry": {
+        "voltage": "0.72",
+        "current": "23.0",
+        "power": "16.0",
+        "aiclk": "800",
+        "asic_temperature": "40.3"
+      },
+      "firmwares": {
+        "fw_bundle_version": "19.13.1.0"
+      }
     }
   ]
 }
 ```
 
-Four entries in `device_info` means four chips, all alive. Check it directly:
+`board_type` is the board SKU (`p300c` on a QB2), not a chip-family string — Blackhole doesn't appear literally anywhere in the output. Four entries in `device_info` means four chips, all alive. Check it directly:
 
 ```bash
 tt-smi -s | python3 -m json.tool | grep board_type
 ```
 
-You should see `"BLACKHOLE"` printed four times.
+You should see `"p300c"` printed four times.
 
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">🌡️</span>

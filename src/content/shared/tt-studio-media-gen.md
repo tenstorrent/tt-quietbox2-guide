@@ -1,6 +1,6 @@
 ## Beyond text: video and image generation
 
-The QB2 isn't only a text box. **tt-studio v2.8.0** adds two generative-media families to the same deploy-and-run flow:
+The QB2 isn't only a text box. **tt-studio** (v2.8.0 and current as of v2.10.0) adds two generative-media families to the same deploy-and-run flow:
 
 - **WAN** — text-to-video. Describe a scene, get a short generated clip.
 - **Flux** — text-to-image. A high-quality diffusion image generator.

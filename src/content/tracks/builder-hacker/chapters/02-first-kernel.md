@@ -77,7 +77,7 @@ A key conceptual shift: TTNN does not operate on individual elements. It operate
 The tile transformation happens automatically during `from_torch` with `layout=ttnn.TILE_LAYOUT`. You can inspect the layout:
 
 ```python
-print(a_tt.layout)   # TILE_LAYOUT
+print(a_tt.layout)   # Layout.TILE
 print(a_tt.dtype)    # DataType.BFLOAT16
 print(a_tt.shape)    # Shape([32, 32])
 ```
