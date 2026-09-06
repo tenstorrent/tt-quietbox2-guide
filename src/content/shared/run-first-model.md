@@ -7,18 +7,27 @@
 
 This chapter takes the *other* path — the hands-on one, where you talk to a chip directly in Python and pull a tiny model down yourself. The starter is [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) — no license gate, 1.5 GB, runs on any Tenstorrent hardware.
 
-First, activate the TTNN environment and verify the hardware is accessible:
+First, get into the TTNN environment. On a factory QB2 there is no `~/tt-metal`
+checkout on the host — TT-Metalium ships as a container, and the QB2 provides a
+wrapper command that starts it:
 
 ```bash
-source ~/tt-metal/python_env/bin/activate
+tt-metalium
 ```
 
-Your prompt will change to show `(python_env)`. That `which python3` will now point into the venv, not `/usr/bin/python3`. Check it:
+That drops you into a shell inside the container with your home directory mounted.
+TTNN is already on the default interpreter, so there is no venv to activate. Check it:
 
 ```bash
 which python3
-# → /home/yourname/tt-metal/python_env/bin/python3
+# → /opt/venv/bin/python3
 ```
+
+<div class="callout callout--info">
+<span class="callout-icon illustrated-only">ℹ</span>
+<strong>First run downloads the image.</strong> <code>tt-metalium</code> pulls a multi-GB
+container the first time you run it. Later runs start immediately.
+</div>
 
 Now do the handshake — open a device, confirm it responds, close it:
 
@@ -39,9 +48,27 @@ If you see `Device open:` without errors, chip 0 is alive and responding. Repeat
 <strong>QB2 note:</strong> To work with all four chips together, use <code>ttnn.CreateDevices({0, 1, 2, 3})</code> — not four separate <code>open_device()</code> calls. Opening and closing devices individually can cause dispatch core errors on multi-chip configs.
 </div>
 
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+<strong>The chips can only have one owner.</strong> If a model is already deployed
+through tt-studio, it holds the devices and their hugepages, and opening a device here
+fails with a UMD error like <code>Expected NOC address: 0x1000000000000000, but got
+0x1000000040000000</code>. That is contention, not broken hardware — stop the deployed
+model (or <code>docker ps</code> and stop the inference container) and try again.
+</div>
+
 ### Download a model
 
-Use the `hf` CLI (part of the `huggingface_hub` package already installed in the venv):
+Downloading weights by hand needs the `hf` CLI, which is **not** part of the QB2's
+preinstalled stack — install it first. Keep it out of `~/.tenstorrent-venv`: that venv
+is auto-activated in every shell and holds `tt-smi` and `tt-flash`, so a bad dependency
+resolution there costs you your hardware tooling.
+
+```bash
+brew install hf          # or: uv tool install huggingface_hub
+```
+
+Then pull the weights (run this on the host, not inside `tt-metalium`):
 
 ```bash
 # hf — not huggingface-cli. The command is hf.

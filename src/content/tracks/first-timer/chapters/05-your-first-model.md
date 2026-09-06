@@ -34,27 +34,47 @@ When that Python snippet ran without errors, the Blackhole chip opened a dispatc
 
 ## Serving a Model with vLLM
 
-The fastest path to actually generating text is vLLM. It handles model loading, tokenization, batching, and presents an OpenAI-compatible HTTP API.
+The fastest path to actually generating text is vLLM. It handles model loading,
+tokenization, batching, and presents an OpenAI-compatible HTTP API.
+
+On a QB2 you do not invoke `vllm` yourself, and it is **not** installed in
+`~/.tenstorrent-venv` — that venv holds only the hardware tooling (`tt-smi`, `tt-flash`).
+vLLM ships inside a container that `tt-inference-server` launches for you:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
+cd ~/.local/lib/tt-inference-server
 
-export TT_METAL_ARCH_NAME=blackhole
-export MESH_DEVICE=P300              # one P300 card; P300x2 uses all four chips
-export VLLM_RPC_TIMEOUT=900000       # first compile exceeds the 10s default
+export HF_TOKEN=hf_...   # required; gated repos need it even when weights are local
 
-# HF_MODEL must match the --model path: tt-metal uses it as the checkpoint directory
-export HF_MODEL=~/models/Llama-3.1-8B-Instruct
-
-vllm serve ~/models/Llama-3.1-8B-Instruct \
-  --served-model-name meta-llama/Llama-3.1-8B-Instruct \
-  --port 8000
+python3 run.py \
+  --model Llama-3.1-8B-Instruct \
+  --workflow server \
+  --tt-device p300x2 \
+  --docker-server
 ```
+
+`run.py` selects the right container image, sets `TT_METAL_ARCH_NAME`, `MESH_DEVICE` and
+the vLLM RPC timeout for you, and publishes the OpenAI-compatible API. Add
+`--print-docker-cmd` to see the exact `docker run` it would issue before it launches.
+
+:::callout type="tip"
+`--tt-device p300x2` is the whole QB2 — two P300 boards, four Blackhole chips. Passing
+`p300` uses a single board, so half the machine sits idle. Check what a given model
+supports: not every model is built for every topology.
+:::
+
+:::callout type="tip"
+If you already pulled weights with `hf download`, add `--host-hf-cache` so the server
+mounts `~/.cache/huggingface` read-only instead of downloading its own copy into a
+Docker volume.
+:::
 
 :::callout type="tip"
 Llama-3.1-8B is the safer first model here. Very small models like Qwen3-0.6B will load — the
 plugin maps them by architecture — but they have no tuned implementation in tt-metal's
-`tt_transformers`, so output quality is not something to judge the hardware by.
+`tt_transformers`, so output quality is not something to judge the hardware by. Note that
+Qwen3-0.6B is not in `tt-inference-server`'s model list at all: it is fine for the direct
+TTNN handshake above, but you cannot serve it with the command in this section.
 :::
 
 You'll see initialization messages as the model loads. This takes a minute or two on first run — the model weights are being compiled for the Blackhole architecture. Subsequent runs are faster.
@@ -74,7 +94,7 @@ The response is JSON. The answer is in `choices[0].message.content`.
 
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">💡</span>
-<strong>Why Qwen3-0.6B?</strong> It's the recommended starter model for all Tenstorrent hardware: small enough to load fast (~1.5 GB), capable enough to give real answers, reasoning-capable with dual thinking modes (add <code>"think": false</code> to the request to skip extended reasoning), and requires no Hugging Face license. Start here before trying larger models.
+<strong>Why two different models?</strong> Qwen3-0.6B is the starter for the <em>direct TTNN</em> path earlier in this chapter: ~1.5 GB, no Hugging Face license gate, fast to pull. For <em>serving</em>, use Llama-3.1-8B-Instruct — Qwen3-0.6B has no tuned <code>tt_transformers</code> implementation and is not in <code>tt-inference-server</code>'s model list, so the vLLM command above cannot serve it.
 </div>
 
 ## Using tt-studio (the Web UI)
@@ -86,7 +106,7 @@ The response is JSON. The answer is in `choices[0].message.content`.
 To spread a model across all four Blackhole chips, use `CreateDevices` instead of `open_device`:
 
 ```bash
-source ~/tt-metal/python_env/bin/activate
+tt-metalium
 
 python3 -c "
 import ttnn

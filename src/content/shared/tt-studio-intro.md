@@ -8,6 +8,17 @@ Start it with the pre-installed wrapper command:
 tt-studio
 ```
 
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+<strong><code>tt-studio: command not found</code>?</strong> The wrapper lives in
+<code>~/.local/bin</code>, which is not on <code>PATH</code> in every shell — zsh in
+particular never reads <code>~/.profile</code>, where Ubuntu's default
+<code>~/.local/bin</code> rule lives. Fix it for this shell with
+<code>export PATH="$HOME/.local/bin:$PATH"</code>, and add that line to
+<code>~/.zshrc</code> to make it stick. The same applies to <code>tt-metalium</code>
+and <code>tt-inference-server</code>.
+</div>
+
 Then open `http://localhost:3000` in your browser, pick a model from the Deploy Model dropdown, and click Run. **On a QB2, Qwen3-32B is already there with its weights pre-cached** — its first deploy skips the multi-GB download and is ready in a few minutes. Other models download on first use; after that, every run loads fast from the on-disk cache. (tt-studio v2.8.0 also fixed the cold first-chat delay after an idle model, so that first token comes back quickly.)
 
 tt-studio is at **v2.10.0** as of this writing. Since v2.8.0 it's added an OpenClaw general agent you can deploy like any model (v2.9.0), and an Apps Marketplace connecting deployed chat models to external tools plus hybrid RAG retrieval with reranking (v2.10.0).
