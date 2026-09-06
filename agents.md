@@ -16,8 +16,13 @@ Recommended first model: `Qwen/Qwen3-0.6B`
 - Works on all 4 devices
 - Fast to download (~1.5GB)
 
-Python env for inference (TTNN): `source ~/tt-metal/python_env/bin/activate`
-Python env for vLLM: `source ~/.tenstorrent-venv/bin/activate`
+TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). There is no
+`~/tt-metal` checkout on a factory QB2; inside the container TTNN is already on the
+default `python3` (`/opt/venv/bin/python3`) — nothing to activate.
+
+vLLM: not installed on the host. `~/.tenstorrent-venv` holds only `tt-smi` / `tt-flash`.
+Serve models with `~/.local/lib/tt-inference-server/run.py --workflow server
+--tt-device p300x2 --docker-server`, which runs vLLM in a container.
 
 ### Coding Agents — Claude Code / OpenCode (tt-studio v2.8.0+)
 tt-studio can serve a deployed model to a coding agent via a built-in LiteLLM
