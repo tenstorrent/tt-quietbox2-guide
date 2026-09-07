@@ -40,6 +40,24 @@ it holds `tt-smi` and `tt-flash`; vLLM's dependency tree resolved on top of them
 lose their hardware tooling to an unrelated install.
 :::
 
+First get the weights (see [Model Zoo](/ml-practitioner/02-model-zoo/) for installing `hf`).
+Qwen3-0.6B is small enough to download in a minute and start fast, which makes it a good first
+model:
+
+```bash
+hf download Qwen/Qwen3-0.6B --local-dir ~/models/Qwen3-0.6B
+```
+
+:::callout type="tip"
+`hf download` can succeed and still print a `click.exceptions.Exit: 0` traceback afterward — a
+typer/click version mismatch, not a failed download. Check the files rather than the output:
+`ls ~/models/Qwen3-0.6B` should show one or more `*.safetensors` files (one, for this model) and
+a `config.json` — larger models shard weights across several `model-0000N-of-0000M.safetensors`
+files, so don't treat the exact filename as a pass/fail signal.
+:::
+
+Then serve it:
+
 ```bash
 # Your own vLLM environment — not the tooling venv
 source ~/.venvs/vllm-tt/bin/activate
@@ -48,20 +66,41 @@ source ~/.venvs/vllm-tt/bin/activate
 export TT_METAL_ARCH_NAME=blackhole
 
 # Mesh shape. This — not --tensor-parallel-size — is how you choose chips.
-# P150 = one chip. P300x2 = all four chips of a QB2. Avoid the two-chip mesh (see below).
-export MESH_DEVICE=P300x2
+# P150 = one chip, plenty for a 0.6B model — P300x2 (all four) is for the 70B
+# example further down. Avoid the two-chip mesh (see below).
+export MESH_DEVICE=P150
 
-# Model load and first compile far exceed vLLM's default RPC deadline (10s)
-export VLLM_RPC_TIMEOUT=900000
+# Model load and first compile far exceed vLLM's default engine-ready deadline
+export VLLM_ENGINE_READY_TIMEOUT_S=1800
 
 # HF_MODEL is required when --model is a local path: tt-metal's tt_transformers
 # uses it as the checkpoint directory, not just a name.
-export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+export HF_MODEL=~/models/Qwen3-0.6B
 
-vllm serve ~/models/Llama-3.1-8B-Instruct \
-  --served-model-name meta-llama/Llama-3.1-8B-Instruct \
+vllm serve ~/models/Qwen3-0.6B \
+  --served-model-name Qwen3-0.6B \
+  --block_size 64 --max_num_seqs 32 \
   --port 8000
 ```
+
+:::callout type="warn"
+**Two-chip meshes fail on our QB2.** `MESH_DEVICE=P300` dies during fabric bring-up:
+
+```text
+Fabric Router Sync: Timeout after 10000 ms on Device 2 ... Ethernet handshake likely failed
+```
+
+One chip (`P150`) and all four (`P300x2` / `P150x4`) both work; two does not, reproducibly across
+board resets. Neither escape hatch helps — `fabric_config: DISABLED` opens the mesh and then
+fails on `Trying to get un-initialized fabric context`, and `fabric_reliability_mode:
+RELAXED_INIT` gives the same timeout. Until that is understood, pick `P150` or `P300x2`.
+:::
+
+:::callout type="tip"
+`Qwen3-0.6B` has no entry in tt-metal's `tt_transformers` model table, but the plugin registers
+`Qwen3ForCausalLM` generically, so it serves anyway. `--block_size 64` and `--max_num_seqs 32`
+come from the plugin's own `examples/server_example_tt.py` rather than vLLM's defaults.
+:::
 
 :::callout type="tip"
 **Check that vLLM actually claimed your hardware.** Whichever vLLM your box shipped with, the
@@ -71,21 +110,6 @@ request will be slow or wrong rather than failing outright.
 
 If you want the newest Tenstorrent vLLM rather than what shipped, see
 [Running the latest vLLM plugin](#running-the-latest-vllm-plugin) at the end of this chapter.
-:::
-
-:::callout type="warn"
-**Skip the two-chip mesh.** `MESH_DEVICE=P300` — one card, two chips — has failed fabric
-bring-up reproducibly on our hardware, across three board resets:
-
-```
-Fabric Router Sync: Timeout after 10000 ms on Device 2 ... Ethernet handshake likely failed
-```
-
-One chip (`P150`) and all four (`P300x2` / `P150x4`) both serve fine. Neither documented escape
-hatch helps, so don't lose time on them: `fabric_config: DISABLED` opens the mesh and then dies
-on `Trying to get un-initialized fabric context`, and `fabric_reliability_mode: RELAXED_INIT`
-reproduces the identical timeout. If you're narrowing the mesh to fit a smaller model, go to
-`P150`.
 :::
 
 On first run: the model weights get compiled into Blackhole-optimized op graphs. This takes 3–5 minutes. Subsequent starts are fast — the compiled artifacts are cached.
@@ -160,26 +184,30 @@ curl -s http://localhost:8000/v1/chat/completions \
     "model": "Llama-3.1-8B-Instruct",
     "messages": [
       {"role": "user", "content": "Explain tensor parallelism in one sentence."}
-    ]
+    ],
+    "max_tokens": 120
   }' | python3 -m json.tool
 ```
 
 The response JSON has the generated text at `choices[0].message.content`. If you get a connection refused, the server isn't ready yet — give it another 30 seconds.
 
 :::callout type="warn"
-**`"model"` has to match what the server actually loaded**, or you get back
-`The model '...' does not exist` — which looks like a server fault and isn't one. Take the string
-from `/v1/models` rather than from an example: Path 2 reports the model as you named it in
-`--model`, while Path 1's `--served-model-name` above renames it to
-`meta-llama/Llama-3.1-8B-Instruct`. The examples below use `Llama-3.1-8B-Instruct`; substitute
-whatever your box reports.
+**`"model"` has to match what the server actually loaded**, or you get back a 404, not a
+fallback — `{"error": {"message": "The model \`Qwen3-0.6B\` does not exist.", "code": 404}}`.
+Take the string from `/v1/models` rather than from an example: Path 2 reports the model as you
+named it in `--model`, while Path 1's `--served-model-name` above renames it to `Qwen3-0.6B`.
+The examples below use `Llama-3.1-8B-Instruct` (Path 2's naming); substitute whatever your box
+actually reports — `curl -s http://localhost:8000/v1/models | python3 -m json.tool` tells you.
 :::
 
 :::callout type="tip"
 **Serving a Qwen3 model instead?** They reason before answering, so a small `max_tokens` gets
 spent entirely inside the `<think>` block and comes back as `finish_reason: "length"` with an
-empty answer. Pass `extra_body={"enable_thinking": False}` (or `"enable_thinking": false` in
-curl) for direct replies — see [Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/).
+empty answer. Add `"chat_template_kwargs": {"enable_thinking": false}` to the request body above
+(or `extra_body={"chat_template_kwargs": {"enable_thinking": False}}` in the Python SDK examples
+below) for direct replies — see [Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/). Llama and
+other non-reasoning models don't need it; sending it anyway isn't guaranteed to be a harmless
+no-op on every model, so only add it for a model that actually supports it.
 :::
 
 ## OpenAI Python SDK
@@ -208,6 +236,13 @@ print(response.choices[0].message.content)
 ```
 
 This is the integration point for any application that already talks to OpenAI. Change the base URL, change the model name, and the rest of the code runs unchanged.
+
+:::callout type="tip"
+**Serving a Qwen3 model instead?** Add `extra_body={"chat_template_kwargs": {"enable_thinking":
+False}}` to `create()` — see the note under [Verifying the Server](#verifying-the-server) above.
+Only add it when the served model is actually a reasoning model; Llama and similar models don't
+need it.
+:::
 
 ## Streaming Responses
 
@@ -252,7 +287,16 @@ Keep these ports clear. Other services on the QB2 use them.
 | `8001` | tt-local-generator's prompt server — **not** tt-inference-server |
 | `8002` | a managed model's container API, when serving with `--service-port 8002` |
 
-If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`
+If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or
+tt-inference-server instance first.
+
+:::callout type="tip"
+On a box already running tt-studio, port 8000 is taken before you start — its backend container
+publishes it, and `vllm serve` exits with `OSError: [Errno 98] Address already in use`. Because
+the listener is a container mapping, `lsof -i :8000` often shows nothing useful; `docker ps` names
+the real owner. Easiest fix is to leave tt-studio alone and serve on a free port such as `8003`,
+remembering to change it in the `curl` commands too.
+:::
 
 ## Remote Access via SSH Port Forward
 
@@ -289,7 +333,7 @@ For 70B models, set `MESH_DEVICE=P300x2` to put all four Blackhole chips in one 
 source ~/.venvs/vllm-tt/bin/activate
 export TT_METAL_ARCH_NAME=blackhole
 export MESH_DEVICE=P300x2            # (1,4) — two P300 cards, four chips
-export VLLM_RPC_TIMEOUT=900000
+export VLLM_ENGINE_READY_TIMEOUT_S=1800
 export HF_MODEL=~/models/Llama-3.1-70B-Instruct
 
 vllm serve ~/models/Llama-3.1-70B-Instruct \
@@ -311,10 +355,22 @@ The mesh names the plugin accepts on Blackhole are `P100` and `P150` (single chi
 `P150x2` (two chips), `P150x4` and `P300x2` (four chips), and `P150x8` (eight). Spelling
 matters: it is `P300x2` with a lowercase `x` — and note the case difference between the two
 surfaces, since they are easy to cross-wire: `MESH_DEVICE` takes `P300x2`, while
-`run.py --tt-device` takes `p300x2`.
+`run.py --tt-device` takes `p300x2`. Names with the same chip count are equivalent — the plugin
+maps each to a grid shape, so `P300x2` and `P150x4` are both `(1, 4)` on a QB2.
 
 Accepted is not the same as working. The two-chip meshes (`P300`, `P150x2`) are the ones to avoid
 on a QB2 — see the fabric bring-up warning under Path 1.
+
+:::callout type="tip"
+**Why a P300 box writes a cache directory called `P150x4`.** On the first run for a model,
+tt-metal converts the weights into `~/models/<model>/<device-name>/`, and that name comes from
+the **number of chips in the mesh, not the board type** — four Blackhole chips are labelled
+`P150x4` even though they are two P300 cards. It is not a sign you picked the wrong hardware.
+
+The cache is per-mesh-size, so switching between `P150` and `P300x2` writes a second directory
+and pays the conversion again. An unexpectedly slow "second" start usually means the mesh
+changed, not that something broke.
+:::
 
 :::callout type="tip"
 **Status on our hardware.** The four-chip serving path brings up correctly — the plugin selects
@@ -324,6 +380,49 @@ testing generation degenerated into repetition, and we reproduced that across tw
 three models, and both one- and four-chip meshes — so it is not specific to the mesh. Our current
 suspicion is host firmware and driver versions running ahead of the tested pairings. Treat
 four-chip throughput numbers as unverified until that is resolved.
+:::
+
+## When Startup Stalls
+
+Startup has long silent stretches, so "stuck" and "working" look alike in the log. Two quiet
+phases are normal: building rotary-embedding matrices, which prints nothing at all, and the
+warmup prefill sweeps that follow weight loading. Warmup also emits
+`TT_FATAL: Only TILE layout is supported for BFLOAT8_B dtype!` at `critical` level, sometimes
+hundreds of times — it is caught internally and startup continues. Worth knowing if you script a
+log watcher, since grepping for `FATAL` will trip on it.
+
+A real device hang looks different: the log stops, CPU sits near 100%, and RSS stops moving
+entirely. Real work moves RSS. Confirm with a native stack dump:
+
+```bash
+uv tool install py-spy   # isolated install — not into the vLLM venv you're diagnosing
+py-spy dump --native --pid "$(pgrep -n -f 'VLLM::EngineCore')"
+```
+
+`-n` on `pgrep` matters if more than one matching process is running: `py-spy --pid` takes exactly
+one PID, and an unfiltered `pgrep -f` can print several.
+
+A hang in the command queue is unmistakable — `pthread_cond_wait` under
+`FDMeshCommandQueue::wait_for_outstanding_reads`, meaning the device never acknowledged a write.
+`--native` matters: the plain Python stack only shows `ttnn.from_torch` and looks like ordinary
+work.
+
+The usual cause is stale state from a run that did not exit cleanly, and a reset clears it:
+
+```bash
+sudo lsof -w /dev/tenstorrent/*   # must print nothing before you continue
+tt-smi -r                          # reset all boards
+```
+
+`lsof` exits `1` when nothing holds the devices, so for this check non-zero is the answer you
+want.
+
+:::callout type="warn"
+**Stop vLLM with Ctrl-C or SIGTERM, never `kill -9`.** A graceful exit lets the engine drain its
+command queue and close the mesh device; killing it mid-queue is what leaves boards wedged, so
+the *next* start hangs and gets the blame. Note too that boards can report healthy under
+`tt-smi -s` — sane temperatures, `dram_status: true` — while still holding state that hangs a
+fresh mesh. Healthy telemetry does not rule out needing a reset.
 :::
 
 ## Running the latest vLLM plugin
@@ -379,8 +478,9 @@ cd ~/vllm-tt-plugin
 source docs/install-vllm-tt.sh
 ```
 
-That installer pins upstream `vllm==0.24.0`, removes a CUDA `torchaudio` that cannot load beside
-a CPU torch, and installs the plugin itself.
+That installer pins upstream `vllm==0.26.0`, removes a CUDA `torchaudio` that cannot load beside
+a CPU torch, and installs the plugin itself. It fetches vLLM's dependency list from
+`raw.githubusercontent.com`, so it needs network access beyond your package index.
 
 :::callout type="warn"
 **The `--override` in that script is not optional.** `ttnn` requires `numpy<2`, while vLLM's
@@ -390,20 +490,37 @@ imports, vLLM starts up quietly seeing no hardware. Running the shipped installe
 for you; hand-rolling the pip commands is where people get bitten.
 :::
 
-Two dependencies the installer does not cover, because upstream assumes you are installing into
+One dependency the installer does not cover, because upstream assumes you are installing into
 a full tt-metal environment:
 
 ```bash
 uv pip install --override docs/vllm-overrides.txt pytest
-uv pip install --override docs/vllm-overrides.txt \
-  --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match \
-  torchvision
 ```
 
-`pytest` because tt-metal's `models/common/utility_functions.py` imports it at module scope, and
-`torchvision` because transformers' image processor imports it while vLLM inspects the TT model
-class. Missing either shows up as `Model architectures [...] failed to be inspected`, which does
-not obviously point at a missing test framework.
+`pytest` because tt-metal's `models/common/utility_functions.py` imports it at module scope.
+Missing it shows up as `Model architectures [...] failed to be inspected`, which does not
+obviously point at a missing test framework. Earlier versions of this page also had you install
+`torchvision` by hand; the installer now does it for you, so check
+`python3 -c "import torchvision"` before adding it.
+
+### Serving a model with the plugin
+
+`vllm serve` works exactly as it does above. On a QB2, with the mesh caveat from Path 1 in mind:
+
+```bash
+source ~/.venvs/vllm-tt/bin/activate          # the plugin venv from "Installing it" above
+
+export MESH_DEVICE=P150                       # or P300x2 for all four chips
+export HF_MODEL=~/models/Qwen3-0.6B
+
+vllm serve ~/models/Qwen3-0.6B \
+  --served-model-name Qwen3-0.6B \
+  --block_size 64 --max_num_seqs 32 \
+  --port 8003
+```
+
+The plugin disables chunked prefill for TT models and raises `max_num_batched_tokens` to match
+`max_model_len`; both are logged at startup and neither needs your input.
 
 ### Checking what you already have
 
