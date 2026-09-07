@@ -23,6 +23,22 @@ Both paths produce the same OpenAI-compatible API on port 8000. Which you use de
 
 ## Path 1: Direct vLLM
 
+First get the weights. Qwen3-0.6B is small enough to download in a minute and start fast, which
+makes it a good first model:
+
+```bash
+source ~/.tenstorrent-venv/bin/activate
+hf download Qwen/Qwen3-0.6B --local-dir ~/models/Qwen3-0.6B
+```
+
+:::callout type="tip"
+`hf download` succeeds but then prints a `click.exceptions.Exit: 0` traceback on the venv's
+`hf` 1.16.1 — a typer/click mismatch, not a failed download. Check the files rather than the
+output: `ls ~/models/Qwen3-0.6B` should show `model.safetensors` and a `config.json`.
+:::
+
+Then serve it:
+
 ```bash
 # Activate the main tenstorrent venv
 source ~/.tenstorrent-venv/bin/activate
@@ -31,20 +47,40 @@ source ~/.tenstorrent-venv/bin/activate
 export TT_METAL_ARCH_NAME=blackhole
 
 # Mesh shape. This — not --tensor-parallel-size — is how you choose chips.
-# P300 = one card (2 chips). P300x2 = all four chips of a QB2.
-export MESH_DEVICE=P300
+# P150 = one chip, which is plenty for a 0.6B model. See the mesh note below.
+export MESH_DEVICE=P150
 
-# Model load and first compile far exceed vLLM's default RPC deadline (10s)
-export VLLM_RPC_TIMEOUT=900000
+# Model load and first compile far exceed vLLM's default engine-ready deadline
+export VLLM_ENGINE_READY_TIMEOUT_S=1800
 
 # HF_MODEL is required when --model is a local path: tt-metal's tt_transformers
 # uses it as the checkpoint directory, not just a name.
-export HF_MODEL=~/models/Llama-3.1-8B-Instruct
+export HF_MODEL=~/models/Qwen3-0.6B
 
-vllm serve ~/models/Llama-3.1-8B-Instruct \
-  --served-model-name meta-llama/Llama-3.1-8B-Instruct \
+vllm serve ~/models/Qwen3-0.6B \
+  --served-model-name Qwen3-0.6B \
+  --block_size 64 --max_num_seqs 32 \
   --port 8000
 ```
+
+:::callout type="warn"
+**Two-chip meshes fail on our QB2.** `MESH_DEVICE=P300` dies during fabric bring-up:
+
+```text
+Fabric Router Sync: Timeout after 10000 ms on Device 2 ... Ethernet handshake likely failed
+```
+
+One chip (`P150`) and all four (`P300x2`) both work; two does not, reproducibly across board
+resets. Neither escape hatch helps — `fabric_config: DISABLED` opens the mesh and then fails on
+`Trying to get un-initialized fabric context`, and `fabric_reliability_mode: RELAXED_INIT` gives
+the same timeout. Until that is understood, pick `P150` or `P300x2`.
+:::
+
+:::callout type="tip"
+`Qwen3-0.6B` has no entry in tt-metal's `tt_transformers` model table, but the plugin registers
+`Qwen3ForCausalLM` generically, so it serves anyway. `--block_size 64` and `--max_num_seqs 32`
+come from the plugin's own `examples/server_example_tt.py` rather than vLLM's defaults.
+:::
 
 :::callout type="tip"
 **Check that vLLM actually claimed your hardware.** Whichever vLLM your box shipped with, the
@@ -124,11 +160,28 @@ curl -s http://localhost:8000/v1/chat/completions \
     "model": "Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "Explain tensor parallelism in one sentence."}
-    ]
+    ],
+    "max_tokens": 120,
+    "chat_template_kwargs": {"enable_thinking": false}
   }' | python3 -m json.tool
 ```
 
 The response JSON has the generated text at `choices[0].message.content`. If you get a connection refused, the server isn't ready yet — give it another 30 seconds.
+
+:::callout type="warn"
+**Qwen3 is a reasoning model — ask for one sentence and you get none.** Its replies open with a
+`<think>` block, so a request without a token budget spends it all reasoning and returns
+`finish_reason: "length"` with no answer in sight. `"enable_thinking": false` turns that off and
+gives you the sentence you asked for. Leave it on when you *want* the reasoning trace, and raise
+`max_tokens` well past it.
+:::
+
+:::callout type="tip"
+**The `model` field must match what the server advertises** — whatever you passed to
+`--served-model-name`, not the directory name. A mismatch is a 404, not a fallback:
+`{"error": {"message": "The model `Qwen3-0.6B` does not exist.", "code": 404}}`. Ask rather than
+guess: `curl -s http://localhost:8000/v1/models | python3 -m json.tool`.
+:::
 
 ## OpenAI Python SDK
 
@@ -149,7 +202,9 @@ response = client.chat.completions.create(
         {"role": "user", "content": "What is the Tenstorrent NOC fabric?"}
     ],
     max_tokens=256,
-    temperature=0.7
+    temperature=0.7,
+    # Qwen3 reasons before answering; skip the <think> block
+    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
 )
 
 print(response.choices[0].message.content)
@@ -165,7 +220,8 @@ For applications that need to show text as it generates — chat interfaces, int
 stream = client.chat.completions.create(
     model="Qwen3-0.6B",
     messages=[{"role": "user", "content": "Describe continuous batching."}],
-    stream=True
+    stream=True,
+    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
 )
 
 for chunk in stream:
@@ -200,7 +256,16 @@ Keep these ports clear. Other services on the QB2 use them.
 | `8001` | tt-local-generator's prompt server — **not** tt-inference-server |
 | `8002` | a managed model's container API, when serving with `--service-port 8002` |
 
-If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or tt-inference-server instance first: `lsof -i :8000`
+If port 8000 is already in use when you try to start vLLM, check for a running tt-studio or
+tt-inference-server instance first.
+
+:::callout type="tip"
+On a box already running tt-studio, port 8000 is taken before you start — its backend container
+publishes it, and `vllm serve` exits with `OSError: [Errno 98] Address already in use`. Because
+the listener is a container mapping, `lsof -i :8000` often shows nothing useful; `docker ps` names
+the real owner. Easiest fix is to leave tt-studio alone and serve on a free port such as `8003`,
+remembering to change it in the `curl` commands too.
+:::
 
 ## Remote Access via SSH Port Forward
 
@@ -236,7 +301,7 @@ For 70B models, set `MESH_DEVICE=P300x2` to put all four Blackhole chips in one 
 # Direct vLLM across all four chips
 export TT_METAL_ARCH_NAME=blackhole
 export MESH_DEVICE=P300x2            # (1,4) — two P300 cards, four chips
-export VLLM_RPC_TIMEOUT=900000
+export VLLM_ENGINE_READY_TIMEOUT_S=1800
 export HF_MODEL=~/models/Llama-3.1-70B-Instruct
 
 vllm serve ~/models/Llama-3.1-70B-Instruct \
@@ -256,7 +321,19 @@ request format.
 
 The mesh names the plugin accepts on Blackhole are `P100` and `P150` (single chip), `P300` and
 `P150x2` (two chips), `P150x4` and `P300x2` (four chips), and `P150x8` (eight). Spelling
-matters: it is `P300x2` with a lowercase `x`.
+matters: it is `P300x2` with a lowercase `x`. Names with the same chip count are equivalent —
+the plugin maps each to a grid shape, so `P300x2` and `P150x4` are both `(1, 4)` on a QB2.
+
+:::callout type="tip"
+**Why a P300 box writes a cache directory called `P150x4`.** On the first run for a model,
+tt-metal converts the weights into `~/models/<model>/<device-name>/`, and that name comes from
+the **number of chips in the mesh, not the board type** — four Blackhole chips are labelled
+`P150x4` even though they are two P300 cards. It is not a sign you picked the wrong hardware.
+
+The cache is per-mesh-size, so switching between `P150` and `P300x2` writes a second directory
+and pays the conversion again. An unexpectedly slow "second" start usually means the mesh
+changed, not that something broke.
+:::
 
 :::callout type="tip"
 **Status on our hardware.** The four-chip serving path brings up correctly — the plugin selects
@@ -266,6 +343,46 @@ testing generation degenerated into repetition, and we reproduced that across tw
 three models, and both one- and four-chip meshes — so it is not specific to the mesh. Our current
 suspicion is host firmware and driver versions running ahead of the tested pairings. Treat
 four-chip throughput numbers as unverified until that is resolved.
+:::
+
+## When Startup Stalls
+
+Startup has long silent stretches, so "stuck" and "working" look alike in the log. Two quiet
+phases are normal: building rotary-embedding matrices, which prints nothing at all, and the
+warmup prefill sweeps that follow weight loading. Warmup also emits
+`TT_FATAL: Only TILE layout is supported for BFLOAT8_B dtype!` at `critical` level, sometimes
+hundreds of times — it is caught internally and startup continues. Worth knowing if you script a
+log watcher, since grepping for `FATAL` will trip on it.
+
+A real device hang looks different: the log stops, CPU sits near 100%, and RSS stops moving
+entirely. Real work moves RSS. Confirm with a native stack dump:
+
+```bash
+uv pip install py-spy
+py-spy dump --native --pid "$(pgrep -f 'VLLM::EngineCore')"
+```
+
+A hang in the command queue is unmistakable — `pthread_cond_wait` under
+`FDMeshCommandQueue::wait_for_outstanding_reads`, meaning the device never acknowledged a write.
+`--native` matters: the plain Python stack only shows `ttnn.from_torch` and looks like ordinary
+work.
+
+The usual cause is stale state from a run that did not exit cleanly, and a reset clears it:
+
+```bash
+sudo lsof -w /dev/tenstorrent/*   # must print nothing before you continue
+tt-smi -r                          # reset all boards
+```
+
+`lsof` exits `1` when nothing holds the devices, so for this check non-zero is the answer you
+want.
+
+:::callout type="warn"
+**Stop vLLM with Ctrl-C or SIGTERM, never `kill -9`.** A graceful exit lets the engine drain its
+command queue and close the mesh device; killing it mid-queue is what leaves boards wedged, so
+the *next* start hangs and gets the blame. Note too that boards can report healthy under
+`tt-smi -s` — sane temperatures, `dram_status: true` — while still holding state that hangs a
+fresh mesh. Healthy telemetry does not rule out needing a reset.
 :::
 
 ## Running the latest vLLM plugin
@@ -308,8 +425,9 @@ cd ~/vllm-tt-plugin
 source docs/install-vllm-tt.sh
 ```
 
-That installer pins upstream `vllm==0.24.0`, removes a CUDA `torchaudio` that cannot load beside
-a CPU torch, and installs the plugin itself.
+That installer pins upstream `vllm==0.26.0`, removes a CUDA `torchaudio` that cannot load beside
+a CPU torch, and installs the plugin itself. It fetches vLLM's dependency list from
+`raw.githubusercontent.com`, so it needs network access beyond your package index.
 
 :::callout type="warn"
 **The `--override` in that script is not optional.** `ttnn` requires `numpy<2`, while vLLM's
@@ -319,20 +437,37 @@ imports, vLLM starts up quietly seeing no hardware. Running the shipped installe
 for you; hand-rolling the pip commands is where people get bitten.
 :::
 
-Two dependencies the installer does not cover, because upstream assumes you are installing into
+One dependency the installer does not cover, because upstream assumes you are installing into
 a full tt-metal environment:
 
 ```bash
 uv pip install --override docs/vllm-overrides.txt pytest
-uv pip install --override docs/vllm-overrides.txt \
-  --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match \
-  torchvision
 ```
 
-`pytest` because tt-metal's `models/common/utility_functions.py` imports it at module scope, and
-`torchvision` because transformers' image processor imports it while vLLM inspects the TT model
-class. Missing either shows up as `Model architectures [...] failed to be inspected`, which does
-not obviously point at a missing test framework.
+`pytest` because tt-metal's `models/common/utility_functions.py` imports it at module scope.
+Missing it shows up as `Model architectures [...] failed to be inspected`, which does not
+obviously point at a missing test framework. Earlier versions of this page also had you install
+`torchvision` by hand; the installer now does it for you, so check
+`python3 -c "import torchvision"` before adding it.
+
+### Serving a model with the plugin
+
+`vllm serve` works exactly as it does above. On a QB2, with the mesh caveat from Path 1 in mind:
+
+```bash
+source ~/.tenstorrent-venv/bin/activate
+
+export MESH_DEVICE=P150                       # or P300x2 for all four chips
+export HF_MODEL=~/models/Qwen3-0.6B
+
+vllm serve ~/models/Qwen3-0.6B \
+  --served-model-name Qwen3-0.6B \
+  --block_size 64 --max_num_seqs 32 \
+  --port 8003
+```
+
+The plugin disables chunked prefill for TT models and raises `max_num_batched_tokens` to match
+`max_model_len`; both are logged at startup and neither needs your input.
 
 ### Checking what you already have
 
