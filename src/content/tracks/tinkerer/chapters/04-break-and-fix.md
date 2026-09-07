@@ -133,8 +133,10 @@ before concluding the reset didn't work.
 **Fix:**
 
 ```bash
-# Check if the driver module exists for the current kernel
-ls /lib/modules/$(uname -r)/extra/ | grep tenstorrent
+# Check if the driver module exists for the current kernel — DKMS modules
+# land under updates/dkms/, not extra/ (confirmed live: the real file is
+# .../updates/dkms/tenstorrent.ko.zst)
+find /lib/modules/$(uname -r)/ -iname "*tenstorrent*"
 
 # If missing, reinstall the kernel driver package (this is the actual
 # package name — "tt-firmware" doesn't exist)
