@@ -81,9 +81,14 @@ from third_party.tt_forge_models.beit.pytorch import ModelLoader
 xr.set_device_type("TT")
 device = xm.xla_device()
 
+# load_model()/load_inputs() are instance methods, not static — instantiate
+# first (confirmed live: ModelLoader.load_model(...) raises TypeError:
+# missing 1 required positional argument: 'self')
+loader = ModelLoader()
+
 # Load the BEiT-base-patch16-224 model at bfloat16 precision
-model = ModelLoader.load_model(dtype_override=torch.bfloat16).eval()
-inputs = ModelLoader.load_inputs(dtype_override=torch.bfloat16)
+model = loader.load_model(dtype_override=torch.bfloat16).eval()
+inputs = loader.load_inputs(dtype_override=torch.bfloat16)
 
 # Compile to Tensix machine code and move onto the device.
 # First call: torch-xla traces to StableHLO, the TT-MLIR pipeline compiles it
@@ -95,7 +100,7 @@ output = compiled(inputs.to(device))
 print(output.logits.argmax(-1))
 ```
 
-Walk through what happens at each line. `ModelLoader.load_model()` fetches BEiT-base from HuggingFace and returns a standard PyTorch `nn.Module`. The `dtype_override=torch.bfloat16` argument casts weights to bfloat16, the Blackhole chip's native float format.
+Walk through what happens at each line. `loader.load_model()` fetches BEiT-base from HuggingFace and returns a standard PyTorch `nn.Module`. The `dtype_override=torch.bfloat16` argument casts weights to bfloat16, the Blackhole chip's native float format.
 
 `torch.compile(model, backend="tt")` is where the work happens. `torch-xla` traces the model into a StableHLO graph; the TT-MLIR pipeline tunes tile shapes, assigns cores, schedules data movement, and emits Tensix machine code. The compiled callable is API-identical to the original `nn.Module` — call it with inputs, get outputs — except the computation now executes on Blackhole hardware instead of your CPU.
 
@@ -117,16 +122,23 @@ See the [TT-Forge intro lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/l
 
 ## The ForgeModel Interface
 
-The `tt-forge-models` zoo at `~/code/tt-forge-models` defines a standardized interface for 800+ model variants. Every loader implements the `ForgeModel` abstract base class from `base.py`:
+The `tt-forge-models` zoo at `~/code/tt-forge-models` defines a standardized interface for 800+ model variants. Every loader implements the `ForgeModel` abstract base class from `base.py`, as **instance** methods (confirmed live, both in `base.py`'s abstract signatures and in every concrete loader checked — `load_model`/`load_inputs` all take `self`):
 
-- `load_model(variant, dtype_override)` — fetches, instantiates, and returns a ready-to-compile `nn.Module`
-- `load_inputs()` — returns a tuple of sample tensors that match the model's expected input shape and dtype
+- `__init__(self, variant=None)` — picks the checkpoint variant at construction time, not at load time
+- `load_model(self, *, dtype_override=None, **kwargs)` — fetches, instantiates, and returns a ready-to-compile `nn.Module`
+- `load_inputs(self, **kwargs)` — returns sample tensors that match the model's expected input shape and dtype
 
-The `ModelVariant` enum inside each loader names the specific checkpoints. BEiT's loader has variants for different patch sizes and training configurations. ResNet's loader offers:
+Each loader module exports a `ModelVariant` enum naming its specific checkpoints — **as a
+separate top-level name, not an attribute of `ModelLoader`** (confirmed live:
+`ModelLoader.ModelVariant` raises `AttributeError`; the module's own `__init__.py` does
+`from .loader import ModelLoader, ModelVariant`, two independent imports). BEiT's loader has
+variants for different patch sizes and training configurations. ResNet's loader offers:
 
 ```python
-ModelLoader.ModelVariant.RESNET_50_HF    # HuggingFace checkpoint
-ModelLoader.ModelVariant.RESNET_50_TIMM  # timm checkpoint
+from third_party.tt_forge_models.resnet.pytorch import ModelLoader, ModelVariant
+
+ModelVariant.RESNET_50_HF    # HuggingFace checkpoint
+ModelVariant.RESNET_50_TIMM  # timm checkpoint
 ```
 
 The `ModelTask` taxonomy in `config.py` organizes models by task type: `NLP_CAUSAL_LM`, `CV_IMAGE_CLS`, `CV_OBJECT_DETECTION`, and others. `ModelGroup` classifies models by family — Vision Transformers, CNNs, generative language models. The taxonomy is machine-readable, which matters for the compiletron game (more below).
@@ -134,8 +146,11 @@ The `ModelTask` taxonomy in `config.py` organizes models by task type: `NLP_CAUS
 This standardization exists so you can swap models without rewriting your compilation harness. The compilation loop is always:
 
 ```python
-model = ModelLoader.load_model(variant=ModelLoader.ModelVariant.SOME_VARIANT)
-inputs = ModelLoader.load_inputs()
+from third_party.tt_forge_models.<model>.pytorch import ModelLoader, ModelVariant
+
+loader = ModelLoader(variant=ModelVariant.SOME_VARIANT)
+model = loader.load_model(dtype_override=torch.bfloat16)
+inputs = loader.load_inputs()
 compiled = torch.compile(model, backend="tt").to(device)
 ```
 
