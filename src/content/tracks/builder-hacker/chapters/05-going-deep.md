@@ -17,7 +17,7 @@ These four structured lessons continue from where this track ends. They are inte
 
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/", "explore-metalium", "Write a custom kernel in TT-Metalium C++ — the three-kernel model at the C++ API level, explicit circular buffer management, kernel dispatch.", "30 min" %}
 
-{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/", "tt-lang-intro", "Full TT-Lang walkthrough — decorators, circular buffers, vector add, elementwise multiply, running on hardware.", "25 min" %}
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/", "tt-lang-intro", "Full TT-Lang walkthrough — ttl.operation/compute/datamovement, dataflow buffers, vector add, elementwise multiply, running on hardware.", "25 min" %}
 
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/", "cookbook-overview", "TTNN op cookbook — attention, layernorm, convolution patterns; profiling included.", "varies" %}
 
@@ -29,7 +29,7 @@ Build `tt-metal` from source if you're serious about optimization. The pre-built
 
 ## Projects Worth Building
 
-**Custom attention variant in TT-Lang.** Standard multi-head attention is in TTNN. But sliding window attention, linear attention, grouped-query attention with non-standard head dimensions, or a custom masking pattern — these require a TT-Lang kernel. Write the attention kernel using the `@reader/@compute/@writer` structure. The reader fetches Q, K, V tile blocks. The compute section runs the tile-level matmul and softmax. The writer ships results. The explicit tile arithmetic forces you to understand exactly what attention is doing at the register level.
+**Custom attention variant in TT-Lang.** Standard multi-head attention is in TTNN. But sliding window attention, linear attention, grouped-query attention with non-standard head dimensions, or a custom masking pattern — these require a TT-Lang kernel. Write it using `ttl.operation` with one `@ttl.compute()` function and two `@ttl.datamovement()` functions (see [TT-Lang Introduction](/builder-hacker/03-ttlang-intro/) for the real, current decorator set — not `@reader`/`@writer`, which earlier drafts of this guide used and which don't exist in the actual `ttl` module). One data-movement function fetches Q, K, V tile blocks into dataflow buffers; the compute function runs the tile-level matmul and softmax; the other data-movement function drains results out. The explicit tile arithmetic forces you to understand exactly what attention is doing at the register level.
 
 **Profile a TTNN cookbook pattern end-to-end.** Pick any TTNN recipe from the cookbook-overview lesson — a transformer block, a convolution layer, an embedding lookup. Run it on QB2 with the profiler enabled. Find the bottleneck op. Try to shrink it: L1 memory configs, batch size changes, dtype changes. Document the before-and-after numbers. This produces a reusable reference for the specific pattern on Blackhole hardware.
 
