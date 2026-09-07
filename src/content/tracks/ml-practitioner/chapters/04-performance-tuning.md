@@ -44,14 +44,27 @@ tt-smi -s
 
 # Pretty-print it
 tt-smi -s | python3 -m json.tool
+```
 
-# Poll every 2 seconds, watch power and temp
-watch -n 2 'tt-smi -s | python3 -c "
+For repeated polling, a small script is more reliable than cramming this into a
+one-liner (also: `asic_temperature`/`power`/`aiclk` are nested under
+`telemetry`, not flat fields on each device entry — see [Is This Thing
+On?](/first-timer/03-is-this-thing-on/) — and there's no `device_id` field to
+print, so enumerate the list instead). Save as `~/tt-scratchpad/tt-smi-watch.py`:
+
+```python
 import json, sys
+
 data = json.load(sys.stdin)
-for d in data[\"device_info\"]:
-    print(f\"Chip {d[\"device_id\"]}: {d[\"asic_temperature\"]}°C  {d[\"power\"]}W  aiclk={d[\"aiclk\"]}MHz\")
-"'
+for i, d in enumerate(data["device_info"]):
+    t = d["telemetry"]
+    print(f"Chip {i}: {t['asic_temperature']}°C  {t['power']}W  aiclk={t['aiclk']}MHz")
+```
+
+Then poll every 2 seconds:
+
+```bash
+watch -n 2 'tt-smi -s | python3 ~/tt-scratchpad/tt-smi-watch.py'
 ```
 
 The JSON field names you care about per chip: `asic_temperature`, `power`, `aiclk`, `current` (utilization).

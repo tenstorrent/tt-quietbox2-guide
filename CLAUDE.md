@@ -168,6 +168,46 @@ known-stale GIFs (`agents.md`'s list: 03, 04, 04b, 05, 09, 11, plus 12's port fi
 never-recorded 13/14) through the `tt-demo` pipeline is also still open — that needs you
 present for the tt-studio/browser/coding-agent parts.
 
-**Not committed**: per this session's git norms, the content fixes above and the demo/
-migration from earlier are sitting in the working tree, not committed — flag before ending
-the session.
+**Committed**: everything above pushed to PR #19 (`fixes/2026-09-07`) — the user asked to
+commit and contribute to the existing PR rather than open a new one.
+
+### 2026-09-07 (continued) — Phase 2 resumed, two more real bugs found
+
+Kept walking chapters against real hardware after the commit above.
+
+1. **`ml-practitioner/04-performance-tuning.md`'s `tt-smi` polling script would crash
+   outright.** It read `d["device_id"]` (no such field anywhere in `tt-smi -s` output) and
+   `d["asic_temperature"]`/`d["power"]`/`d["aiclk"]` as flat fields — chapter 3 already
+   established these live under `telemetry`, and this script contradicted its own guide.
+   The triple-nested quoting (`watch -n 2 '... python3 -c "..."'`) was also fragile enough
+   that fixing it in place would've made a bad problem worse — replaced with a small script
+   saved to `~/tt-scratchpad/`, tested against real `tt-smi -s` output.
+2. **`builder-hacker/04-profiling.md`'s TTNN profiler example runs clean but never shows
+   real data on a stock QB2.** `ttnn.profiler.get_all_programs_perf_data()` (the API name
+   itself is correct — verified against the real container's `dir()`) returns an empty
+   `{}` after a real dispatched matmul, and trying to force real collection with
+   `TT_METAL_DEVICE_PROFILER=1` crashes outright: `TT_FATAL: TT_METAL_DEVICE_PROFILER
+   requires a Tracy-enabled build of tt-metal` — confirmed live, twice. The stock
+   `tt-metalium` release image isn't Tracy-enabled; that's a from-source-build topic.
+   Added an accurate callout plus a working alternative (wall-clock timing via
+   `ttnn.synchronize_device` before/after — also verified live, including that
+   `synchronize_device` itself exists and a real matmul times cleanly through it).
+
+Both fixes verified end-to-end against real hardware before writing them into the guide,
+not just reasoned about. Build clean, tests pass. Committed and pushed to PR #19.
+
+### Also this session: upstream contribution to `tt-vscode-toolkit`#52
+
+That PR's own "Verification" section said every claim came from reading upstream source,
+never a QB2 run. Validated the checkable ones for real on this same hardware (venv
+contents via a fresh `tt-installer` run's own smoke assertions, `tt-metalium -c '...'`
+argument-passing, Forge's off-by-default flag straight from `install.m4`, the
+`tt-inference-server` wrapper's `cd` behavior, the 4-chip ring-mesh fabric adjacency) and
+found two bugs its own review missed: the same "`TT_METAL_HOME` is pre-set" and
+"bundled tutorial file" claims fixed here in `first-kernel.md`, plus three of four
+`tt-metalium "..."` examples in `tt-installer.md` missing `-c` (so `bash` tries to run the
+whole string as a filename and fails before Python ever runs) and every
+`ttnn.__version__` reference there being liable to crash with `AttributeError` (that
+attribute doesn't exist on the built package — confirmed on two separate images). Fixed
+and pushed to that PR's branch directly (`fix/qb2-venv-activation-claims`); all four of
+that repo's own pre-commit checks still pass.
