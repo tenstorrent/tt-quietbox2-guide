@@ -51,7 +51,9 @@ hf download Qwen/Qwen3-0.6B --local-dir ~/models/Qwen3-0.6B
 :::callout type="tip"
 `hf download` can succeed and still print a `click.exceptions.Exit: 0` traceback afterward — a
 typer/click version mismatch, not a failed download. Check the files rather than the output:
-`ls ~/models/Qwen3-0.6B` should show `model.safetensors` and a `config.json`.
+`ls ~/models/Qwen3-0.6B` should show one or more `*.safetensors` files (one, for this model) and
+a `config.json` — larger models shard weights across several `model-0000N-of-0000M.safetensors`
+files, so don't treat the exact filename as a pass/fail signal.
 :::
 
 Then serve it:
@@ -203,8 +205,9 @@ tells you.
 :::callout type="tip"
 **Serving a Qwen3 model instead?** They reason before answering, so a small `max_tokens` gets
 spent entirely inside the `<think>` block and comes back as `finish_reason: "length"` with an
-empty answer. Pass `extra_body={"enable_thinking": False}` (or `"enable_thinking": false` in
-curl) for direct replies — see [Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/).
+empty answer. Pass `extra_body={"chat_template_kwargs": {"enable_thinking": False}}` (or
+`"chat_template_kwargs": {"enable_thinking": false}` in curl, as above) for direct replies — see
+[Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/).
 :::
 
 ## OpenAI Python SDK
@@ -388,9 +391,12 @@ A real device hang looks different: the log stops, CPU sits near 100%, and RSS s
 entirely. Real work moves RSS. Confirm with a native stack dump:
 
 ```bash
-uv pip install py-spy
-py-spy dump --native --pid "$(pgrep -f 'VLLM::EngineCore')"
+uv tool install py-spy   # isolated install — not into the vLLM venv you're diagnosing
+py-spy dump --native --pid "$(pgrep -n -f 'VLLM::EngineCore')"
 ```
+
+`-n` on `pgrep` matters if more than one matching process is running: `py-spy --pid` takes exactly
+one PID, and an unfiltered `pgrep -f` can print several.
 
 A hang in the command queue is unmistakable — `pthread_cond_wait` under
 `FDMeshCommandQueue::wait_for_outstanding_reads`, meaning the device never acknowledged a write.
