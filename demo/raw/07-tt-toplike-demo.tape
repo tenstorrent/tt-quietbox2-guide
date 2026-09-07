@@ -1,8 +1,8 @@
 # VHS tape — tt-toplike TUI demo
 # Records the live tt-toplike TUI running against QB2 hardware.
-# Record with: vhs scripts/vhs/07-tt-toplike-demo.tape
+# Record with: vhs demo/raw/07-tt-toplike-demo.tape
 
-Output src/assets/video/07-tt-toplike-demo.gif
+Output demo/assets/07-tt-toplike-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

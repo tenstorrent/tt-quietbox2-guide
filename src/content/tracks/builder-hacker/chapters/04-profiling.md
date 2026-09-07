@@ -78,6 +78,33 @@ for entry in report:
 ttnn.close_device(device)
 ```
 
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+<strong>On the standard <code>tt-metalium</code> container, this runs without error but <code>report</code> comes back empty</strong> — confirmed live: <code>get_all_programs_perf_data()</code> returns <code>{}</code> after a real dispatched matmul. Real per-op data needs a Tracy-enabled tt-metal build, which the release image isn't; setting <code>TT_METAL_DEVICE_PROFILER=1</code> to force it doesn't unlock anything either — it crashes outright (<code>TT_FATAL: TT_METAL_DEVICE_PROFILER requires a Tracy-enabled build of tt-metal</code>), confirmed live. For a stock QB2, wrap ops in wall-clock timing instead (below) or use <code>tt-toplike</code> for a live device-level view (aiclk/power, not per-op) — Tracy profiling is a from-source-build topic, out of scope for a factory image.
+</div>
+
+```python
+import time, ttnn
+
+device = ttnn.open_device(device_id=0)
+
+a = ttnn.from_torch(...)
+b = ttnn.from_torch(...)
+
+ttnn.synchronize_device(device)   # drain anything still in flight first
+start = time.perf_counter()
+c = ttnn.matmul(a, b)
+ttnn.synchronize_device(device)   # block until the dispatched op actually finishes
+elapsed = time.perf_counter() - start
+print(f"matmul: {elapsed * 1000:.2f} ms")
+
+ttnn.close_device(device)
+```
+
+Wall-clock timing without the `synchronize_device` calls measures dispatch latency, not
+execution time — TTNN queues ops asynchronously, so the Python call returns before the
+chip has necessarily finished the work.
+
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">📖</span>
 The profiler API surface is evolving. Check the current function signatures in the TTNN docs at <a href="https://docs.tenstorrent.com" style="color:var(--teal)">docs.tenstorrent.com</a> and the cookbook-overview lesson at <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/" style="color:var(--teal)">docs.tenstorrent.com/tt-vscode-toolkit/lessons/cookbook-overview/</a> — the lesson includes runnable profiling examples updated for the current API.

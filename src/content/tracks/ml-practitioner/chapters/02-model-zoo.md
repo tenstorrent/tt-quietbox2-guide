@@ -28,11 +28,11 @@ The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with
 
 ## Picking a Starting Point
 
-**Qwen3-0.6B** is the fastest way to confirm the stack is working. It downloads in seconds, loads in under a minute, and produces real answers. For evaluation, prototyping, and smoke-testing your setup, this is the right choice. Think of it as the "hello world" of this hardware.
+**Qwen3-0.6B** is the fastest way to confirm the stack is working. It downloads in seconds, loads in under a minute, and produces real answers. Think of it as the "hello world" of this hardware — with one caveat worth knowing before you build a plan around it: it is **absent from `tt-inference-server`'s model list**, so `run.py --model Qwen3-0.6B` has nothing to select. It's a smoke test for direct TTNN work and for a hand-rolled `vllm serve`, not a model you can deploy down the managed path.
 
 **Llama-3.1-8B-Instruct** is where you start if you need production-quality output on a single chip. Strong reasoning, strong instruction-following, 128K context. The model most people actually use for serious work on a single Blackhole.
 
-**Qwen3-8B** is a strong alternative in the same size class as Llama-3.1-8B. Use it if your workload benefits from Qwen's architectural choices, or to compare against the 0.6B for quality/speed tradeoffs.
+**Qwen3-8B** is a strong alternative in the same size class as Llama-3.1-8B. Use it if your workload benefits from Qwen's architectural choices, or to compare against the 0.6B for quality/speed tradeoffs. Note that `tt-inference-server` lists it for `p300` (two chips) but **not** `p300x2` — and the two-chip mesh is the one that has failed fabric bring-up on our hardware. Llama-3.1-8B-Instruct, which has both a `p300` and a `p300x2` entry, is the lower-risk pick in this size class on a QB2.
 
 **Llama-3.1-70B-Instruct** requires all four chips and 140 GB of storage. It's the top-of-rack option for workloads where quality is the priority. Inference speed is lower than the 8B, but the output quality difference is real on complex tasks.
 
@@ -42,7 +42,7 @@ The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with
 
 <div class="rcard-grid">
 
-{% card "model", "https://huggingface.co/Qwen/Qwen3-0.6B", "Qwen3-0.6B", "The fastest way to confirm the stack is working — the \"hello world\" of this hardware. Single chip.", "0.6B · 1.5 GB" %}
+{% card "model", "https://huggingface.co/Qwen/Qwen3-0.6B", "Qwen3-0.6B", "The fastest way to confirm the stack is working — the \"hello world\" of this hardware. Single chip; not servable via tt-inference-server.", "0.6B · 1.5 GB" %}
 
 {% card "model", "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct", "Llama-3.1-8B-Instruct", "Production-quality output on a single chip — strong reasoning, strong instruction-following, 128K context.", "8B · ~16 GB · gated" %}
 
@@ -78,7 +78,16 @@ prompts; not the model to hand an autonomous coding agent.
 
 ## Downloading Models
 
-The `hf` CLI is pre-installed. Use it — not `huggingface-cli`, not Python API calls. The `hf` command is faster and handles partial downloads and resumption correctly.
+Downloads go through the `hf` CLI — not `huggingface-cli`, not Python API calls. It's faster and it handles partial downloads and resumption correctly.
+
+It is **not** pre-installed. `huggingface_hub` isn't in any environment tt-installer creates, so
+`hf` won't be on your PATH out of the box. Install it into an environment of its own — not
+`~/.tenstorrent-venv`, which holds `tt-smi` and `tt-flash` and is activated for you at login:
+
+```bash
+uv tool install huggingface_hub     # or: pipx install huggingface_hub
+hf version
+```
 
 ```bash
 # Make sure the models directory exists
@@ -132,18 +141,25 @@ When calling through the OpenAI-compatible API, pass `enable_thinking` in the re
 ```python
 # Thinking mode (default for Qwen3) — slower, more thorough
 response = client.chat.completions.create(
-    model="Qwen3-0.6B",
+    model="Qwen3-32B",
     messages=[{"role": "user", "content": "What is 17 * 23 + 48?"}],
     extra_body={"enable_thinking": True}
 )
 
 # Non-thinking mode — faster, direct answers
 response = client.chat.completions.create(
-    model="Qwen3-0.6B",
+    model="Qwen3-32B",
     messages=[{"role": "user", "content": "What is 17 * 23 + 48?"}],
     extra_body={"enable_thinking": False}
 )
 ```
+
+:::callout type="warn"
+**Leave room for the thinking block.** With thinking on and a tight `max_tokens`, the entire
+budget goes into `<think>…</think>` and you get back `finish_reason: "length"` with no answer at
+all — which reads like a broken model rather than a truncated one. Either raise `max_tokens` or
+pass `enable_thinking: False`.
+:::
 
 For conversational workloads where speed matters, non-thinking mode is the better choice. For tasks where the reasoning trace improves output quality — math, code, multi-hop questions — thinking mode earns its overhead.
 

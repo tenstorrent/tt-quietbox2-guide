@@ -82,7 +82,7 @@ Worth saying plainly: `tt-smi` has **no LED control of its own**. Check for your
 tt-smi --help | grep -i led
 ```
 
-Nothing prints — current `tt-smi` (v6.1.0) has zero LED-related flags, and there's no `--set-led` or equivalent hiding under a different name. `tt-smi`'s job is telemetry: it reads chip state and reports it. Driving actual lights is a separate concern, handled by whatever RGB control stack your hardware uses — which is exactly what **tt-qb-lights** above already wires up for you via OpenRGB.
+Nothing prints — current `tt-smi` (check yours with `tt-smi --version`) has zero LED-related flags, and there's no `--set-led` or equivalent hiding under a different name. `tt-smi`'s job is telemetry: it reads chip state and reports it. Driving actual lights is a separate concern, handled by whatever RGB control stack your hardware uses — which is exactly what **tt-qb-lights** above already wires up for you via OpenRGB.
 
 What follows is the DIY version of the same idea, for anyone who wants a different RGB setup or a starting point to hack on: read chip telemetry from `tt-smi -s`, and drive your own LEDs through whatever tool actually controls them (OpenRGB's CLI/API, a vendor tool, a GPIO script — not `tt-smi`).
 

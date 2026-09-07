@@ -1,7 +1,7 @@
 # VHS tape for tt-smi demo
-# Record with: vhs scripts/vhs/03-tt-smi-demo.tape
+# Record with: vhs demo/raw/03-tt-smi-demo.tape
 
-Output src/assets/video/03-tt-smi-demo.gif
+Output demo/assets/03-tt-smi-demo.gif
 
 Set Shell "bash"
 Set FontSize 14
@@ -9,7 +9,7 @@ Set Width 900
 Set Height 500
 Set Theme "Catppuccin Mocha"
 
-Type "# tt-smi is on PATH via ~/.local/bin — no activation needed"
+Type "# tt-smi is already on PATH — the QB2 activates its tooling venv at login"
 Sleep 500ms
 Enter
 Sleep 300ms

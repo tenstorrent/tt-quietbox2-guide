@@ -15,8 +15,10 @@ tt-studio
 particular never reads <code>~/.profile</code>, where Ubuntu's default
 <code>~/.local/bin</code> rule lives. Fix it for this shell with
 <code>export PATH="$HOME/.local/bin:$PATH"</code>, and add that line to
-<code>~/.zshrc</code> to make it stick. The same applies to <code>tt-metalium</code>
-and <code>tt-inference-server</code>.
+<code>~/.zshrc</code> to make it stick. The same applies to <code>tt-metalium</code>,
+<code>tt-forge</code> and <code>tt-inference-server</code> — the last of these is a wrapper
+that runs <code>run.py</code> out of <code>~/.local/lib/tt-inference-server</code>, so you can
+call it either way.
 </div>
 
 Then open `http://localhost:3000` in your browser, pick a model from the Deploy Model dropdown, and click Run. **On a QB2, Qwen3-32B is already there with its weights pre-cached** — its first deploy skips the multi-GB download and is ready in a few minutes. Other models download on first use; after that, every run loads fast from the on-disk cache. (tt-studio v2.8.0 also fixed the cold first-chat delay after an idle model, so that first token comes back quickly.)

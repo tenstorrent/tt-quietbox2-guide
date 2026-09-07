@@ -1,5 +1,5 @@
 # VHS tape — tt-studio v2.8.0: Claude Code against a local model on your QB2
-# Record ON the QB2 with: vhs scripts/vhs/13-tt-studio-coding-agents.tape
+# Record ON the QB2 with: vhs demo/raw/13-tt-studio-coding-agents.tape
 #
 # PREREQUISITES (do these first, in the shell you record from):
 #   1. tt-studio running, with an eligible model DEPLOYED (Qwen3-32B is
@@ -11,7 +11,7 @@
 #      variable, never the literal key.
 #   4. `claude` (Claude Code) installed and on PATH.
 
-Output src/assets/video/13-tt-studio-coding-agents.gif
+Output demo/assets/13-tt-studio-coding-agents.gif
 
 Set Shell "bash"
 Set FontSize 13

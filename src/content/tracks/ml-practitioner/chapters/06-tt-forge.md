@@ -17,13 +17,25 @@ If vLLM is the highway, TT-Forge is the ability to go anywhere.
 
 ## Before You Begin — Install Forge
 
-Forge is **not** part of a default tt-installer run. tt-installer sets up the base — driver, firmware, hugepages, and the `~/.tenstorrent-venv` Python environment. Forge itself you install as a **pip wheel** from Tenstorrent's package index. That's how the [TT-Forge docs](https://docs.tenstorrent.com/tt-forge/) want you to do it — not a container wrapper, not a 45-minute source build.
+Forge is **not** part of a default tt-installer run. tt-installer sets up the base — driver, firmware, hugepages, and the `~/.tenstorrent-venv` environment that holds `tt-smi` and `tt-flash`. Forge itself you install as a **pip wheel** from Tenstorrent's package index. That's how the [TT-Forge docs](https://docs.tenstorrent.com/tt-forge/) want you to do it — not a container wrapper, not a 45-minute source build.
+
+(tt-installer *can* give you Forge as a container instead, via `--install-forge-container`, which
+writes a `tt-forge` wrapper to `~/.local/bin/`. It's off unless you ask for it, and it's a
+separate path from the wheel below — pick one.)
 
 First confirm the base is ready (Ubuntu 24.04, Python 3.12):
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
 tt-smi   # should show the System Management Interface
+```
+
+Then make Forge a venv of its own. Don't install it into `~/.tenstorrent-venv`: Forge pins its
+own `torch` / `torch-xla` stack, and resolving that on top of your hardware tooling means a bad
+Forge install is also a broken `tt-smi`.
+
+```bash
+python3 -m venv ~/.venvs/forge
+source ~/.venvs/forge/bin/activate
 ```
 
 Then install the frontend for your framework:

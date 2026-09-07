@@ -11,10 +11,14 @@ Run `tt-smi -s` and interpret the JSON output.
 - Temperature normal range: 35–55°C idle, up to 85°C under load
 
 ### Model Running
-Recommended first model: `Qwen/Qwen3-0.6B`
+Recommended first model **for the direct TTNN path**: `Qwen/Qwen3-0.6B`
 - No Hugging Face license required
-- Works on all 4 devices
 - Fast to download (~1.5GB)
+- Runs on a single chip; fine for a device handshake and TTNN experiments
+- **Cannot be served via `tt-inference-server`** — it is absent from
+  `release_model_spec.json` entirely. For serving, point users at
+  `Llama-3.1-8B-Instruct` (`p300` and `p300x2` variants exist) or the pre-cached
+  `Qwen3-32B` (`p300x2`).
 
 TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). There is no
 `~/tt-metal` checkout on a factory QB2; inside the container TTNN is already on the
@@ -54,6 +58,26 @@ gateway on **port 4000** — no cloud, runs on the QB2's own chips.
 tt-studio now also serves **WAN** (text-to-video) and **Flux** (image generation),
 deployed from the same Deploy Model dropdown as the language models.
 
+### Upgrading a QB2 (suggest this early — users rarely think of it)
+A box that has been sitting is behind on driver, firmware, tooling and container images, and
+"behind" presents as broken hardware or a broken tutorial. Four steps, in this order:
+1. `/bin/bash -c "$(curl -fsSL https://tenstorrent.ai/install.sh)"` — re-running tt-installer is
+   the supported way to move an existing machine forward. Driver, firmware, HugePages, tt-smi,
+   tt-flash, sfpi, container wrappers. Firmware update is on by default; expect a reboot prompt.
+2. `sudo apt-get update && sudo apt-get upgrade` — everything from `ppa.tenstorrent.com`.
+3. **`git -C ~/.local/lib/tt-studio pull`** and **`git -C ~/.local/lib/tt-inference-server pull`**
+   — these are git clones, and the installer **skips a directory that already exists** ("Skipping
+   clone, will create wrapper script only"). Re-running it never updates them. This is the usual
+   reason a box reports an old tt-studio against newer docs.
+4. `docker pull ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64:latest-rc` —
+   the `tt-metalium` wrapper is a plain `docker run`, so it pulls only when the image is absent
+   and never refreshes on its own.
+
+Order matters: the installer pins to a golden baseline (`--versions=release`) and passes
+`--allow-downgrades`, so apt-upgrading past it and *then* re-running the installer walks those
+packages back. Use `--versions=rolling` if the user wants newest-of-everything from the
+installer. `--dry-run --mode-non-interactive` previews the plan safely.
+
 ### Install Troubleshooting
 - apt says the Tenstorrent repository "is not signed" / `NO_PUBKEY`: the signing key is
   missing from `/etc/apt/keyrings/tt-pkg-key.asc`. Fix:
@@ -69,8 +93,11 @@ deployed from the same Deploy Model dropdown as the language models.
 |---------|-------|-----|
 | `tt-smi` shows <4 devices | `dmesg | grep tenstorrent` | Reseat PCIe card or reflash firmware |
 | `DispatchCoreAxis.ROW` error | Code uses wrong dispatch config | Use `ttnn.DispatchCoreConfig(ttnn.DispatchCoreType.WORKER)` |
-| `~/tt-metal` not found | QB2 ships without source tree | Clone from https://github.com/tenstorrent/tt-metal |
-| venv not found | Path may differ | Try `~/tt-metal/python_env` (TTNN) or `~/.tenstorrent-venv` (vLLM), or re-run tt-installer |
+| `~/tt-metal` not found | Expected — nothing creates it | Not a fault. TT-Metalium is a container; run `tt-metalium`. Only clone https://github.com/tenstorrent/tt-metal for a from-source build |
+| `import ttnn` fails on the host | Wrong interpreter — TTNN only exists inside the container | Run `tt-metalium` first, then `python3` (`/opt/venv/bin/python3`) |
+| `import vllm` fails in `~/.tenstorrent-venv` | Expected — it was never installed there | That venv holds tt-smi/tt-flash only. Serve via `tt-inference-server`'s `run.py` |
+| `hf: command not found` | `huggingface_hub` is not part of the stack | Install it outside `~/.tenstorrent-venv` (e.g. `uv tool install huggingface_hub`) |
+| `tt-studio` / `tt-metalium` / `tt-forge`: command not found | `~/.local/bin` not on PATH (zsh never reads `~/.profile`) | `export PATH="$HOME/.local/bin:$PATH"`, and add it to `~/.zshrc`. tt-installer warns about this at install time |
 | `apt` refuses Tenstorrent packages | `cat /etc/apt/keyrings/tt-pkg-key.asc` | Re-download the key to `/etc/apt/keyrings/tt-pkg-key.asc` from `https://ppa.tenstorrent.com/tt-pkg-key.asc`, then `sudo apt-get update` |
 
 ## Content Map by Task
@@ -112,16 +139,25 @@ the demo assets are outstanding.
 3. Ensure `claude` and `opencode` are installed and on PATH.
 
 **VHS tapes (terminal — already written, record on the QB2):**
-- `scripts/vhs/13-tt-studio-coding-agents.tape` → `13-tt-studio-coding-agents.gif`
+Recording is driven by `tt-demo` now (`demo/demos.yaml`), not one-off `vhs`
+invocations. Every tape is a `raw_tape:` scene in that manifest —
+`tt-demo record <id>` shells out to `vhs demo/raw/<id>.tape` for you (each
+tape's `Output` line writes to `demo/assets/<id>.gif`), then use
+`tt-demo list` to see all scenes, `tt-demo verify <id>` for a contact-sheet
+check before trusting a take, and `tt-demo publish <ids> --dir src/assets/video`
+to copy accepted artifacts into the committed path.
+- `demo/raw/13-tt-studio-coding-agents.tape` (scene `13-tt-studio-coding-agents`)
   (Claude Code: env setup + a real curl proof against Qwen3-32B + `claude` launch)
-- `scripts/vhs/14-tt-studio-opencode.tape` → `14-tt-studio-opencode.gif`
+- `demo/raw/14-tt-studio-opencode.tape` (scene `14-tt-studio-opencode`)
   (OpenCode: writes the `tt-studio` provider config + `opencode --model tt-studio/Qwen3-32B`)
-- `scripts/vhs/12-tt-studio-demo.tape` — **re-record**: port corrected 7860→3000 and
-  the wrapper is now explained; the committed GIF still shows the old port.
-- Record with `vhs scripts/vhs/<tape>`. Tune the `Sleep` values to real model
-  latency (Qwen3-32B first token after idle can take a few seconds). The
-  interactive "type a prompt" money shots are commented out in each tape —
-  uncomment if the TUI captures cleanly on the box.
+- `demo/raw/12-tt-studio-demo.tape` (scene `12-tt-studio-demo`) — **re-record**:
+  port corrected 7860→3000 and the wrapper is now explained; the committed GIF
+  still shows the old port.
+- Record with `tt-demo record <id>`, then `tt-demo verify <id>` and
+  `tt-demo publish <id> --dir src/assets/video`. Tune the `Sleep` values to
+  real model latency (Qwen3-32B first token after idle can take a few
+  seconds). The interactive "type a prompt" money shots are commented out in
+  each tape — uncomment if the TUI captures cleanly on the box.
 
 **Browser screenshots (no tape — plain grabs, ~2000px wide, current teal branding):**
 - The **Coding Agents page** with its copy-paste snippet panel (the headline shot).
@@ -143,3 +179,25 @@ Once `13-...gif` exists, paste this at the end of
 (Add the matching `14-tt-studio-opencode.gif` figure the same way if you record
 it.) The `video-demo` / inline-style pattern matches every other GIF in the
 guide — copy an existing one from `tt-studio-intro.md` if in doubt.
+
+## Handoff: GIFs stale after the environment-model correction
+
+The guide no longer tells anyone to `source ~/tt-metal/python_env/bin/activate` —
+that path does not exist on any current install (tt-installer's `install.m4` never
+creates it; TT-Metalium is the container `ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64`).
+The `.tape` sources under `demo/raw/` have all been corrected, but the
+**committed GIFs were recorded before the correction and still show the old
+commands**. They need re-recording on a QB2:
+
+| Tape | Scene id | GIF | Why it's stale |
+|------|----------|-----|----------------|
+| `03-tt-smi-demo.tape` | `03-tt-smi-demo` | `03-tt-smi-demo.gif` | PATH comment reworded |
+| `04-tt-installer-demo.tape` | `04-tt-installer-demo` | `04-tt-installer-demo.gif` | claimed `hf` is on PATH; listed `python_env` |
+| `04b-venv-demo.tape` | `04b-venv-demo` | `04b-venv-demo.gif` | built entirely around activating `python_env` |
+| `05-first-model-demo.tape` | `05-first-model-demo` | `05-first-model-demo.gif` | activates `python_env` |
+| `09-vllm-demo.tape` | `09-vllm-demo` | `09-vllm-demo.gif` | both venv paths wrong; `vllm serve` from the host |
+| `11-first-kernel-demo.tape` | `11-first-kernel-demo` | `11-first-kernel-demo.gif` | activates `python_env`, uses `TT_METAL_HOME` |
+
+Record with `tt-demo record <id>` on the box, `tt-demo verify <id>` to check
+the take, then `tt-demo publish <id> --dir src/assets/video` and commit the
+regenerated GIF. Until then the prose is right and the moving pictures are not.

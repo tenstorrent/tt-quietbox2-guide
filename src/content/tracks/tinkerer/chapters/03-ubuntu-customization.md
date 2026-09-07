@@ -207,7 +207,7 @@ pyenv virtualenv 3.11.9 myproject
 pyenv activate myproject
 ```
 
-Keep these entirely separate from `~/tt-metal/python_env/` and `~/.tenstorrent-venv/`. Those are managed environments. Don't pip-install into them manually.
+Keep these entirely separate from `~/.tenstorrent-venv/`. That one is a managed environment holding `tt-smi` and `tt-flash`, your QB2 activates it at login, and a bad resolution in there costs you your hardware tooling. Don't pip-install into it manually. (There's no TTNN venv to worry about — TTNN lives inside the `tt-metalium` container, where your pip installs can't reach it anyway.)
 
 ## VS Code
 
@@ -235,8 +235,8 @@ Add these to `~/.bashrc` or `~/.zshrc` to cut down repetitive typing:
 
 ```bash
 # Tenstorrent environment shortcuts
-alias ttenv='source ~/tt-metal/python_env/bin/activate'
-alias ttvllm='source ~/.tenstorrent-venv/bin/activate'
+alias ttenv='tt-metalium'                      # TTNN lives in the Metalium container
+alias ttserve='python3 ~/.local/lib/tt-inference-server/run.py'
 
 # Readable tt-smi JSON output
 alias ttsmi='tt-smi -s | python3 -m json.tool'

@@ -1,7 +1,7 @@
 # VHS tape — tt-studio: startup and port-forwarding instructions
-# Record with: vhs scripts/vhs/12-tt-studio-demo.tape
+# Record with: vhs demo/raw/12-tt-studio-demo.tape
 
-Output src/assets/video/12-tt-studio-demo.gif
+Output demo/assets/12-tt-studio-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

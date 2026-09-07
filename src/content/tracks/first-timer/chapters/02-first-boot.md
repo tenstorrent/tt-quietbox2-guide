@@ -107,15 +107,25 @@ This is where new Linux users often hit a wall. Ubuntu ships with its own Python
 | Name | Location | What it is |
 |------|----------|-----------|
 | System Python | `/usr/bin/python3` | Ubuntu's built-in Python — **don't pip install here** |
-| TTNN venv | `~/tt-metal/python_env/` | Pre-built environment for TTNN and the Direct API |
-| Tenstorrent venv | `~/.tenstorrent-venv/` | Main venv with vLLM and other tools |
-| TT-Forge (TT-XLA) | pip wheel in a Python 3.12 venv | Compile PyTorch/JAX models — install it yourself (see [TT-Forge](/ml-practitioner/06-tt-forge/)) |
+| Hardware tooling venv | `~/.tenstorrent-venv/` | `tt-smi` and `tt-flash`. That's the whole inventory — **don't install into it** |
+| TTNN / Direct API | *inside* the `tt-metalium` container | `/opt/venv/bin/python3` once you're in. Nothing on the host to activate |
+| TT-Forge (TT-XLA) | pip wheel in a venv you create | Compile PyTorch/JAX models — install it yourself (see [TT-Forge](/ml-practitioner/06-tt-forge/)) |
+
+The important surprise is the third row. **There is no TTNN environment on the host.** You may
+find older notes pointing at `~/tt-metal/python_env/` — that path doesn't exist on a QB2 and the
+installer never creates it. TT-Metalium arrives as a container image, and `tt-metalium` is the
+wrapper that puts you inside it with your home directory mounted. `import ttnn` works in there
+and nowhere else.
 
 ### Why does this matter?
 
 Ubuntu 24.04 enforces what's called **externally-managed Python** — the system Python is protected. If you try to `pip install` something directly, Ubuntu will refuse with an error about breaking system packages. This is intentional. It protects you.
 
-The right move is always: activate the correct venv, then install inside it. The Tenstorrent venvs already have everything you need for this guide, so you won't need to install much.
+So when you need a Python package of your own, make it a new venv (`python3 -m venv ~/.venvs/mine`)
+or let `uv tool` / `pipx` make one for you. What you should *not* do is install into
+`~/.tenstorrent-venv` to dodge the error. That venv exists to hold `tt-smi` and `tt-flash`, your
+QB2 activates it for you at login, and a dependency resolution gone wrong in there takes out the
+tools you'd use to work out what broke.
 
 ### What `which python3` tells you
 
@@ -125,9 +135,11 @@ Before running any Python code, check which Python is active:
 which python3
 ```
 
-If you see `/usr/bin/python3` — you're using the system Python. Tenstorrent imports will fail.
+If you see `/usr/bin/python3` — you're on the host, using Ubuntu's Python. Tenstorrent imports will fail.
 
-If you see something like `/home/yourname/tt-metal/python_env/bin/python3` — you're inside the right venv. Go ahead.
+If you see `/home/yourname/.tenstorrent-venv/bin/python3` — you're in the tooling venv. `tt-smi` works; `import ttnn` still won't.
+
+If you see `/opt/venv/bin/python3` — you're inside the `tt-metalium` container, which is where TTNN lives. Go ahead.
 
 ### pip, pyenv, uv — a brief map
 
@@ -136,28 +148,43 @@ You may encounter other Python tools in documentation or online:
 - **`pip`** — Python package installer. Works inside a venv. Fine to use there.
 - **`pyenv`** — manages multiple Python versions (3.10, 3.11, etc.). The QB2 doesn't need it — the venvs handle version isolation.
 - **`virtualenv` / `python -m venv`** — creates isolated environments. The Tenstorrent venvs were built this way.
-- **`uv`** — a fast, modern alternative to pip and virtualenv. Works, but the QB2 docs and this guide use standard venv activation.
+- **`uv`** — a fast, modern alternative to pip and virtualenv. `uv tool install <pkg>` is the tidiest way to add a CLI (like `hf`) without touching a managed environment.
 
-For this guide: ignore pyenv, ignore uv. Activate the venv Tenstorrent provides. That's all you need.
+For this guide: ignore pyenv. Reach for `uv` or `pipx` when you want a CLI of your own, and use `tt-metalium` when you want TTNN.
 
-<img src="/assets/illustrations/python-env-map.svg" alt="Map of Python environments on the QB2: system Python, TTNN venv, vLLM venv, Forge venv" class="spot-illustration" style="max-width:100%;"/>
+<img src="/assets/illustrations/python-env-map.svg" alt="Map of Python environments on the QB2: system Python, the hardware-tooling venv, the TT-Metalium container, and Forge" class="spot-illustration" style="max-width:100%;"/>
 
 ### Activating and deactivating
 
 ```bash
-# Activate the TTNN environment
-source ~/tt-metal/python_env/bin/activate
+# Enter the TTNN environment — a container, not a venv
+tt-metalium
 
-# Your prompt now shows (python_env) — you're inside
-# Deactivate when done
-deactivate
+# You're now in a shell inside the container, home directory mounted.
+which python3          # → /opt/venv/bin/python3
+python3 -c "import ttnn; print('TTNN ready')"
+
+# Leave it the way you leave any shell
+exit
 ```
 
-The `(python_env)` prefix in your prompt is the signal. When it's there, Python calls and imports go to the right place. When it's not, they don't.
+There's no `(python_env)` prefix to look for, because nothing is being activated — you're in a
+different shell on a different filesystem. `which python3` is the signal: `/opt/venv/bin/python3`
+means you're inside.
+
+<div class="callout callout--info">
+<span class="callout-icon illustrated-only">ℹ</span>
+<strong>The first <code>tt-metalium</code> run pulls a multi-GB image.</strong> Later runs start immediately.
+</div>
 
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">💡</span>
-The QB2 may have pre-activation scripts in <code>/etc/profile.d/</code> that activate an environment automatically at login. Run <code>which python3</code> before sourcing any venv to see what's already active — activating on top of an active venv is messy.
+The QB2 has pre-activation scripts in <code>/etc/profile.d/</code> that activate <code>~/.tenstorrent-venv</code> automatically at login — which is why <code>tt-smi</code> just works. Run <code>which python3</code> before sourcing any venv to see what's already active; activating on top of an active venv is messy.
+</div>
+
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+<strong><code>tt-metalium: command not found</code>?</strong> The wrapper lives in <code>~/.local/bin</code>, which isn't on <code>PATH</code> in every shell — zsh never reads <code>~/.profile</code>, where Ubuntu's default rule for it lives. Run <code>export PATH="$HOME/.local/bin:$PATH"</code> and add that line to <code>~/.zshrc</code>. Same story for <code>tt-studio</code> and <code>tt-forge</code>.
 </div>
 
 ---

@@ -44,14 +44,27 @@ tt-smi -s
 
 # Pretty-print it
 tt-smi -s | python3 -m json.tool
+```
 
-# Poll every 2 seconds, watch power and temp
-watch -n 2 'tt-smi -s | python3 -c "
+For repeated polling, a small script is more reliable than cramming this into a
+one-liner (also: `asic_temperature`/`power`/`aiclk` are nested under
+`telemetry`, not flat fields on each device entry — see [Is This Thing
+On?](/first-timer/03-is-this-thing-on/) — and there's no `device_id` field to
+print, so enumerate the list instead). Save as `~/tt-scratchpad/tt-smi-watch.py`:
+
+```python
 import json, sys
+
 data = json.load(sys.stdin)
-for d in data[\"device_info\"]:
-    print(f\"Chip {d[\"device_id\"]}: {d[\"asic_temperature\"]}°C  {d[\"power\"]}W  aiclk={d[\"aiclk\"]}MHz\")
-"'
+for i, d in enumerate(data["device_info"]):
+    t = d["telemetry"]
+    print(f"Chip {i}: {t['asic_temperature']}°C  {t['power']}W  aiclk={t['aiclk']}MHz")
+```
+
+Then poll every 2 seconds:
+
+```bash
+watch -n 2 'tt-smi -s | python3 ~/tt-scratchpad/tt-smi-watch.py'
 ```
 
 The JSON field names you care about per chip: `asic_temperature`, `power`, `aiclk`, `current` (utilization).
@@ -103,11 +116,23 @@ Larger batches improve throughput at the cost of time-to-first-token. In vLLM's 
 
 You can influence this with `--max-num-seqs` (maximum concurrent sequences) when starting the server:
 
+On the managed path, pass it straight through to the server:
+
 ```bash
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Llama-3.1-8B-Instruct \
+  --workflow server --tt-device p300x2 --docker-server \
+  --max-num-seqs 16
+```
+
+Driving `vllm serve` yourself (from your own vLLM venv — it is not installed on the host; see
+[vLLM on QB2](/ml-practitioner/03-vllm-on-qb2/)):
+
+```bash
+source ~/.venvs/vllm-tt/bin/activate
 export TT_METAL_ARCH_NAME=blackhole
-export MESH_DEVICE=P300              # P300x2 for all four chips
+export MESH_DEVICE=P300x2            # all four chips; avoid the two-chip P300 mesh
 export HF_MODEL=~/models/Llama-3.1-8B-Instruct
-export VLLM_RPC_TIMEOUT=900000
 
 vllm serve "$HF_MODEL" \
   --max-num-seqs 16 \
@@ -144,7 +169,10 @@ In vLLM, performance optimization happens at the model-loading stage. The compil
 
 Chips are added by widening the **mesh**, not with `--tensor-parallel-size` — the Tenstorrent
 platform rejects tensor and pipeline parallel outright. On a QB2 that means
-`MESH_DEVICE=P300` for one card (two chips) or `MESH_DEVICE=P300x2` for all four.
+`MESH_DEVICE=P300x2` for all four chips, or `MESH_DEVICE=P150` for one. The two-chip mesh in
+between (`MESH_DEVICE=P300`, a single card) has failed fabric bring-up reproducibly on our
+hardware — so "half the box" is not a tuning knob you can lean on. See
+[vLLM on QB2](/ml-practitioner/03-vllm-on-qb2/) for the error it produces.
 
 Within the mesh, a model's weights and attention heads distribute across the chips, and the
 chips coordinate activations over their Ethernet cores directly, without routing through the

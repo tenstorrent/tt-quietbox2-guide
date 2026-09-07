@@ -26,14 +26,25 @@ Tenstorrent ships the QB2 ready to serve models. You don't install drivers. You 
 
 - **Kernel driver** — loaded automatically at boot, makes the chips visible to software
 - **`tt-smi`** — hardware monitoring tool, lives at `/usr/bin/tt-smi`
-- **TTNN Python environment** — pre-built venv at `~/tt-metal/python_env/`
-- **vLLM** — in the main tenstorrent venv at `~/.tenstorrent-venv/`
-- **TT-Forge/XLA** — container wrapper at `~/.local/bin/tt-forge`
+- **TTNN / TT-Metalium** — as a container, started by the `tt-metalium` wrapper in `~/.local/bin/`
+- **Hardware tooling venv** — `~/.tenstorrent-venv/`, holding `tt-smi` and `tt-flash`
+- **tt-inference-server** — at `~/.local/lib/tt-inference-server`; its `run.py` serves models with vLLM in a container
+- **TT-Forge/XLA** — container wrapper at `~/.local/bin/tt-forge`, if it was installed (it's opt-in)
 - **tt-studio** — the no-code web UI for serving models, pre-installed (launch with `tt-studio`)
 - **A ready-to-run model** — Qwen3-32B, weights pre-cached on disk, deployable from tt-studio with no download (your fastest path to a first token: launch `tt-studio`, pick it, click Run)
 - **Firmware** — already flashed to all four chips
 
-What's intentionally absent: the `~/tt-metal` source code. The environments are there; the source isn't. You can build models, run inference, and work with the full API stack without it. Building from source is a later chapter — a much later chapter.
+What's intentionally absent: `~/tt-metal` — not just the source code, the whole directory. TT-Metalium reaches you as a container image instead, and `tt-metalium` is how you get inside it. You can build models, run inference, and work with the full API stack without ever having a checkout. Building from source is a later chapter — a much later chapter.
+
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+<strong>Pre-installed is not the same as current.</strong> That list is the stack as it stood when
+your box was built — driver, firmware, tooling and container images all included. Upgrading is
+not most people's first instinct, and being behind almost never announces itself: it shows up as
+a tutorial that fails or hardware that looks broken. Once you've confirmed the chips respond
+(<a href="/first-timer/03-is-this-thing-on/">Chapter 3</a>), take the upgrade step in
+<a href="/first-timer/04-installing-the-stack/">Chapter 4</a> before you go looking for a bug.
+</div>
 
 ## Physical Tour
 

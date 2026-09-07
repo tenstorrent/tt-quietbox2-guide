@@ -95,16 +95,16 @@
   <line x1="284" y1="133" x2="270" y2="133" stroke="rgba(79,209,197,0.2)" stroke-width="0.8" stroke-dasharray="2,2"/>
 
   <!-- Python env panel -->
-  <text x="460" y="30" fill="#607D8B" font-size="8" font-family="monospace" letter-spacing="1.5">PYTHON ENVS</text>
+  <text x="460" y="30" fill="#607D8B" font-size="8" font-family="monospace" letter-spacing="1.5">WHERE THE CODE RUNS</text>
 
   <rect x="456" y="38" width="172" height="20" rx="3" fill="rgba(244,196,113,0.06)" stroke="rgba(244,196,113,0.3)" stroke-width="1"/>
-  <text x="542" y="52" text-anchor="middle" fill="#F4C471" font-size="7.5" font-family="monospace">~/.tenstorrent-venv  (vLLM)</text>
+  <text x="542" y="52" text-anchor="middle" fill="#F4C471" font-size="7" font-family="monospace">~/.tenstorrent-venv  (tt-smi)</text>
 
   <rect x="456" y="64" width="172" height="20" rx="3" fill="rgba(79,209,197,0.06)" stroke="rgba(79,209,197,0.3)" stroke-width="1"/>
-  <text x="542" y="78" text-anchor="middle" fill="#81E6D9" font-size="7.5" font-family="monospace">~/tt-metal/python_env</text>
+  <text x="542" y="78" text-anchor="middle" fill="#81E6D9" font-size="7" font-family="monospace">tt-metalium  →  ttnn</text>
 
   <rect x="456" y="90" width="172" height="20" rx="3" fill="rgba(236,150,184,0.06)" stroke="rgba(236,150,184,0.25)" stroke-width="1"/>
-  <text x="542" y="104" text-anchor="middle" fill="#EC96B8" font-size="7.5" font-family="monospace">~/.local/bin/tt-forge</text>
+  <text x="542" y="104" text-anchor="middle" fill="#EC96B8" font-size="7" font-family="monospace">tt-inference-server  →  vLLM</text>
 
   <line x1="456" y1="48" x2="444" y2="49" stroke="rgba(244,196,113,0.25)" stroke-width="0.8" stroke-dasharray="2,2"/>
   <line x1="456" y1="74" x2="444" y2="77" stroke="rgba(79,209,197,0.25)" stroke-width="0.8" stroke-dasharray="2,2"/>
