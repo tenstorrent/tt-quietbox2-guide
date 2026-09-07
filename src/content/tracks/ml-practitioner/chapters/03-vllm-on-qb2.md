@@ -185,8 +185,7 @@ curl -s http://localhost:8000/v1/chat/completions \
     "messages": [
       {"role": "user", "content": "Explain tensor parallelism in one sentence."}
     ],
-    "max_tokens": 120,
-    "chat_template_kwargs": {"enable_thinking": false}
+    "max_tokens": 120
   }' | python3 -m json.tool
 ```
 
@@ -196,18 +195,19 @@ The response JSON has the generated text at `choices[0].message.content`. If you
 **`"model"` has to match what the server actually loaded**, or you get back a 404, not a
 fallback — `{"error": {"message": "The model \`Qwen3-0.6B\` does not exist.", "code": 404}}`.
 Take the string from `/v1/models` rather than from an example: Path 2 reports the model as you
-named it in `--model`, while Path 1's `--served-model-name` above renames it to
-`meta-llama/Llama-3.1-8B-Instruct`. The examples below use `Llama-3.1-8B-Instruct`; substitute
-whatever your box reports — `curl -s http://localhost:8000/v1/models | python3 -m json.tool`
-tells you.
+named it in `--model`, while Path 1's `--served-model-name` above renames it to `Qwen3-0.6B`.
+The examples below use `Llama-3.1-8B-Instruct` (Path 2's naming); substitute whatever your box
+actually reports — `curl -s http://localhost:8000/v1/models | python3 -m json.tool` tells you.
 :::
 
 :::callout type="tip"
 **Serving a Qwen3 model instead?** They reason before answering, so a small `max_tokens` gets
 spent entirely inside the `<think>` block and comes back as `finish_reason: "length"` with an
-empty answer. Pass `extra_body={"chat_template_kwargs": {"enable_thinking": False}}` (or
-`"chat_template_kwargs": {"enable_thinking": false}` in curl, as above) for direct replies — see
-[Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/).
+empty answer. Add `"chat_template_kwargs": {"enable_thinking": false}` to the request body above
+(or `extra_body={"chat_template_kwargs": {"enable_thinking": False}}` in the Python SDK examples
+below) for direct replies — see [Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/). Llama and
+other non-reasoning models don't need it; sending it anyway isn't guaranteed to be a harmless
+no-op on every model, so only add it for a model that actually supports it.
 :::
 
 ## OpenAI Python SDK
@@ -229,15 +229,20 @@ response = client.chat.completions.create(
         {"role": "user", "content": "What is the Tenstorrent NOC fabric?"}
     ],
     max_tokens=256,
-    temperature=0.7,
-    # Qwen3 reasons before answering; skip the <think> block
-    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
+    temperature=0.7
 )
 
 print(response.choices[0].message.content)
 ```
 
 This is the integration point for any application that already talks to OpenAI. Change the base URL, change the model name, and the rest of the code runs unchanged.
+
+:::callout type="tip"
+**Serving a Qwen3 model instead?** Add `extra_body={"chat_template_kwargs": {"enable_thinking":
+False}}` to `create()` — see the note under [Verifying the Server](#verifying-the-server) above.
+Only add it when the served model is actually a reasoning model; Llama and similar models don't
+need it.
+:::
 
 ## Streaming Responses
 
@@ -247,8 +252,7 @@ For applications that need to show text as it generates — chat interfaces, int
 stream = client.chat.completions.create(
     model="Llama-3.1-8B-Instruct",
     messages=[{"role": "user", "content": "Describe continuous batching."}],
-    stream=True,
-    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
+    stream=True
 )
 
 for chunk in stream:
