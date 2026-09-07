@@ -211,3 +211,53 @@ whole string as a filename and fails before Python ever runs) and every
 attribute doesn't exist on the built package — confirmed on two separate images). Fixed
 and pushed to that PR's branch directly (`fix/qb2-venv-activation-claims`); all four of
 that repo's own pre-commit checks still pass.
+
+### 2026-09-07 (continued) — Phase 2 finished: remaining tracks walked, PR #19/#20 merged, #18 closed
+
+PR #19 merged to `main`. Josh Zheng's PR #18 (vLLM chapter fixes) predated #19 and was based
+on the stale pre-correction file; reshaped it down to its non-overlapping findings as PR #20
+(cherry-picked his commit, kept his authorship, dropped what #19 already had — two-chip mesh
+warning, `enable_thinking`, port 8000 guidance, "When Startup Stalls" were all already
+present). Two rounds of Copilot review on #20 addressed (each verified against reality, not
+applied blindly) — a leftover `Llama-3.1-8B-Instruct` reference after Path 1 changed to
+Qwen3-0.6B, and a Qwen3-only `enable_thinking` flag applied unconditionally to Llama examples.
+#20 merged, #18 closed with a comment crediting the findings that landed.
+
+Then resumed the Phase 2 walkthrough for every chapter not yet covered:
+`ml-practitioner` 02/05/06, `builder-hacker` 03/05/06, `tinkerer` 02-05. Real bugs found, all
+confirmed live before fixing (see PR #21):
+
+* **model-zoo.md**: Qwen3-0.6B shown sharded 2 ways in the storage-layout example; a real
+  download is single-file. Same flat `enable_thinking` key bug as the vLLM chapter, in the
+  canonical "Qwen3 Reasoning Modes" section this guide cross-links from everywhere else.
+* **tt-forge.md**: the ResNet-50 example needs `torchvision`, which nothing installs — and a
+  naive `pip install torchvision` silently upgrades `torch` itself and breaks `torch_xla`
+  (confirmed live: `undefined symbol` crash). Fixed with a `--no-deps` pinned install. Also:
+  stale 4-chip fabric state from an unclean exit (same failure/fix as vLLM's note), a wrong
+  `tt-forge-models` directory diagram (bert/dinov2/llama all nest a task-type directory it
+  omitted — the worked import 404s), `ModelLoader.load_model()` called as if static when it's
+  an instance method (confirmed: `TypeError: missing 1 required positional argument: 'self'`),
+  and two wrong Compiletron CLI facts (`--auto-quit` is a post-summary countdown in seconds,
+  not a model count; the real default backend is `auto` with a `mixed` mode, not `forge`).
+* **tt-forge-compiler.md**: the same static-vs-instance bug in its own BEiT example, plus two
+  more layered API bugs found going deeper — `variant` is a constructor argument, not a
+  `load_model()` keyword, and `ModelVariant` is a separate top-level import
+  (`from .loader import ModelLoader, ModelVariant`), not `ModelLoader.ModelVariant` (confirmed
+  live: `AttributeError`). Verified the fully-corrected pattern end-to-end — loads a real
+  ResNet-50, returns real tensors.
+* **ttlang-intro.md / 05-going-deep.md — the big one**: the entire TT-Lang code example was a
+  fictional API (`from ttlang import kernel, reader, compute, writer, Tile, Buffer`, four
+  decorators, bare `push()`/`pop()`). None of it exists. The real, installed package is `ttl`
+  (importable from `~/.tenstorrent-venv`), with `@ttl.operation`, only two function decorators
+  (`@ttl.compute()`/`@ttl.datamovement()` — no separate reader/writer), `DataflowBuffer`s via
+  `ttl.make_dataflow_buffer_like()`, transfers via `ttl.copy(...).wait()` — cross-checked
+  against tt-vscode-toolkit's actively-maintained `tt-lang-intro` lesson, which already uses
+  this real API. Replaced the guide's example with the lesson's real, working elementwise-add
+  kernel; fixed every decorator reference in both files.
+* **break-and-fix.md**: the driver-module existence check looked under
+  `/lib/modules/$(uname -r)/extra/`; confirmed live the real path is `updates/dkms/`.
+
+`tinkerer` 02/03/05 (tt-toplike/compiletron flags, package/extension names, standard Ubuntu
+tooling) checked out against real source and this box's actual installs — no changes needed.
+Every chapter across all four tracks has now been walked against real hardware or the actual
+installed packages at least once. Build clean, tests pass throughout. Pushed as PR #21.
