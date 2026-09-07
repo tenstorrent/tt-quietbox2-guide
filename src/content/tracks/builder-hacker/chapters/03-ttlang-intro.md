@@ -20,8 +20,11 @@ This explicitness is intentional and strategic. It makes TT-Lang programs easy f
 ## The Kernel Decorators
 
 TT-Lang programs are organized around the `ttl` module's decorators — verified against the
-real, installed package (`import ttl; dir(ttl)` on a QB2's `~/.tenstorrent-venv`) rather than
-assumed:
+real, installed package rather than assumed. `ttl` is not part of the factory tooling venv
+(`~/.tenstorrent-venv` holds only `tt-smi`/`tt-flash`, as elsewhere in this guide) or the
+TT-Metalium container (confirmed absent from both, live) — it comes from `pip install tt-lang`
+into a venv of your own, the same way the [tt-lang-intro lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/)
+sets one up (`python3 -m venv ttlang-venv && ... && pip install tt-lang tt-lang-setup`):
 
 - `@ttl.operation(grid=...)` — the outer program; `grid="auto"` lets the compiler size it
 - `@ttl.compute()` — runs on the FPU; consumes filled dataflow buffers, does the math, fills the output buffer
@@ -40,7 +43,7 @@ def eltwise_add(a_in: ttnn.Tensor, b_in: ttnn.Tensor, out: ttnn.Tensor) -> None:
     row_tiles = a_in.shape[0] // TILE_SIZE
     col_tiles = a_in.shape[1] // TILE_SIZE
 
-    # Typed ring buffers — one slot per tile, depth 2 (double-buffer)
+    # Typed dataflow buffers (DFBs) — one slot per tile, depth 2 (double-buffer)
     a_dfb = ttl.make_dataflow_buffer_like(a_in, shape=(1, 1), block_count=2)
     b_dfb = ttl.make_dataflow_buffer_like(b_in, shape=(1, 1), block_count=2)
     out_dfb = ttl.make_dataflow_buffer_like(out, shape=(1, 1), block_count=2)

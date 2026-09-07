@@ -166,7 +166,7 @@ response = client.chat.completions.create(
 **Leave room for the thinking block.** With thinking on and a tight `max_tokens`, the entire
 budget goes into `<think>…</think>` and you get back `finish_reason: "length"` with no answer at
 all — which reads like a broken model rather than a truncated one. Either raise `max_tokens` or
-pass `chat_template_kwargs: {"enable_thinking": False}`.
+pass `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`, as above.
 :::
 
 For conversational workloads where speed matters, non-thinking mode is the better choice. For tasks where the reasoning trace improves output quality — math, code, multi-hop questions — thinking mode earns its overhead.

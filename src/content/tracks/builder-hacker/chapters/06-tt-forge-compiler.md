@@ -146,6 +146,7 @@ The `ModelTask` taxonomy in `config.py` organizes models by task type: `NLP_CAUS
 This standardization exists so you can swap models without rewriting your compilation harness. The compilation loop is always:
 
 ```python
+import torch
 from third_party.tt_forge_models.<model>.pytorch import ModelLoader, ModelVariant
 
 loader = ModelLoader(variant=ModelVariant.SOME_VARIANT)
