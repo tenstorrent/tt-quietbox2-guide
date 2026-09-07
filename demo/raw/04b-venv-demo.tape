@@ -1,10 +1,10 @@
 # VHS tape — Python environment navigation demo
-# Record with: vhs scripts/vhs/04b-venv-demo.tape
+# Record with: vhs demo/raw/04b-venv-demo.tape
 #
 # Shows the thing that actually confuses people: there is no TTNN venv on the
 # host. `import ttnn` only works inside the tt-metalium container.
 
-Output src/assets/video/04b-venv-demo.gif
+Output demo/assets/04b-venv-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

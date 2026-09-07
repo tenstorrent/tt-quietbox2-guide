@@ -1,10 +1,10 @@
 # VHS tape — first TTNN kernel: elementwise add on Blackhole
-# Record with: vhs scripts/vhs/11-first-kernel-demo.tape
+# Record with: vhs demo/raw/11-first-kernel-demo.tape
 #
 # Helper script must live under $HOME, not /tmp: the tt-metalium container
 # mounts only your home directory. Pre-write ~/vhs-ttnn-add.py before recording.
 
-Output src/assets/video/11-first-kernel-demo.gif
+Output demo/assets/11-first-kernel-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

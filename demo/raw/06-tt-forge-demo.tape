@@ -1,7 +1,7 @@
 # VHS tape — TT-Forge: environment and compile pattern demo
-# Record with: vhs scripts/vhs/06-tt-forge-demo.tape
+# Record with: vhs demo/raw/06-tt-forge-demo.tape
 
-Output src/assets/video/06-tt-forge-demo.gif
+Output demo/assets/06-tt-forge-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

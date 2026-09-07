@@ -10,7 +10,10 @@ Interactive QB2 guide (Eleventy). Four tracks: `first-timer` (Explore), `ml-prac
   `lib/chunks.js` flattens blank lines out of rendered chunk HTML; a blank line inside a
   fenced block in a chunk otherwise terminates the HTML block and breaks the code block's
   copy-paste. `node --test` guards this — don't hand-edit around it.
-* `scripts/vhs/*.tape` — VHS sources for the demo GIFs in `src/assets/video/`.
+* `demo/demos.yaml` + `demo/raw/*.tape` — `tt-demo` manifest and VHS sources for the demo
+  GIFs in `src/assets/video/`. Every scene is currently a `raw_tape:` hatch: record with
+  `tt-demo record <id>`, then `tt-demo verify <id>` and
+  `tt-demo publish <id> --dir src/assets/video`.
 * `agents.md` — the AI-assistant-facing guide, served at `/agents.md`. Also carries
   **handoff sections** for work that needs a QB2 (asset recording, etc.).
 * `llms.txt` — machine-readable summary.
@@ -81,3 +84,90 @@ a recipe in `agents.md`, and a fact in `llms.txt`). The two non-obvious parts:
   instead, ideally seeded from a real box via `--export-schema` → `--versions=<state>.ttis`.
 * `tt-vscode-toolkit` lessons carry a three-path activation block whose middle path is
   `source ~/.tenstorrent-venv/bin/activate` for TTNN/vLLM. Same wrong claim, ~7 lessons.
+
+### 2026-09-07 — VHS → tt-demo migration; validation against corrected Dockerfile.qb2 pending
+
+**Prompt:** "We updated ~/code/tt-develeper-image for QB2 testing closer to hardware
+shipping status... We should test the whole book against this environment, using HW passed
+to the docker container as needed. We should also update our VHS instructions to use
+tt-demo-maker instead of one-off approach. re-record videos as needed"
+
+Sequenced as: tooling migration first (no hardware), then a hardware-backed validation +
+re-record pass (separate session, since it needs a full TTNN build + user presence for
+tt-studio/coding-agent demos).
+
+**Tooling migration (done this pass):**
+* `scripts/vhs/*.tape` → `demo/raw/*.tape` (`git mv`, history preserved), `scripts/vhs/prompts/`
+  → `demo/raw/prompts/`. Each tape's `Output` line repointed from `src/assets/video/<id>.gif`
+  to `demo/assets/<id>.gif`.
+* `demo/demos.yaml` scaffolded via `tt-demo init`; all 14 tapes registered as `raw_tape:`
+  scenes (ids match the old filename stems) with a title + caption per scene.
+* **Gap found and fixed upstream, not just documented.** Reading `tt-demo-maker`'s source
+  (`bin/src/record.rs`) showed `tt-demo record` didn't yet execute raw-hatch scenes — it
+  printed "raw scenes not yet CLI-captured (v1.1)" and skipped, a limitation the tool's own
+  README/AGENTS already listed as deferred. Fixed there instead of working around it here:
+  `record.rs` now runs `vhs <tape>` (or `asciinema rec ... --command "bash <script>"` for
+  `raw_script`) for real, checks the tool is on PATH first, and reports whether the
+  conventional `demo/assets/<id>.{gif,mp4}` path appeared afterward. Covered by a new
+  hardware-free case in `tests/e2e_golden.sh`; all 34 Rust unit tests + the golden script
+  pass. Shipped as `tt-demo-maker` `0.2.1` → `0.2.2`, committed and pushed to its `main`.
+  So `tt-demo record <id>` now actually records qb2-guide's tapes — no `vhs` fallback needed.
+* `agents.md`'s two handoff sections and this file's repo-shape bullet updated to the new
+  paths and the `tt-demo record` → `verify` → `publish` pipeline.
+* Verified: `tt-demo record --dry-run all` (manifest validates, 15 steps), `node --test`
+  (14/14 pass), `npx eleventy` build clean, no leaked `:::` in `_site/`.
+
+### 2026-09-07 (same day, continued) — Phase 2: hardware validation, two real bugs found and fixed
+
+`tenstorrent/qb2-env:latest` (2026-06-21) predated `tt-developer-image`'s factory-layout fix,
+so first rebuilt it there — which surfaced four unrelated bugs in that image/its CI script,
+fixed and documented in `tt-developer-image`'s own CLAUDE.md rather than here (venv-activation
+order breaking TTNN's compiled extension; a floating `vllm-tt-plugin` ref; a tt-metal commit
+too old for any current vllm; a `build/` dir pre-create colliding with a newer tt-metal's
+symlink step; a legacy path in `ci-qb2.sh`'s own hardware check). All four fixed, verified live
+on all 4 chips, pushed to that repo's `main`. Also fixed there: `tt-toplike`'s install step
+still assumed no apt PPA existed — it does now, confirmed live.
+
+**Walkthrough approach**: rather than only testing inside the rebuilt custom image, also
+tested directly against the **real, official** `ghcr.io/tenstorrent/tt-metal/tt-metalium-*`
+container (already pulled on this box) and the bare-metal `tt-smi`/apt/dmesg surface — more
+authoritative than our own approximation for anything that container or the host actually
+owns. This is how both bugs below were found.
+
+**Two real bugs found in the guide's own content, both in `builder-hacker/02-first-kernel.md`
+and (torch only) two other chapters — confirmed against the real Metalium container, not
+assumed:**
+
+1. **No `ttnn_add_tensors.py` tutorial ships in the container.** The chapter claimed one did,
+   with a `find /` fallback "if that path doesn't resolve." `find /` on the real container
+   returns nothing — there is no tutorials directory anywhere in this image at all (it's a
+   compiled-wheel runtime image, not a source checkout). Fixed: the chapter now has the reader
+   write the ~15-line script themselves into `~/tt-scratchpad/` — the file was already printed
+   in full right below the broken claim, so this is a smaller diff than it sounds.
+2. **`torch` isn't installed in the container, and there's no `pip` to install it with**
+   (confirmed: `ModuleNotFoundError: No module named 'torch'`; only `uv` and `ensurepip` are
+   present). Every code sample doing `ttnn.from_torch`/`to_torch` was broken as written. Fixed
+   in `02-first-kernel.md` (added the bootstrap step, verified live:
+   `uv pip install --python /opt/venv/bin/python3 torch --index-url
+   https://download.pytorch.org/whl/cpu` — the CPU wheel specifically, since the default index
+   pulls an unnecessary multi-GB CUDA build) and added a one-line pointer to the same fix in
+   `01-tt-metal-architecture.md` and `ml-practitioner/01-coming-from-cuda.md`, whose code
+   samples have the same gap but don't instruct the reader to actually run them right there.
+
+**Verified accurate, no changes needed**: Chapter 3 (`is-this-thing-on`) — every `tt-smi -s`
+JSON field path, type, and even the exact `dmesg` permission-error text matched real output.
+Same for the LED chapter's `telemetry.*`/`firmwares.fw_bundle_version` field paths (one stale
+version number de-pinned: `tt-smi --version` instead of a hardcoded "v6.1.0"). The core
+device-open/close handshake and full `ttnn.add` round-trip in `run-first-model.md` both ran
+clean on real hardware. `tt-toplike`'s apt-install path is genuinely correct now.
+
+**Not done yet**: the remaining tracks (ml-practitioner beyond ch1, tinkerer 03-05,
+builder-hacker 03-06) weren't walked with the same hardware-verification depth — time was
+spent chasing the `tt-developer-image` bugs blocking a rebuilt image at all. Re-recording the
+known-stale GIFs (`agents.md`'s list: 03, 04, 04b, 05, 09, 11, plus 12's port fix, plus
+never-recorded 13/14) through the `tt-demo` pipeline is also still open — that needs you
+present for the tt-studio/browser/coding-agent parts.
+
+**Not committed**: per this session's git norms, the content fixes above and the demo/
+migration from earlier are sitting in the working tree, not committed — flag before ending
+the session.

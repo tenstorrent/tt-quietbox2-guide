@@ -80,6 +80,11 @@ Every Metalium operation on a Tensix core involves three co-running kernels. All
 
 TTNN doesn't think in terms of individual floats or rows. It thinks in 32×32 tiles. A tensor of shape `(64, 64)` becomes 4 tiles of shape `(32, 32)`. The tile format — BFP8, BFP16, or FP32 — is set when you create a tensor:
 
+<div class="callout callout--info">
+<span class="callout-icon illustrated-only">ℹ</span>
+The code samples below assume you're inside <code>tt-metalium</code> (see <a href="/builder-hacker/02-first-kernel/">Your First Kernel</a>). <code>torch</code> isn't preinstalled there — bootstrap it once per container session with <code>uv pip install --python /opt/venv/bin/python3 torch --index-url https://download.pytorch.org/whl/cpu</code> (the CPU wheel, since TTNN does the actual chip work).
+</div>
+
 ```python
 import ttnn, torch
 

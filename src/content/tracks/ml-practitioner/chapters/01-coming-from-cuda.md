@@ -50,6 +50,11 @@ Think of TTNN the way you think of `libcudart` plus cuBLAS plus cuDNN — all fu
 
 The critical difference from cuBLAS: TTNN compiles ops JIT on first invocation. When you run a matrix multiply for the first time on a new tensor shape, Metalium generates a Tensix kernel for that exact configuration. Subsequent calls with the same shape hit the op cache and run fast. This is why first-run latency can be a few seconds — and why subsequent runs are fast enough to serve production traffic.
 
+<div class="callout callout--info">
+<span class="callout-icon illustrated-only">ℹ</span>
+Running this yourself? It assumes you're inside <code>tt-metalium</code> (see <a href="/builder-hacker/02-first-kernel/">Your First Kernel</a>). <code>torch</code> isn't preinstalled there — bootstrap it once per container session with <code>uv pip install --python /opt/venv/bin/python3 torch --index-url https://download.pytorch.org/whl/cpu</code>.
+</div>
+
 ```python
 import ttnn
 import torch

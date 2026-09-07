@@ -1,5 +1,5 @@
 # VHS tape — tt-studio v2.8.0: OpenCode against a local model on your QB2
-# Record ON the QB2 with: vhs scripts/vhs/14-tt-studio-opencode.tape
+# Record ON the QB2 with: vhs demo/raw/14-tt-studio-opencode.tape
 #
 # PREREQUISITES (same as the Claude Code tape, 13-...):
 #   1. tt-studio running with an eligible model DEPLOYED (Qwen3-32B).
@@ -13,7 +13,7 @@
 # ~/.config/opencode/opencode.json (creating it if absent), then launches
 # OpenCode against the provider-qualified model name.
 
-Output src/assets/video/14-tt-studio-opencode.gif
+Output demo/assets/14-tt-studio-opencode.gif
 
 Set Shell "bash"
 Set FontSize 13
@@ -91,7 +91,7 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "mkdir -p /tmp/oc-demo && cp scripts/vhs/prompts/perl-poetry.txt /tmp/oc-demo/ && cd /tmp/oc-demo"
+Type "mkdir -p /tmp/oc-demo && cp demo/raw/prompts/perl-poetry.txt /tmp/oc-demo/ && cd /tmp/oc-demo"
 Sleep 300ms
 Enter
 Sleep 500ms

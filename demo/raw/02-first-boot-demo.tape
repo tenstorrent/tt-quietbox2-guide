@@ -1,7 +1,7 @@
 # VHS tape — first boot: terminal basics on a live QB2
-# Record with: vhs scripts/vhs/02-first-boot-demo.tape
+# Record with: vhs demo/raw/02-first-boot-demo.tape
 
-Output src/assets/video/02-first-boot-demo.gif
+Output demo/assets/02-first-boot-demo.gif
 
 Set Shell "bash"
 Set FontSize 14

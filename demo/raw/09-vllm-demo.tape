@@ -1,10 +1,10 @@
 # VHS tape — serving a model on QB2
-# Record with: vhs scripts/vhs/09-vllm-demo.tape
+# Record with: vhs demo/raw/09-vllm-demo.tape
 #
 # Rewritten: there is no vLLM venv on a QB2. vLLM ships inside the container
 # that tt-inference-server's run.py launches, so that is what this shows.
 
-Output src/assets/video/09-vllm-demo.gif
+Output demo/assets/09-vllm-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

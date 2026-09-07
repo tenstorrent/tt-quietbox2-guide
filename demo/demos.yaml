@@ -1,0 +1,85 @@
+project: qb2-guide
+theme: tt-brand
+defaults: { outputs: [gif] }
+
+# All scenes here are hand-written VHS tapes (raw_tape hatch) rather than
+# declarative left/right scenes — they predate tt-demo and record a plain
+# terminal walkthrough for a guide chapter, not a hardware-reactive directive.
+#
+# Pipeline: `tt-demo record <id>` (shells out to `vhs demo/raw/<id>.tape`,
+# writing demo/assets/<id>.gif per the tape's own Output line) -> `tt-demo
+# verify <id>` for a contact-sheet check -> `tt-demo publish <ids> --dir
+# src/assets/video` to copy accepted artifacts in. Wire the
+# `<figure class="video-demo">` markup into the chapter/chunk by hand — see
+# agents.md.
+
+scenes:
+  - id: 02-first-boot-demo
+    title: "First boot: terminal basics on a live QB2"
+    raw_tape: demo/raw/02-first-boot-demo.tape
+    caption: "Orienting in a fresh QB2 shell for the first time."
+
+  - id: 03-tt-smi-demo
+    title: "tt-smi: verifying all four Blackhole chips"
+    raw_tape: demo/raw/03-tt-smi-demo.tape
+    caption: "tt-smi -s confirms four healthy p300c chips."
+
+  - id: 04-tt-installer-demo
+    title: "Post-tt-installer state inspection"
+    raw_tape: demo/raw/04-tt-installer-demo.tape
+    caption: "What tt-installer actually leaves behind: one venv for hardware tools, plus container wrappers."
+
+  - id: 04b-venv-demo
+    title: "Python environment navigation"
+    raw_tape: demo/raw/04b-venv-demo.tape
+    caption: "There is no TTNN venv on the host — import ttnn only works inside the tt-metalium container."
+
+  - id: 05-first-model-demo
+    title: "Your first model: TTNN device open"
+    raw_tape: demo/raw/05-first-model-demo.tape
+    caption: "Opening a TTNN device and running a first model inside the tt-metalium container."
+
+  - id: 06-tt-forge-demo
+    title: "TT-Forge: environment and compile pattern"
+    raw_tape: demo/raw/06-tt-forge-demo.tape
+    caption: "Activating the Forge environment and compiling a small model."
+
+  - id: 07-tt-toplike-demo
+    title: "tt-toplike TUI against live QB2 hardware"
+    raw_tape: demo/raw/07-tt-toplike-demo.tape
+    caption: "Live chip telemetry in tt-toplike's TUI."
+
+  - id: 08-model-download-demo
+    title: "Model download and verification"
+    raw_tape: demo/raw/08-model-download-demo.tape
+    caption: "Downloading and verifying a model's files before serving it."
+
+  - id: 09-vllm-demo
+    title: "Serving a model on QB2"
+    raw_tape: demo/raw/09-vllm-demo.tape
+    caption: "vLLM ships inside tt-inference-server's container — there is no host vLLM venv."
+
+  - id: 10-led-telemetry-demo
+    title: "LED customization: tt-smi telemetry"
+    raw_tape: demo/raw/10-led-telemetry-demo.tape
+    caption: "The tt-smi data an LED monitor script reads."
+
+  - id: 11-first-kernel-demo
+    title: "First TTNN kernel: elementwise add on Blackhole"
+    raw_tape: demo/raw/11-first-kernel-demo.tape
+    caption: "Writing and running a first custom TTNN kernel."
+
+  - id: 12-tt-studio-demo
+    title: "tt-studio: startup and port-forwarding"
+    raw_tape: demo/raw/12-tt-studio-demo.tape
+    caption: "Starting tt-studio and reaching its UI on :3000."
+
+  - id: 13-tt-studio-coding-agents
+    title: "Claude Code against a local model on your QB2"
+    raw_tape: demo/raw/13-tt-studio-coding-agents.tape
+    caption: "Claude Code configured against tt-studio's local LiteLLM gateway — no cloud API."
+
+  - id: 14-tt-studio-opencode
+    title: "OpenCode against a local model on your QB2"
+    raw_tape: demo/raw/14-tt-studio-opencode.tape
+    caption: "OpenCode configured against tt-studio's local gateway, running a local coding task."

@@ -1,7 +1,7 @@
 # VHS tape — model download and verification demo
-# Record with: vhs scripts/vhs/08-model-download-demo.tape
+# Record with: vhs demo/raw/08-model-download-demo.tape
 
-Output src/assets/video/08-model-download-demo.gif
+Output demo/assets/08-model-download-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

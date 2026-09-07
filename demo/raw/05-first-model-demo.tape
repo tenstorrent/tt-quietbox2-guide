@@ -1,11 +1,11 @@
 # VHS tape — first model run: TTNN device open + model files
-# Record with: vhs scripts/vhs/05-first-model-demo.tape
+# Record with: vhs demo/raw/05-first-model-demo.tape
 #
 # Helper script must live under $HOME, not /tmp: the tt-metalium container
 # mounts only your home directory, so a script in /tmp is invisible inside it.
 # Pre-write ~/vhs-open-device.py before recording.
 
-Output src/assets/video/05-first-model-demo.gif
+Output demo/assets/05-first-model-demo.gif
 
 Set Shell "bash"
 Set FontSize 13

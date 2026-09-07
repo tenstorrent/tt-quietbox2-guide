@@ -1,11 +1,11 @@
 # VHS tape — post-tt-installer state inspection
-# Record with: vhs scripts/vhs/04-tt-installer-demo.tape
+# Record with: vhs demo/raw/04-tt-installer-demo.tape
 #
 # The point of this one is to show what the installer ACTUALLY leaves behind:
 # one venv holding the hardware tools, plus container wrappers. Deliberately does
 # not claim `hf` is present — it isn't installed by tt-installer.
 
-Output src/assets/video/04-tt-installer-demo.gif
+Output demo/assets/04-tt-installer-demo.gif
 
 Set Shell "bash"
 Set FontSize 14

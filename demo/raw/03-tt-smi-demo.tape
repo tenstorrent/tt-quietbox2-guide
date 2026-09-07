@@ -1,7 +1,7 @@
 # VHS tape for tt-smi demo
-# Record with: vhs scripts/vhs/03-tt-smi-demo.tape
+# Record with: vhs demo/raw/03-tt-smi-demo.tape
 
-Output src/assets/video/03-tt-smi-demo.gif
+Output demo/assets/03-tt-smi-demo.gif
 
 Set Shell "bash"
 Set FontSize 14

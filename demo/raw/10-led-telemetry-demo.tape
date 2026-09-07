@@ -1,8 +1,8 @@
 # VHS tape — LED customization: tt-smi telemetry for LED scripting
-# Record with: vhs scripts/vhs/10-led-telemetry-demo.tape
+# Record with: vhs demo/raw/10-led-telemetry-demo.tape
 # Shows the tt-smi data the LED monitor script reads
 
-Output src/assets/video/10-led-telemetry-demo.gif
+Output demo/assets/10-led-telemetry-demo.gif
 
 Set Shell "bash"
 Set FontSize 13
