@@ -498,7 +498,7 @@ obviously point at a missing test framework. Earlier versions of this page also 
 `vllm serve` works exactly as it does above. On a QB2, with the mesh caveat from Path 1 in mind:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
+source ~/.venvs/vllm-tt/bin/activate          # the plugin venv from "Installing it" above
 
 export MESH_DEVICE=P150                       # or P300x2 for all four chips
 export HF_MODEL=~/models/Qwen3-0.6B
