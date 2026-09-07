@@ -1,47 +1,40 @@
-# VHS tape — vLLM on QB2 demo
+# VHS tape — serving a model on QB2
 # Record with: vhs scripts/vhs/09-vllm-demo.tape
+#
+# Rewritten: there is no vLLM venv on a QB2. vLLM ships inside the container
+# that tt-inference-server's run.py launches, so that is what this shows.
 
 Output src/assets/video/09-vllm-demo.gif
 
 Set Shell "bash"
 Set FontSize 13
 Set Width 900
-Set Height 560
+Set Height 600
 Set Theme "Catppuccin Mocha"
 
-Type "# vLLM runs in a dedicated venv on a QB2"
+Type "# vLLM is not installed on the host — it runs in a container"
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "# The TTNN venv: ~/tt-metal/python_env/"
+Type "python3 -c 'import vllm' || echo '(expected — vLLM is not on the host)'"
 Sleep 400ms
 Enter
-Sleep 200ms
-
-Type "# The vLLM venv: ~/tt-metal/build/python_env_vllm/ (created by tt-installer)"
-Sleep 400ms
-Enter
-Sleep 400ms
+Sleep 1500ms
 
 Type ""
 Sleep 300ms
 Enter
 
-Type "# Activate the TTNN venv — confirm hardware access"
+Type "# The launcher that starts it is preinstalled:"
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "source ~/tt-metal/python_env/bin/activate"
+Type "ls ~/.local/lib/tt-inference-server/run.py"
 Sleep 400ms
 Enter
-Sleep 1000ms
-
-Type "which python3"
-Sleep 400ms
-Enter
-Sleep 600ms
+Sleep 800ms
 
 Type ""
 Sleep 300ms
@@ -66,21 +59,36 @@ Type ""
 Sleep 300ms
 Enter
 
-Type "# The vLLM serve command (shown — requires model weights to run)"
+Type "# --tt-device p300x2 is the whole box: two P300 boards, four chips"
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "# vllm serve ~/models/Llama-3.1-8B-Instruct --port 8000"
+Type "# (shown — needs weights and an idle machine to actually run)"
 Sleep 400ms
 Enter
-Sleep 500ms
+Sleep 200ms
+
+Type "# python3 ~/.local/lib/tt-inference-server/run.py \\"
+Sleep 400ms
+Enter
+Sleep 200ms
+
+Type "#   --model Llama-3.1-8B-Instruct --workflow server \\"
+Sleep 400ms
+Enter
+Sleep 200ms
+
+Type "#   --tt-device p300x2 --docker-server"
+Sleep 400ms
+Enter
+Sleep 800ms
 
 Type ""
 Sleep 300ms
 Enter
 
-Type "deactivate"
+Type "# --print-docker-cmd shows the docker run it would issue"
 Sleep 400ms
 Enter
-Sleep 600ms
+Sleep 1000ms

@@ -22,15 +22,27 @@ On a QB2 from Tenstorrent, the stack is pre-installed. Here's your map:
 
 | Component | Location | When to use it |
 |-----------|----------|----------------|
-| TTNN venv | `~/tt-metal/python_env/` | Direct API work, TTNN operations, cookbook examples |
-| vLLM | `vllm` in `~/.tenstorrent-venv/` | Serving models via HTTP, OpenAI-compatible API |
-| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` | Compile PyTorch/JAX models via container |
-| `tt-smi` | `~/.local/bin/tt-smi` (on PATH) | Hardware monitoring, always available |
+| TTNN / Metalium | `tt-metalium` wrapper in `~/.local/bin/` | Direct API work, TTNN operations, cookbook examples |
+| Hardware tooling | `~/.tenstorrent-venv/` — `tt-smi`, `tt-flash` | Monitoring and firmware. Nothing else belongs in here |
+| Serving | `~/.local/lib/tt-inference-server` | Serving models via HTTP, OpenAI-compatible API — runs vLLM in a container |
+| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` | Compile PyTorch/JAX models via container — *opt-in, may not be present* |
+| `tt-smi` | in `~/.tenstorrent-venv/bin/` — on PATH once that venv is active | Hardware monitoring, always available |
 | Model storage | `~/models/` (convention) | Where you put downloaded model weights |
 | Scratch space | `~/tt-scratchpad/` | Working directory for scripts and experiments |
 
+:::callout type="warn"
+**There is no `~/tt-metal` and no `~/tt-metal/python_env`.** Older QB2 notes — and earlier
+versions of this page — told you to activate a TTNN venv at that path. Nothing on a current
+machine creates it: `tt-installer` ships TT-Metalium as a container image and gives you the
+`tt-metalium` wrapper instead. If a command in some other guide starts with
+`source ~/tt-metal/python_env/bin/activate`, substitute `tt-metalium`.
+:::
+
 :::callout type="tip"
-**Installing on a fresh Ubuntu machine?** `tt-installer` today uses Docker containers for Metalium and Forge — it creates `~/.tenstorrent-venv` with Python tools and installs `tt-metalium` / `tt-forge` wrapper scripts in `~/.local/bin/`. The paths here reflect a configured QB2; a fresh install may differ slightly.
+**Installing on a fresh Ubuntu machine?** `tt-installer` uses Docker containers for Metalium and
+(optionally) Forge. It creates `~/.tenstorrent-venv` for the Python *hardware tools* and installs
+the `tt-metalium` / `tt-forge` wrapper scripts in `~/.local/bin/`. The paths here reflect a
+configured QB2; a fresh install may differ slightly.
 :::
 
 Create the scratch directory if it doesn't exist yet:
@@ -41,40 +53,51 @@ mkdir -p ~/tt-scratchpad ~/models
 
 ## The Three Environments, Explained
 
-### TTNN (`~/tt-metal/python_env/`)
+Two of them are containers and one is a venv. That's the thing worth internalising: only the
+hardware tooling lives in a virtual environment on the host.
+
+### TTNN — the `tt-metalium` container
 
 This is the workhorse. Use it for direct Python API work — opening devices, running TTNN operations, the cookbook examples in this guide.
 
 ```bash
-source ~/tt-metal/python_env/bin/activate
-# prompt changes to (python_env)
+tt-metalium
+# you're now in a shell inside the container, home directory mounted
 python3 -c "import ttnn; print('TTNN ready')"
-deactivate
+exit
 ```
 
-### vLLM (in `~/.tenstorrent-venv`)
+TTNN is already on the container's default interpreter (`/opt/venv/bin/python3`), so there's
+nothing to activate. The first run pulls a multi-GB image; later runs start immediately.
 
-Use this to run a model as a server with an OpenAI-compatible HTTP API. vLLM is available in the main tenstorrent venv:
+### Serving — `tt-inference-server`
+
+Use this to run a model as a server with an OpenAI-compatible HTTP API. You don't invoke `vllm`
+yourself and it isn't installed on the host — it ships inside a container that
+`tt-inference-server` launches:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
+export HF_TOKEN=hf_...   # gated repos need it even when the weights are already local
 
-export TT_METAL_ARCH_NAME=blackhole
-export MESH_DEVICE=P300              # one P300 card; P300x2 uses all four chips
-export VLLM_RPC_TIMEOUT=900000       # the 10s default is far too short for a first compile
-
-# HF_MODEL must match the --model path. tt-metal's tt_transformers reads it as the
-# checkpoint directory, so serving a local path without it fails outright.
-export HF_MODEL=~/models/Llama-3.1-8B-Instruct
-
-vllm serve ~/models/Llama-3.1-8B-Instruct --port 8000
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Llama-3.1-8B-Instruct \
+  --workflow server \
+  --tt-device p300x2 \
+  --docker-server
 ```
 
-Watch the startup log for a line saying the `tt` platform has been selected. Without it,
-vLLM is running but cannot see your hardware — see the
-[vLLM on QB2 chapter](/ml-practitioner/03-vllm-on-qb2/).
+`run.py` picks the container image, sets `TT_METAL_ARCH_NAME`, `MESH_DEVICE` and the vLLM
+timeouts per model, and publishes the API on port 8000. `--tt-device p300x2` is the whole QB2 —
+two P300 boards, four chips. Add `--print-docker-cmd` to see the `docker run` it would issue.
 
-Or use `tt-studio` for a no-code UI that handles vLLM startup automatically.
+Or use `tt-studio` for a no-code UI that handles all of this for you.
+
+:::callout type="tip"
+Watch the startup log for a line saying the `tt` platform has been selected. Without it, vLLM is
+running but cannot see your hardware — see the
+[vLLM on QB2 chapter](/ml-practitioner/03-vllm-on-qb2/), which also covers running `vllm serve`
+by hand if you want the lower-level control surface.
+:::
 
 ### TT-Forge (`tt-forge` wrapper)
 
@@ -92,28 +115,34 @@ For scripting with `import forge` in Python, use the `tt-forge-fe` source tree o
 Run this check sequence:
 
 ```bash
-# TTNN
-source ~/tt-metal/python_env/bin/activate
-python3 -c "import ttnn; print('✓ TTNN')" && deactivate
+# TTNN — inside the container
+tt-metalium -c 'python3 -c "import ttnn; print(\"OK TTNN\")"'""
 
-# vLLM (in the main tenstorrent venv)
-source ~/.tenstorrent-venv/bin/activate
-python3 -c "import vllm; print('✓ vLLM')" && deactivate
+# The serving stack — the launcher is a file on disk, so just check it's there
+python3 ~/.local/lib/tt-inference-server/run.py --help > /dev/null && echo '✓ tt-inference-server'
 
-# Check for the tt-smi binary
+# The hardware tooling
 which tt-smi && tt-smi --version
 ```
 
-All three should respond without errors. If TTNN import fails, the venv may not be set up — check [docs.tenstorrent.com](https://docs.tenstorrent.com) for the current setup guide. If `tt-smi` isn't found, add `~/.local/bin` to your PATH (see below).
+All three should respond without errors.
+
+Note what is *not* in that list: there's no `import vllm` check, because vLLM isn't installed on
+the host — it lives in the container `run.py` starts. If you run `python3 -c "import vllm"` in
+`~/.tenstorrent-venv` and get a `ModuleNotFoundError`, nothing is broken; that venv only ever
+contained `tt-smi` and `tt-flash`.
+
+If any Tenstorrent command comes back `command not found`, the wrapper is almost certainly
+installed and merely unreachable — add `~/.local/bin` to your PATH (see below).
 
 <figure class="video-demo">
-<img src="/assets/video/04b-venv-demo.gif" alt="Activating the TTNN venv and importing ttnn on a QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Navigating between system Python and the TTNN venv — checking what's active before and after</figcaption>
+<img src="/assets/video/04b-venv-demo.gif" alt="Checking which python3 is active on the QB2 host and inside the tt-metalium container" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Checking what <code>which python3</code> reports on the host versus inside <code>tt-metalium</code></figcaption>
 </figure>
 
 <div class="callout callout--deep-dive">
 <span class="callout-icon illustrated-only">📁</span>
-<strong>Why ~/tt-metal exists without source code:</strong> On a QB2, <code>~/tt-metal/</code> contains the pre-built TTNN Python environment and compiled shared libraries. The source code — C++ kernels, the build system — isn't there by default, and most users never need it. If you want to build from source (for kernel modification or upstream contributions), the <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/">build-tt-metal lesson</a> walks through it.
+<strong>Why there's no <code>~/tt-metal</code> at all:</strong> TT-Metalium reaches your QB2 as a container image — <code>ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64</code> — with the Python environment and compiled shared libraries inside it. Nothing is unpacked into your home directory, which is why <code>ls ~/tt-metal</code> comes back empty-handed and why the TTNN import only works after <code>tt-metalium</code>. Most users never need more than that. If you do want a real checkout to build from source (for kernel modification or upstream contributions), the <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/">build-tt-metal lesson</a> walks through it.
 </div>
 
 ## Installing tt-smi if it's Missing
@@ -152,8 +181,8 @@ df -h ~/models
 ```
 
 <figure class="video-demo">
-<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state showing venvs, tt-smi, and hf on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">After tt-installer and reboot — venvs, tt-smi, and hf are ready</figcaption>
+<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state on a QB2 — the hardware-tooling venv and tt-smi on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
+<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">After tt-installer and reboot — the tooling venv and <code>tt-smi</code> are ready</figcaption>
 </figure>
 
 ---

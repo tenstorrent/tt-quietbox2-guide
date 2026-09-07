@@ -9,13 +9,18 @@ Two frontends cover every framework — both lower to the same TT-MLIR compiler:
 | **TT-XLA** (primary) | `torch.compile(model, backend="tt")` / `jax.jit` | PyTorch & JAX / Flax | single & multi |
 | **TT-Forge-ONNX** | `forge.compile(model, inputs)` | ONNX, TensorFlow, PaddlePaddle | single only |
 
-Forge is **not** installed by default. tt-installer sets up the base (driver, firmware, `~/.tenstorrent-venv`); install the frontend itself as a pip wheel from Tenstorrent's package index, the way the [TT-Forge docs](https://docs.tenstorrent.com/tt-forge/) recommend:
+Forge is **not** installed by default. tt-installer sets up the base — driver, firmware, and the `~/.tenstorrent-venv` environment for `tt-smi` and `tt-flash`. Install the frontend itself as a pip wheel from Tenstorrent's package index, the way the [TT-Forge docs](https://docs.tenstorrent.com/tt-forge/) recommend, into **a venv of its own**:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
+python3 -m venv ~/.venvs/forge
+source ~/.venvs/forge/bin/activate
 pip install pjrt-plugin-tt --extra-index-url https://pypi.eng.aws.tenstorrent.com/
 tt-forge-install
 ```
+
+:::callout type="warn"
+Don't install this into `~/.tenstorrent-venv`. That venv exists to hold `tt-smi` and `tt-flash`, and Forge drags in its own pinned `torch`/`torch-xla` stack — resolve it in there and a bad day with Forge becomes a bad day with your hardware tooling too.
+:::
 
 Here is the full PyTorch compile-and-run pattern (TT-XLA):
 

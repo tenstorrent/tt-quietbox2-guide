@@ -39,25 +39,34 @@ The vast majority of issues resolve at step 1, 2, or 3.
 
 **Symptom:** Something installed correctly but broke an import in tt-metal, or `pip install` warned about an externally-managed environment.
 
-**Cause:** Installing into system Python, or into a tt-metal venv that shouldn't be modified.
+**Cause:** Installing into system Python, or into `~/.tenstorrent-venv` — which your QB2 activates at login, so a `pip install` typed without thinking lands there and can drag `tt-smi` down with it.
 
 **Fix:**
 
 ```bash
-# Identify which pip you used
-which pip   # or: which pip3
+# Identify which pip you used, and which environment is active
+which pip           # or: which pip3
+echo "$VIRTUAL_ENV"
 
 # If it was system pip, uninstall the conflicting package
 pip uninstall <package-name>
 
-# If you modified a tt-metal venv, recreate it:
-# First, note the requirements file for that venv, then:
-rm -rf ~/tt-metal/python_env
-# Re-run the tt-metal environment setup script
-# (check ~/tt-metal/README.md for the exact command)
+# If you damaged the tooling venv, rebuild it — it only ever held two tools,
+# so this is cheap. Deactivate first, or you'll be deleting the venv you're in.
+deactivate 2>/dev/null
+rm -rf ~/.tenstorrent-venv
+python3 -m venv ~/.tenstorrent-venv
+source ~/.tenstorrent-venv/bin/activate
+pip install tt-smi tt-flash
 ```
 
-Going forward, always activate a project-specific venv before installing packages. Never use `pip install --break-system-packages` unless you have a specific reason.
+TTNN is not at risk from any of this: it lives inside the `tt-metalium` container image, not in a
+venv you can pip into. If TTNN itself misbehaves, the reset is `docker pull` on the Metalium
+image, not a venv rebuild.
+
+Going forward, give every project its own venv — or install CLIs with `uv tool` / `pipx`, which
+does that for you. Never use `pip install --break-system-packages` unless you have a specific
+reason.
 
 ### 2. conda Conflict with tt-metal
 
@@ -170,22 +179,35 @@ hf download <model-id> --local-dir ~/models/<model-name>
 
 **Fix:**
 
-```bash
-# Chips are chosen by the mesh shape — there is no --num_gpus or
-# --tensor-parallel-size on this platform.
-export TT_METAL_ARCH_NAME=blackhole
-export VLLM_RPC_TIMEOUT=900000
+Chips are chosen by the **mesh shape** — there is no `--num_gpus` or `--tensor-parallel-size` on
+this platform. The simplest way to get the mesh right is to let `tt-inference-server` derive it
+from the model's spec:
 
+```bash
 # All four chips, needed for a 70B
-export MESH_DEVICE=P300x2
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Llama-3.1-70B-Instruct \
+  --workflow server --tt-device p300x2 --docker-server
+```
+
+If you're driving `vllm serve` yourself (see [vLLM on QB2](/ml-practitioner/03-vllm-on-qb2/) for
+how to get a vLLM that can — it is not installed on the host), the mesh is an environment
+variable instead:
+
+```bash
+export TT_METAL_ARCH_NAME=blackhole
+export MESH_DEVICE=P300x2            # all four chips
 export HF_MODEL=~/models/Llama-3.1-70B-Instruct
 vllm serve "$HF_MODEL" --port 8000
-
-# A single card (two chips) for something smaller
-export MESH_DEVICE=P300
-export HF_MODEL=~/models/Llama-3.1-8B-Instruct
-vllm serve "$HF_MODEL" --port 8000
 ```
+
+:::callout type="warn"
+**Reaching for the two-chip mesh to save capacity is a trap.** `MESH_DEVICE=P300` (one card, two
+chips) has failed fabric bring-up reproducibly on our hardware — `Fabric Router Sync: Timeout
+after 10000 ms ... Ethernet handshake likely failed` — while one chip (`P150`) and all four
+(`P300x2`) both come up fine. If you're narrowing the mesh to fit a smaller model, go to `P150`
+rather than `P300`.
+:::
 
 Also check that DRAM on every chip is actually up (`tt-smi -s` doesn't report a per-chip usage figure, only link health — `board_id` and `dram_status` live under the nested `board_info` object, not at the top level):
 

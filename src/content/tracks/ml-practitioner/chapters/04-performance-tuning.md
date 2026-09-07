@@ -103,11 +103,23 @@ Larger batches improve throughput at the cost of time-to-first-token. In vLLM's 
 
 You can influence this with `--max-num-seqs` (maximum concurrent sequences) when starting the server:
 
+On the managed path, pass it straight through to the server:
+
 ```bash
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Llama-3.1-8B-Instruct \
+  --workflow server --tt-device p300x2 --docker-server \
+  --max-num-seqs 16
+```
+
+Driving `vllm serve` yourself (from your own vLLM venv — it is not installed on the host; see
+[vLLM on QB2](/ml-practitioner/03-vllm-on-qb2/)):
+
+```bash
+source ~/.venvs/vllm-tt/bin/activate
 export TT_METAL_ARCH_NAME=blackhole
-export MESH_DEVICE=P300              # P300x2 for all four chips
+export MESH_DEVICE=P300x2            # all four chips; avoid the two-chip P300 mesh
 export HF_MODEL=~/models/Llama-3.1-8B-Instruct
-export VLLM_RPC_TIMEOUT=900000
 
 vllm serve "$HF_MODEL" \
   --max-num-seqs 16 \
@@ -144,7 +156,10 @@ In vLLM, performance optimization happens at the model-loading stage. The compil
 
 Chips are added by widening the **mesh**, not with `--tensor-parallel-size` — the Tenstorrent
 platform rejects tensor and pipeline parallel outright. On a QB2 that means
-`MESH_DEVICE=P300` for one card (two chips) or `MESH_DEVICE=P300x2` for all four.
+`MESH_DEVICE=P300x2` for all four chips, or `MESH_DEVICE=P150` for one. The two-chip mesh in
+between (`MESH_DEVICE=P300`, a single card) has failed fabric bring-up reproducibly on our
+hardware — so "half the box" is not a tuning knob you can lean on. See
+[vLLM on QB2](/ml-practitioner/03-vllm-on-qb2/) for the error it produces.
 
 Within the mesh, a model's weights and attention heads distribute across the chips, and the
 chips coordinate activations over their Ethernet cores directly, without routing through the

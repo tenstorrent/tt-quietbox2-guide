@@ -8,8 +8,8 @@ The Tenstorrent Quietbox 2 (QB2) is a workstation with two Blackhole p300c cards
 | Tensix cores per chip | 120 (12×10 compute grid) |
 | Connection | PCIe Gen4 (4 independent devices) |
 | OS | Ubuntu 24.04 LTS |
-| Pre-installed | TTNN, vLLM, tt-smi, drivers, Python venvs |
-| Source tree | Not included — `~/tt-metal` has venvs, not source |
+| Pre-installed | Drivers, `tt-smi`/`tt-flash`, the TT-Metalium and tt-inference-server containers, tt-studio |
+| Source tree | Not included — and neither is `~/tt-metal`. TT-Metalium runs as a container (`tt-metalium`) |
 
 The chips don't share memory. When you open device 0, you're talking to one Blackhole chip. To use all four together, you use `ttnn.CreateDevices({0, 1, 2, 3})` — not four separate `open_device()` calls.
 

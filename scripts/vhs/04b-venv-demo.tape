@@ -1,15 +1,18 @@
 # VHS tape — Python environment navigation demo
 # Record with: vhs scripts/vhs/04b-venv-demo.tape
+#
+# Shows the thing that actually confuses people: there is no TTNN venv on the
+# host. `import ttnn` only works inside the tt-metalium container.
 
 Output src/assets/video/04b-venv-demo.gif
 
 Set Shell "bash"
 Set FontSize 13
 Set Width 900
-Set Height 520
+Set Height 560
 Set Theme "Catppuccin Mocha"
 
-Type "# Check which Python is active before activating anything"
+Type "# On the host: which Python is active, and what's in it?"
 Sleep 400ms
 Enter
 Sleep 200ms
@@ -24,39 +27,34 @@ Sleep 400ms
 Enter
 Sleep 600ms
 
-Type ""
-Sleep 300ms
-Enter
-
-Type "# Activate the TTNN environment"
+Type "# The tooling venv — tt-smi and tt-flash. No ttnn:"
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "source ~/tt-metal/python_env/bin/activate"
+Type "python3 -c 'import ttnn' || echo '(expected — TTNN is not on the host)'"
 Sleep 400ms
 Enter
-Sleep 1200ms
+Sleep 1500ms
 
-Type "which python3"
-Sleep 400ms
-Enter
-Sleep 800ms
-
-Type "# ~/tt-metal/python_env/bin/python3 — the TTNN venv"
-Sleep 400ms
-Enter
+Type ""
 Sleep 300ms
+Enter
 
-Type "python3 -c 'import ttnn; print(ttnn)'"
+Type "# TTNN lives in the TT-Metalium container. tt-metalium is the door:"
 Sleep 400ms
 Enter
-Sleep 3000ms
+Sleep 200ms
 
-Type "deactivate"
+Type "tt-metalium -c 'which python3; python3 -c \"import ttnn; print(ttnn.__file__)\"'"
 Sleep 400ms
 Enter
-Sleep 600ms
+Sleep 5000ms
+
+Type "# /opt/venv/bin/python3 — inside the container, nothing to activate"
+Sleep 400ms
+Enter
+Sleep 500ms
 
 Type ""
 Sleep 300ms

@@ -60,13 +60,20 @@ model (or <code>docker ps</code> and stop the inference container) and try again
 ### Download a model
 
 Downloading weights by hand needs the `hf` CLI, which is **not** part of the QB2's
-preinstalled stack — install it first. Keep it out of `~/.tenstorrent-venv`: that venv
-is auto-activated in every shell and holds `tt-smi` and `tt-flash`, so a bad dependency
-resolution there costs you your hardware tooling.
+preinstalled stack — `huggingface_hub` isn't in any environment the installer creates, so
+`hf` isn't on your PATH. Install it first, and install it **somewhere other than**
+`~/.tenstorrent-venv`: that venv holds `tt-smi` and `tt-flash`, a factory QB2 activates it
+for you in every shell, and a bad dependency resolution in there costs you the tooling you
+diagnose the machine with. `uv tool` and `pipx` each give the CLI its own environment, which
+is exactly what you want:
 
 ```bash
-brew install hf          # or: uv tool install huggingface_hub
+uv tool install huggingface_hub     # or: pipx install huggingface_hub
 ```
+
+Ubuntu 24.04 is an externally-managed Python, so a plain `pip install` on the host will
+refuse — that refusal is the system protecting itself, not an error to force past with
+`--break-system-packages`.
 
 Then pull the weights (run this on the host, not inside `tt-metalium`):
 

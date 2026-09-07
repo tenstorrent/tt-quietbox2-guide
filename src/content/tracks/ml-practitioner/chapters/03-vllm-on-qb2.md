@@ -11,28 +11,45 @@ This is the chapter with the most practical density. By the end of it you'll hav
 
 ## The Deployment Stack
 
-The QB2 ships with two paths to running models as a server.
+There are two paths to running models as a server, and only one of them works out of the box.
 
-The **direct vLLM path** activates the pre-built venv and launches the API server directly. More control, lower ceremony.
+The **tt-inference-server path** wraps the vLLM backend in a Docker container with one-command deploy syntax. This is what tt-studio and tt-local-generator use internally. It handles Docker pulls, environment setup, and port mapping automatically. It is pre-installed at `~/.local/lib/tt-inference-server`, and it is where you should start.
 
-The **tt-inference-server path** wraps the same vLLM backend in a Docker container with one-command deploy syntax. This is what tt-studio and tt-local-generator use internally. It handles Docker pulls, environment setup, and port mapping automatically.
+The **direct vLLM path** runs `vllm serve` yourself for more control and lower ceremony — but you have to build that environment first. **vLLM is not installed on a QB2.** It isn't in `~/.tenstorrent-venv` (which holds `tt-smi` and `tt-flash` and nothing else) and it isn't on the host at all; the copy the managed path uses lives inside a container image. So Path 1 below is a thing you set up deliberately, not a thing you find.
 
-Both paths produce the same OpenAI-compatible API on port 8000. Which you use depends on whether you want the control surface of running vLLM directly or the simplicity of a single command.
+Both paths produce the same OpenAI-compatible API on port 8000.
+
+:::callout type="tip"
+**If you just want a server running, skip to [Path 2](#path-2-tt-inference-server).** Path 1 is
+worth the setup when you need flags `run.py` doesn't expose, or a newer vLLM than the pinned
+image ships — see [Running the latest vLLM plugin](#running-the-latest-vllm-plugin) for how that
+environment gets built.
+:::
 
 <img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" class="spot-illustration" style="max-width:100%; margin: 2em 0;">
 
 ## Path 1: Direct vLLM
 
+This assumes you have already built an environment with a working `vllm` **and** a working Python
+`ttnn` — see [Running the latest vLLM plugin](#running-the-latest-vllm-plugin) below, which is the
+supported way to get one. Substitute your own venv for `~/.venvs/vllm-tt` throughout.
+
+:::callout type="warn"
+Build that venv anywhere except `~/.tenstorrent-venv`. Your QB2 activates that one at login and
+it holds `tt-smi` and `tt-flash`; vLLM's dependency tree resolved on top of them is how people
+lose their hardware tooling to an unrelated install.
+:::
+
 ```bash
-# Activate the main tenstorrent venv
-source ~/.tenstorrent-venv/bin/activate
+# Your own vLLM environment — not the tooling venv
+source ~/.venvs/vllm-tt/bin/activate
 
 # Blackhole architecture flag
 export TT_METAL_ARCH_NAME=blackhole
 
 # Mesh shape. This — not --tensor-parallel-size — is how you choose chips.
-# P300 = one card (2 chips). P300x2 = all four chips of a QB2.
-export MESH_DEVICE=P300
+# P150 = one chip. P300x2 = all four chips of a QB2. Avoid the two-chip mesh (see below).
+export MESH_DEVICE=P300x2
 
 # Model load and first compile far exceed vLLM's default RPC deadline (10s)
 export VLLM_RPC_TIMEOUT=900000
@@ -54,6 +71,21 @@ request will be slow or wrong rather than failing outright.
 
 If you want the newest Tenstorrent vLLM rather than what shipped, see
 [Running the latest vLLM plugin](#running-the-latest-vllm-plugin) at the end of this chapter.
+:::
+
+:::callout type="warn"
+**Skip the two-chip mesh.** `MESH_DEVICE=P300` — one card, two chips — has failed fabric
+bring-up reproducibly on our hardware, across three board resets:
+
+```
+Fabric Router Sync: Timeout after 10000 ms on Device 2 ... Ethernet handshake likely failed
+```
+
+One chip (`P150`) and all four (`P300x2` / `P150x4`) both serve fine. Neither documented escape
+hatch helps, so don't lose time on them: `fabric_config: DISABLED` opens the mesh and then dies
+on `Trying to get un-initialized fabric context`, and `fabric_reliability_mode: RELAXED_INIT`
+reproduces the identical timeout. If you're narrowing the mesh to fit a smaller model, go to
+`P150`.
 :::
 
 On first run: the model weights get compiled into Blackhole-optimized op graphs. This takes 3–5 minutes. Subsequent starts are fast — the compiled artifacts are cached.
@@ -84,9 +116,13 @@ python3 ~/.local/lib/tt-inference-server/run.py \
 # Then: port 8000 is ready
 ```
 
-`--tt-device p300x2` is what identifies a QB2 — two P300 cards, four chips. Use `p300` for a
-single card. **`p100` is a single Blackhole chip**, so it under-uses a QB2 rather than failing
-loudly. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
+`--tt-device p300x2` is what identifies a QB2 — two P300 cards, four chips, and the value you
+want almost every time. `p300` selects a single card (two chips), which is the mesh that has
+failed fabric bring-up on our hardware — prefer `p150` if you deliberately want less than the
+whole box. **`p100` is a single Blackhole chip**, so it under-uses a QB2 rather than failing
+loudly. Not every model has an entry for every topology: `Qwen3-8B`, for instance, is listed for
+`p300` but not `p300x2`, while `Llama-3.1-8B-Instruct` and `Qwen3-32B` both have `p300x2`
+entries. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
 
 On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
 derives them per model from its spec, and on a QB2 the correct value is model-dependent.
@@ -114,14 +150,14 @@ python3 ~/.local/lib/tt-inference-server/run.py \
 Once the server reports ready, confirm it's working:
 
 ```bash
-# List available models
+# List available models — start here, and use the id it prints
 curl -s http://localhost:8000/v1/models | python3 -m json.tool
 
 # First chat completion
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Qwen3-0.6B",
+    "model": "Llama-3.1-8B-Instruct",
     "messages": [
       {"role": "user", "content": "Explain tensor parallelism in one sentence."}
     ]
@@ -129,6 +165,22 @@ curl -s http://localhost:8000/v1/chat/completions \
 ```
 
 The response JSON has the generated text at `choices[0].message.content`. If you get a connection refused, the server isn't ready yet — give it another 30 seconds.
+
+:::callout type="warn"
+**`"model"` has to match what the server actually loaded**, or you get back
+`The model '...' does not exist` — which looks like a server fault and isn't one. Take the string
+from `/v1/models` rather than from an example: Path 2 reports the model as you named it in
+`--model`, while Path 1's `--served-model-name` above renames it to
+`meta-llama/Llama-3.1-8B-Instruct`. The examples below use `Llama-3.1-8B-Instruct`; substitute
+whatever your box reports.
+:::
+
+:::callout type="tip"
+**Serving a Qwen3 model instead?** They reason before answering, so a small `max_tokens` gets
+spent entirely inside the `<think>` block and comes back as `finish_reason: "length"` with an
+empty answer. Pass `extra_body={"enable_thinking": False}` (or `"enable_thinking": false` in
+curl) for direct replies — see [Qwen3 Reasoning Modes](/ml-practitioner/02-model-zoo/).
+:::
 
 ## OpenAI Python SDK
 
@@ -143,7 +195,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="Qwen3-0.6B",
+    model="Llama-3.1-8B-Instruct",
     messages=[
         {"role": "system", "content": "You are a concise technical assistant."},
         {"role": "user", "content": "What is the Tenstorrent NOC fabric?"}
@@ -163,7 +215,7 @@ For applications that need to show text as it generates — chat interfaces, int
 
 ```python
 stream = client.chat.completions.create(
-    model="Qwen3-0.6B",
+    model="Llama-3.1-8B-Instruct",
     messages=[{"role": "user", "content": "Describe continuous batching."}],
     stream=True
 )
@@ -233,7 +285,8 @@ QB2 notes — including earlier versions of this page — that is why it failed.
 For 70B models, set `MESH_DEVICE=P300x2` to put all four Blackhole chips in one mesh:
 
 ```bash
-# Direct vLLM across all four chips
+# Direct vLLM across all four chips — from your own vLLM venv (see Path 1)
+source ~/.venvs/vllm-tt/bin/activate
 export TT_METAL_ARCH_NAME=blackhole
 export MESH_DEVICE=P300x2            # (1,4) — two P300 cards, four chips
 export VLLM_RPC_TIMEOUT=900000
@@ -256,7 +309,12 @@ request format.
 
 The mesh names the plugin accepts on Blackhole are `P100` and `P150` (single chip), `P300` and
 `P150x2` (two chips), `P150x4` and `P300x2` (four chips), and `P150x8` (eight). Spelling
-matters: it is `P300x2` with a lowercase `x`.
+matters: it is `P300x2` with a lowercase `x` — and note the case difference between the two
+surfaces, since they are easy to cross-wire: `MESH_DEVICE` takes `P300x2`, while
+`run.py --tt-device` takes `p300x2`.
+
+Accepted is not the same as working. The two-chip meshes (`P300`, `P150x2`) are the ones to avoid
+on a QB2 — see the fabric bring-up warning under Path 1.
 
 :::callout type="tip"
 **Status on our hardware.** The four-chip serving path brings up correctly — the plugin selects
@@ -294,11 +352,24 @@ waiting for a fork to rebase.
 
 ### Installing it
 
-Run this **inside an environment that already has a working `ttnn`** — on a QB2 that is
-`~/.tenstorrent-venv`. The plugin binds to whatever tt-metal that environment provides.
+Run this **inside an environment that already has a working Python `ttnn`**. The plugin binds to
+whatever tt-metal that environment provides, and it only activates when `import ttnn` succeeds.
+
+Finding such an environment is the real work on a QB2, and it is worth being clear-eyed about it:
+
+- `~/.tenstorrent-venv` is **not** one. It contains `tt-smi` and `tt-flash`; `import ttnn` fails there.
+- The apt packages `tt-metalium` and `tt-nn` are the **C++ runtime libraries**, not the Python module.
+- The Python `ttnn` on a QB2 lives inside the Metalium container. The `tt-metalium` wrapper runs
+  that container with `--rm`, so anything you pip-install in a session is gone when you exit —
+  to use it as a base you need a derived image (`FROM` the Metalium image) that installs the
+  plugin at build time.
+
+So the practical options are a container image you build yourself, or a venv where you have
+installed a `ttnn` wheel from Tenstorrent's package index. Confirm before you start:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
+source ~/.venvs/vllm-tt/bin/activate
+python3 -c "import ttnn; print('ttnn ok')"   # must succeed, or the plugin will never activate
 
 # uv is required: the installer uses `uv pip`'s --override, which pip has no equivalent for
 python3 -m pip install --upgrade pip setuptools wheel uv

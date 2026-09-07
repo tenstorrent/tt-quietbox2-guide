@@ -49,10 +49,11 @@ The convergence is intentional — and it's why both frameworks share one fronte
 
 ## Prerequisite: Install Forge
 
-Forge is **not** installed by default — a stock tt-installer run gives you the driver and base environment, not Forge. The TT-Forge docs install it as a **pip wheel** from Tenstorrent's package index; for the PyTorch/JAX work in this chapter that's the TT-XLA frontend:
+Forge is **not** installed by default — a stock tt-installer run gives you the driver and the hardware-tooling environment, not Forge. The TT-Forge docs install it as a **pip wheel** from Tenstorrent's package index; for the PyTorch/JAX work in this chapter that's the TT-XLA frontend. Give it a venv of its own rather than putting it in `~/.tenstorrent-venv`, which exists to hold `tt-smi` and `tt-flash`:
 
 ```bash
-source ~/.tenstorrent-venv/bin/activate
+python3 -m venv ~/.venvs/forge
+source ~/.venvs/forge/bin/activate
 pip install pjrt-plugin-tt --extra-index-url https://pypi.eng.aws.tenstorrent.com/
 tt-forge-install
 ```

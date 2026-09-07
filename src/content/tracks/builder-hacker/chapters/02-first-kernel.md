@@ -7,35 +7,55 @@ permalink: /builder-hacker/02-first-kernel/
 
 # Your First Kernel
 
-Reading about architecture is preparation. Writing code is proof. This chapter takes you from zero to a dispatched, JIT-compiled, hardware-executed kernel — using the tutorials that ship pre-installed on your QB2. You don't need to clone anything, build anything, or download anything.
+Reading about architecture is preparation. Writing code is proof. This chapter takes you from zero to a dispatched, JIT-compiled, hardware-executed kernel — using the tutorials that ship inside the TT-Metalium container image on your QB2. You don't need to clone anything, build anything, or download anything.
 
 ## Setting Up the Environment
 
-Everything runs inside the TTNN virtual environment. Activate it and set the required variables:
+Everything runs inside the TT-Metalium container. There's no venv to activate and no
+`~/tt-metal` on the host — the `tt-metalium` wrapper is the door:
 
 ```bash
-source ~/tt-metal/python_env/bin/activate
-export TT_METAL_HOME=~/tt-metal
-export PYTHONPATH=$TT_METAL_HOME:$PYTHONPATH
+tt-metalium
+```
+
+You're now in a shell inside the container, with your home directory mounted at `/home/user`
+(so `~` still means your files). TTNN is on the default interpreter and `TT_METAL_HOME` is
+already set for you — check before you export anything:
+
+```bash
+which python3            # → /opt/venv/bin/python3
+echo "$TT_METAL_HOME"
+echo "$TT_METAL_ARCH_NAME"
+```
+
+`TT_METAL_ARCH_NAME` must be `blackhole`. Without it the runtime defaults to Wormhole and
+dispatches incorrect kernel variants; the QB2 has Blackhole chips. The container image normally
+sets it, but if that last command printed nothing, set it yourself:
+
+```bash
 export TT_METAL_ARCH_NAME=blackhole
 ```
 
-The `TT_METAL_ARCH_NAME=blackhole` variable is mandatory. Without it, the runtime defaults to Wormhole and dispatches incorrect kernel variants. The QB2 has Blackhole chips. The variable makes this explicit.
-
-Add these exports to your `~/.bashrc` if you want them set automatically on every login:
-
-```bash
-echo 'export TT_METAL_HOME=~/tt-metal' >> ~/.bashrc
-echo 'export PYTHONPATH=$TT_METAL_HOME:$PYTHONPATH' >> ~/.bashrc
-echo 'export TT_METAL_ARCH_NAME=blackhole' >> ~/.bashrc
-```
+:::callout type="tip"
+Exports you make inside the container are gone when you `exit` — the container is `--rm`. Only
+edits under your home directory survive, so keep scripts in `~/tt-scratchpad/` and re-export any
+variable you need each session (or put the exports in a small script under your home directory
+and source it after `tt-metalium`).
+:::
 
 ## Your First Run: Tensor Addition
 
-The `ttnn_add_tensors.py` tutorial is the canonical starting point. It is short, complete, and exercises the full round-trip: host to chip to host.
+The `ttnn_add_tensors.py` tutorial is the canonical starting point. It is short, complete, and exercises the full round-trip: host to chip to host. It lives under `TT_METAL_HOME` in the container:
 
 ```bash
-python3 ~/tt-metal/ttnn/tutorials/basic_python/ttnn_add_tensors.py
+# From inside tt-metalium
+python3 "$TT_METAL_HOME"/ttnn/tutorials/basic_python/ttnn_add_tensors.py
+```
+
+If that path doesn't resolve in your image, find it rather than guessing:
+
+```bash
+find / -name 'ttnn_add_tensors.py' 2>/dev/null
 ```
 
 **First run:** expect 30 to 60 seconds of compile time before any output. This is the JIT compiler building the addition kernel from LLVM IR down to Tensix assembly, then writing the binary to the kernel cache.

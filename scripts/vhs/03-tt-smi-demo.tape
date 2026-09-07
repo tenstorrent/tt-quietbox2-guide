@@ -9,7 +9,7 @@ Set Width 900
 Set Height 500
 Set Theme "Catppuccin Mocha"
 
-Type "# tt-smi is on PATH via ~/.local/bin — no activation needed"
+Type "# tt-smi is already on PATH — the QB2 activates its tooling venv at login"
 Sleep 500ms
 Enter
 Sleep 300ms

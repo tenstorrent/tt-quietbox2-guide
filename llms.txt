@@ -19,14 +19,26 @@ The Tenstorrent Quietbox 2 (QB2) contains:
 - 2× Blackhole p300c cards (4 Blackhole chips total)
 - Connected via PCIe as 4 independent devices
 - Ubuntu 24.04 LTS pre-installed
-- Tenstorrent software stack pre-installed (TTNN, vLLM, tt-smi, drivers)
-- No tt-metal source tree (~/tt-metal does not exist by default)
+- Tenstorrent software stack pre-installed (drivers, tt-smi/tt-flash, TT-Metalium and
+  tt-inference-server containers, tt-studio)
+- No tt-metal source tree and no `~/tt-metal` at all — TT-Metalium ships as a container
 
 ## Key Facts
 
 - Check hardware: `tt-smi -s` — returns JSON with 4 device entries on a healthy QB2
-- Activate Python env: `source ~/tt-metal/python_env/bin/activate`
-- Recommended starter model: Qwen/Qwen3-0.6B (no license gate, works on all TT hardware)
+- Upgrade first on any box that has been sitting: re-run tt-installer
+  (`curl -fsSL https://tenstorrent.ai/install.sh`), then `sudo apt-get update && sudo apt-get
+  upgrade`, then `git pull` in `~/.local/lib/tt-studio` and `~/.local/lib/tt-inference-server`
+  (the installer skips existing checkouts), then `docker pull` the Metalium image (the wrapper
+  only pulls when it's missing)
+- TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). TTNN is on the
+  container's default `python3` (`/opt/venv/bin/python3`) — there is no venv to activate
+- `~/.tenstorrent-venv` holds only the hardware tooling (tt-smi, tt-flash) — not vLLM, not `hf`
+- Serving: `~/.local/lib/tt-inference-server/run.py --workflow server --tt-device p300x2
+  --docker-server` runs vLLM in a container
+- Starter model for the direct TTNN path: Qwen/Qwen3-0.6B (no license gate, 1.5 GB). It is
+  **not** in tt-inference-server's model list, so it cannot be served via `run.py`; for serving,
+  start with Llama-3.1-8B-Instruct or the pre-cached Qwen3-32B
 - Multi-device API: use `ttnn.CreateDevices` / `ttnn.CloseDevices` (not individual open/close)
 - `TT_METAL_ARCH_NAME` must be `blackhole` for QB2
 
