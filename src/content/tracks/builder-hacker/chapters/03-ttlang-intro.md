@@ -19,45 +19,63 @@ This explicitness is intentional and strategic. It makes TT-Lang programs easy f
 
 ## The Kernel Decorators
 
-TT-Lang programs are organized around four decorators:
+TT-Lang programs are organized around the `ttl` module's decorators — verified against the
+real, installed package rather than assumed. `ttl` is not part of the factory tooling venv
+(`~/.tenstorrent-venv` holds only `tt-smi`/`tt-flash`, as elsewhere in this guide) or the
+TT-Metalium container (confirmed absent from both, live) — it comes from `pip install tt-lang`
+into a venv of your own, the same way the [tt-lang-intro lesson](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/)
+sets one up (`python3 -m venv ttlang-venv && ... && pip install tt-lang tt-lang-setup`):
 
-- `@kernel` — the outer program, declares the kernel name and grid dimensions
-- `@reader` — runs on BRISC, the read NoC endpoint; fetches tiles from DRAM or another core's L1
-- `@compute` — runs on the FPU; pops tiles from L1, runs the matrix engine, pushes results back to L1
-- `@writer` — runs on NCRISC, the write NoC endpoint; sends tiles from L1 to a destination address
+- `@ttl.operation(grid=...)` — the outer program; `grid="auto"` lets the compiler size it
+- `@ttl.compute()` — runs on the FPU; consumes filled dataflow buffers, does the math, fills the output buffer
+- `@ttl.datamovement()` — runs on a data-movement RISC core; there's one decorator for both directions, not separate reader/writer ones — a function's *role* (producer vs. consumer) comes from whether it calls `.reserve()` (fill a slot) or `.wait()` (drain a slot) on a given buffer, not from its decorator
 
 A minimal vector addition kernel in TT-Lang looks like this:
 
 ```python
-from ttlang import kernel, reader, compute, writer, Tile, Buffer
+import ttl
+import ttnn
 
-@kernel(grid=(1, 1))
-def vector_add(a_addr: int, b_addr: int, out_addr: int, n_tiles: int):
+TILE_SIZE = 32
 
-    @reader
-    def read_inputs():
-        a_buf = Buffer(src=a_addr, n_tiles=n_tiles)
-        b_buf = Buffer(src=b_addr, n_tiles=n_tiles)
-        for tile in range(n_tiles):
-            push(a_buf[tile])   # fetch tile from DRAM into L1 circular buffer
-            push(b_buf[tile])
+@ttl.operation(grid="auto")
+def eltwise_add(a_in: ttnn.Tensor, b_in: ttnn.Tensor, out: ttnn.Tensor) -> None:
+    row_tiles = a_in.shape[0] // TILE_SIZE
+    col_tiles = a_in.shape[1] // TILE_SIZE
 
-    @compute
-    def add_tiles():
-        for tile in range(n_tiles):
-            a_tile: Tile = pop()   # pop from L1 circular buffer into SRCA
-            b_tile: Tile = pop()   # pop into SRCB
-            result = a_tile + b_tile   # FPU elementwise add
-            push(result)             # push result tile to L1 output buffer
+    # Typed dataflow buffers (DFBs) — one slot per tile, depth 2 (double-buffer)
+    a_dfb = ttl.make_dataflow_buffer_like(a_in, shape=(1, 1), block_count=2)
+    b_dfb = ttl.make_dataflow_buffer_like(b_in, shape=(1, 1), block_count=2)
+    out_dfb = ttl.make_dataflow_buffer_like(out, shape=(1, 1), block_count=2)
 
-    @writer
-    def write_output():
-        out_buf = Buffer(dst=out_addr, n_tiles=n_tiles)
-        for tile in range(n_tiles):
-            out_buf[tile] = pop()   # send tile from L1 to DRAM destination
+    @ttl.compute()
+    def compute():
+        for row in range(row_tiles):
+            for col in range(col_tiles):
+                with a_dfb.wait() as a_blk, b_dfb.wait() as b_blk, out_dfb.reserve() as o_blk:
+                    o_blk.store(a_blk + b_blk)   # element-wise add in L1
+
+    @ttl.datamovement()
+    def read():
+        for row in range(row_tiles):
+            for col in range(col_tiles):
+                with a_dfb.reserve() as a_blk, b_dfb.reserve() as b_blk:
+                    ttl.copy(a_in[row:row+1, col:col+1], a_blk).wait()
+                    ttl.copy(b_in[row:row+1, col:col+1], b_blk).wait()
+
+    @ttl.datamovement()
+    def write():
+        for row in range(row_tiles):
+            for col in range(col_tiles):
+                with out_dfb.wait() as o_blk:
+                    ttl.copy(o_blk, out[row:row+1, col:col+1]).wait()
 ```
 
-Three functions, three processors, one core. They run concurrently. The circular buffers between them are the synchronization mechanism — `push` blocks if the buffer is full, `pop` blocks if it's empty. This backpressure propagation means the pipeline self-regulates.
+Three functions, three processors, one core. They run concurrently. The dataflow buffers
+between them are the synchronization mechanism — `reserve()` blocks until a slot is free to
+fill, `wait()` blocks until a slot is filled and ready to drain. This backpressure propagation
+means the pipeline self-regulates. Every tile makes one DRAM read (`read`) and one DRAM write
+(`write`); the `+` happens entirely in L1, inside `compute`.
 
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">🤖</span>
@@ -112,7 +130,7 @@ For the structured lesson with exercises and a graded environment:
 
 <div class="rcard-grid">
 
-{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/", "TT-Lang Introduction", "Covers all four decorators, circular buffer semantics, and a complete vector add + elementwise multiply walkthrough.", "25 min" %}
+{% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-lang-intro/", "TT-Lang Introduction", "Covers ttl.operation/compute/datamovement, dataflow-buffer semantics, and a complete vector add + elementwise multiply walkthrough.", "25 min" %}
 
 </div>
 
@@ -120,7 +138,7 @@ The lesson runs inside VS Code with the TT-VSCode Toolkit extension. It uses a l
 
 <div class="callout callout--deep-dive">
 <span class="callout-icon illustrated-only">🔬</span>
-<strong>Circular buffers as the memory model.</strong> The L1 SRAM between reader and compute, and between compute and writer, is organized as circular buffers — fixed-size ring structures. When the reader fills the ring, it stalls until compute consumes. When compute fills the output ring, it stalls until the writer drains. This backpressure propagation is how three concurrent programs stay synchronized without explicit locks. The hardware implements the buffer arbitration; you just see push and pop. Understanding this explains why tile count and L1 size set the performance envelope: a kernel that fully pipelines needs at least two tiles in each buffer simultaneously.
+<strong>Dataflow buffers as the memory model.</strong> The L1 SRAM between the <code>read</code> data-movement function and <code>compute</code>, and between <code>compute</code> and <code>write</code>, is organized as dataflow buffers (DFBs) — fixed-size ring structures, made with <code>ttl.make_dataflow_buffer_like()</code>. When a producer fills a slot (<code>.reserve()</code>), it stalls until a consumer drains one (<code>.wait()</code>) if the ring is full. This backpressure propagation is how three concurrent functions stay synchronized without explicit locks. The hardware implements the buffer arbitration; you just see <code>reserve()</code> and <code>wait()</code>. Understanding this explains why tile count and L1 size set the performance envelope: a kernel that fully pipelines needs at least two blocks in each buffer simultaneously — hence <code>block_count=2</code> above.
 </div>
 
 ---

@@ -49,6 +49,24 @@ tt-forge-install     # pulls in any missing system dependencies
 
 `pip install tt-forge` is the convenience meta-package that wraps the same thing.
 
+:::callout type="warn"
+**The ResNet-50 example below also needs `torchvision`, which neither of these installs.**
+Check your installed `torch` version first (`python3 -c "import torch; print(torch.__version__)"`
+— confirmed `2.11.0+cpu` as of this writing) and install a matching `torchvision` with
+`--no-deps`, so pip's resolver can't silently upgrade `torch` itself and break the
+already-installed `torch_xla` (confirmed live: a plain `pip install torchvision` without
+`--no-deps` pulled `torch 2.14.0`, and `import torch_xla` then failed with
+`undefined symbol: _ZN5torch8autograd10deleteNodeEPNS0_4NodeE`):
+
+```bash
+pip install --no-deps torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cpu
+```
+
+If your installed `torch` is a different version, match `torchvision`'s version to it via
+[PyTorch's compatibility matrix](https://github.com/pytorch/vision#installation) rather than
+reusing `0.26.0` blindly.
+:::
+
 **ONNX / TensorFlow / PaddlePaddle — TT-Forge-ONNX (single-chip only):**
 
 ```bash
@@ -58,6 +76,12 @@ uv pip install tt_forge_onnx tt_tvm --extra-index-url https://pypi.eng.aws.tenst
 
 :::callout type="tip"
 Don't want to touch your host Python? Tenstorrent ships prebuilt images: `docker run -it --rm --device /dev/tenstorrent -v /dev/hugepages-1G:/dev/hugepages-1G ghcr.io/tenstorrent/tt-xla-slim:latest`. Building from source is documented too, but the docs are explicit that it's for *developing Forge itself*, not for running models.
+
+**This image's own `torchvision` is currently broken**, independent of anything you do —
+confirmed live: `import torchvision` fails there with
+`RuntimeError: operator torchvision::nms does not exist` (an ABI mismatch between the
+image's bundled `torch` and `torchvision` builds). If you hit that, reinstall it inside the
+container the same way described above (matching, `--no-deps` `torchvision`).
 :::
 
 :::callout type="warn"
@@ -111,6 +135,14 @@ print(output.cpu().argmax(dim=-1).item())   # predicted ImageNet class
 
 What `torch.compile(model, backend="tt")` does: `torch-xla` traces the model into a StableHLO graph, the TT-MLIR pipeline lowers that graph to Tensix kernels, and you get back a callable that dispatches to hardware. The first compilation is slow (tens of seconds for ResNet, longer for large models). Subsequent calls with the same input shapes hit a compiled cache and run fast.
 
+:::callout type="warn"
+**`xr.set_device_type("TT")` opens all four chips and brings up the 4-chip ring fabric —
+if it was left in a bad state by a process that didn't exit cleanly, you'll see `Fabric
+Router Sync: Timeout after 10000 ms` on device open, same failure mode (and same fix) as
+the [vLLM chapter's stale-fabric-state note](/ml-practitioner/03-vllm-on-qb2/#when-startup-stalls):
+`tt-smi -r` to reset the boards before retrying.
+:::
+
 Loading in `torch.bfloat16` matters: Blackhole is bfloat16-native, so it gives you full hardware throughput. Float32 works, but leaves performance on the table.
 
 Here is the chip view during compilation and inference:
@@ -141,7 +173,9 @@ Writing model-loading boilerplate for hundreds of architectures is tedious. Some
 
 The repo lives at `~/code/tt-forge-models` and on GitHub at [tenstorrent/tt-forge-models](https://github.com/tenstorrent/tt-forge-models).
 
-Directory structure follows a consistent pattern:
+Directory structure is **not** uniformly flat — verified against the real repo. Models with
+one obvious task (ResNet, CLIP, DeiT) go straight to the framework directory; models that serve
+several downstream tasks (BERT, DINOv2, Llama) add a task-type directory in between:
 
 ```
 tt-forge-models/
@@ -149,30 +183,49 @@ tt-forge-models/
     pytorch/
       loader.py       # ModelLoader class
   bert/
-    pytorch/
-      loader.py
-    onnx/
-      loader.py
+    masked_lm/
+      pytorch/
+        loader.py
+      jax/
+        loader.py
+    question_answering/
+      pytorch/
+        loader.py
+    sequence_classification/
+      pytorch/
+        loader.py
   clip/
     pytorch/
       loader.py
   dinov2/
-    jax/
-      loader.py       # Flax variant
+    image_classification/
+      pytorch/
+        loader.py
+      jax/
+        loader.py       # Flax variant
   llama/
-    pytorch/
-      loader.py
+    causal_lm/
+      pytorch/
+        loader.py
 ```
 
-Every `loader.py` exports a `ModelLoader` class with two static methods. `load_model()` returns a standard PyTorch `nn.Module` and `load_inputs()` returns matching sample tensors — so you compile them exactly like any other model:
+If an import at the depth shown above 404s, that's why — check the task-type directories for
+the model you want rather than assuming the flat pattern.
+
+Every `loader.py` exports a `ModelLoader` class with two **instance** methods (not static —
+`ModelLoader.load_model(...)` raises `TypeError: missing 1 required positional argument:
+'self'`, confirmed live; instantiate first). `load_model()` returns a standard PyTorch
+`nn.Module` and `load_inputs()` returns matching sample tensors — so you compile them exactly
+like any other model:
 
 ```python
 import torch, tt_torch
-from third_party.tt_forge_models.bert.pytorch import ModelLoader
+from third_party.tt_forge_models.bert.masked_lm.pytorch import ModelLoader
 
 # Load the pretrained model and representative inputs
-model = ModelLoader.load_model(dtype_override=torch.bfloat16)
-inputs = ModelLoader.load_inputs(dtype_override=torch.bfloat16)
+loader = ModelLoader()
+model = loader.load_model(dtype_override=torch.bfloat16)
+inputs = loader.load_inputs(dtype_override=torch.bfloat16)
 
 # compile for Tensix and run — same torch.compile path as before
 compiled = torch.compile(model, backend="tt").to(device)
@@ -256,22 +309,29 @@ A three-screen Textual TUI opens. The countdown is four seconds — then the exp
 
 The **bestiary** (`data/bestiary.json`) is a persistent record of every model you've successfully compiled. Base score per compile: 200 points. First time you compile a model, ever: multiplier of 5, making it 1,000 points. Freshness and rarity bonuses stack on top. The scoring structure incentivizes breadth: you gain more by compiling 10 new models than by recompiling the same model 10 times.
 
-Compiletron supports both compiler backends from a single interface:
+Compiletron supports both compiler backends from a single interface — verified against the
+actual `--backend` argument, which has four choices, not two:
 
 | Backend | What runs | Invoke with |
 |---------|-----------|-------------|
-| `forge` | PyTorch models via `forge.compile()` | Default |
+| `auto` | Routes each model to the right backend automatically | Default |
+| `forge` | PyTorch models via `forge.compile()` | `--backend forge` |
 | `xla` | JAX/Flax models via `jax.jit` + PJRT | `--backend xla` |
+| `mixed` | Even-numbered chips run `forge`, odd-numbered run `xla` | `--backend mixed` |
 
 **Side quests** activate when the mesh is busy with a large model compilation. Idle chips get assigned fast curated models to compile in parallel, keeping hardware utilization high and points accumulating while you wait. The game manages chip allocation automatically.
 
-For unattended recording (VHS demos, overnight compilation runs), use `--auto-quit N`:
+For unattended recording (VHS demos, overnight compilation runs), use `--auto-quit SECS` —
+verified against the actual argument: it's a countdown in **seconds after the summary screen
+appears**, not a count of models compiled:
 
 ```bash
 python3 expedition.py run --tui --auto-quit 30
 ```
 
-The game exits after 30 compiled models, bestiary saved, score written to disk.
+The expedition runs its normal course; once the summary screen shows, the game waits 30
+seconds and then quits on its own — bestiary saved, score written to disk — instead of
+waiting on a keypress.
 
 {% tensixsystem "qb2", "Four chips compiling at once — main model + side quests" %}
 

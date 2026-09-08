@@ -121,36 +121,44 @@ Every Tenstorrent tutorial uses the `~/models/<family>-<variant>/` convention. T
   Qwen3-0.6B/
     config.json
     tokenizer.json
-    model-00001-of-00002.safetensors
-    model-00002-of-00002.safetensors
+    model.safetensors
     ...
   Llama-3.1-8B-Instruct/
     config.json
     tokenizer.json
+    model-00001-of-00004.safetensors
+    ...
     ...
   Llama-3.1-70B-Instruct/
     ...
 ```
 
+Shard count depends on model size, not family — small models like Qwen3-0.6B download as one
+`model.safetensors` file; larger ones split across several `model-0000N-of-0000M.safetensors`
+files (verified against the actual repo file listings: Qwen3-0.6B is genuinely single-file —
+confirmed by downloading it — and Llama-3.1-8B-Instruct is 4 shards).
+
 ## Qwen3 Reasoning Modes
 
 Qwen3 models support two inference modes: **thinking mode** and **non-thinking mode**. In thinking mode, the model emits `<think>...</think>` tokens before its final answer — extended chain-of-thought reasoning that improves quality on multi-step problems at the cost of more tokens and higher latency.
 
-When calling through the OpenAI-compatible API, pass `enable_thinking` in the request body:
+When calling through the OpenAI-compatible API, `enable_thinking` is a **chat-template**
+parameter, not a top-level sampling one — it goes through `extra_body`'s `chat_template_kwargs`,
+the same way vLLM passes any other kwarg into the tokenizer's `apply_chat_template()`:
 
 ```python
 # Thinking mode (default for Qwen3) — slower, more thorough
 response = client.chat.completions.create(
     model="Qwen3-32B",
     messages=[{"role": "user", "content": "What is 17 * 23 + 48?"}],
-    extra_body={"enable_thinking": True}
+    extra_body={"chat_template_kwargs": {"enable_thinking": True}}
 )
 
 # Non-thinking mode — faster, direct answers
 response = client.chat.completions.create(
     model="Qwen3-32B",
     messages=[{"role": "user", "content": "What is 17 * 23 + 48?"}],
-    extra_body={"enable_thinking": False}
+    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
 )
 ```
 
@@ -158,7 +166,7 @@ response = client.chat.completions.create(
 **Leave room for the thinking block.** With thinking on and a tight `max_tokens`, the entire
 budget goes into `<think>…</think>` and you get back `finish_reason: "length"` with no answer at
 all — which reads like a broken model rather than a truncated one. Either raise `max_tokens` or
-pass `enable_thinking: False`.
+pass `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`, as above.
 :::
 
 For conversational workloads where speed matters, non-thinking mode is the better choice. For tasks where the reasoning trace improves output quality — math, code, multi-hop questions — thinking mode earns its overhead.
