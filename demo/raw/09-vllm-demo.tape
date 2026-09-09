@@ -1,8 +1,13 @@
-# VHS tape — serving a model on QB2
+# VHS tape - serving a model on QB2
 # Record with: vhs demo/raw/09-vllm-demo.tape
 #
 # Rewritten: there is no vLLM venv on a QB2. vLLM ships inside the container
 # that tt-inference-server's run.py launches, so that is what this shows.
+#
+# Recorded inside tenstorrent/qb2-env:latest with hardware passed through (see
+# 04-tt-installer-demo.tape's note - this box's own host venv has accumulated
+# dev-tool pollution, including a working `import vllm`, that isn't
+# factory-representative).
 
 Output demo/assets/09-vllm-demo.gif
 
@@ -12,12 +17,21 @@ Set Width 900
 Set Height 600
 Set Theme "Catppuccin Mocha"
 
-Type "# vLLM is not installed on the host — it runs in a container"
+Hide
+Type "docker run --rm -it --device /dev/tenstorrent -v /dev/hugepages-1G:/dev/hugepages-1G tenstorrent/qb2-env:latest bash -l"
+Enter
+Sleep 3000ms
+Type "clear"
+Enter
+Sleep 500ms
+Show
+
+Type "# vLLM is not installed on the host - it runs in a container"
 Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "python3 -c 'import vllm' || echo '(expected — vLLM is not on the host)'"
+Type "python3 -c 'import vllm' || echo '(expected - vLLM is not on the host)'"
 Sleep 400ms
 Enter
 Sleep 1500ms
@@ -50,7 +64,7 @@ Sleep 400ms
 Enter
 Sleep 1500ms
 
-Type "# Four p300c chips — ready to serve a multi-chip model"
+Type "# Four p300c chips - ready to serve a multi-chip model"
 Sleep 400ms
 Enter
 Sleep 500ms
@@ -64,7 +78,7 @@ Sleep 400ms
 Enter
 Sleep 200ms
 
-Type "# (shown — needs weights and an idle machine to actually run)"
+Type "# (shown - needs weights and an idle machine to actually run)"
 Sleep 400ms
 Enter
 Sleep 200ms
