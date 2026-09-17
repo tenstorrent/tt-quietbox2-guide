@@ -261,3 +261,66 @@ confirmed live before fixing (see PR #21):
 tooling) checked out against real source and this box's actual installs — no changes needed.
 Every chapter across all four tracks has now been walked against real hardware or the actual
 installed packages at least once. Build clean, tests pass throughout. Pushed as PR #21.
+
+### 2026-09-17 — the pre-cached Qwen3-32B: teach the shortcut, on the branch `use_that_model`
+
+**Prompt:** "The first inference lesson in here could also give you a short cut to serving
+that qwen model with tt-inference-server the first time that already ships with the box.
+it's locked away in a non-standard directory, but we could teach how to make any tool aware
+of it right here and skip having to download any other model." Then: "really explain why
+this is a good idea to people."
+
+New shared chunk `shared/precached-model.md`, injected into `first-timer/05` (ahead of its
+first serving section) and `ml-practitioner/03` (inside Path 2).
+
+**What the directory actually is.** `~/data/tt-cache` is **tt-inference-server's
+`persistent_volume_root`**, not a Hugging Face cache — `volume_id_<impl>-<model>-v<version>/`
+containing `weights/`, `tt_metal_cache/`, `logs/`, `model_file_symlinks_map/`. So
+`--host-hf-cache` (resolves `HOST_HF_HOME` → `HF_HOME` → `~/.cache/huggingface`) is the wrong
+lever and silently re-downloads 62 GB. `--host-weights-dir` is the right one. Both places the
+guide recommended `--host-hf-cache` for reusing shipped weights were wrong; both fixed.
+
+**Verified against the pristine image, which overturned a wrong conclusion.** On the *host*
+QB2 the weights are hardlinked (`links=2`, matching inode 115122987) into
+`~/.cache/huggingface/hub/models--Qwen--Qwen3-32B`, which made it look as though the model
+ships pre-registered in the HF cache and needs no setup at all. Mounting
+`tt-qb2-one-accelerator-pristine.qcow2` read-only (`qemu-nbd --read-only`) showed
+`links=1`, **no `~/.cache/huggingface` and no `~/models`** on the shipping image. The
+hardlinks are an artifact of this host's own later `hf download` work. Had we written from
+the host alone, the chapter would have told readers `Qwen/Qwen3-32B` resolves natively.
+Textbook "trust the subject, verify the instrument."
+
+**The version trap, verified live.** `run.py` computes the volume name it expects rather than
+scanning; the version comes from the **model spec entry for model+device**
+(`workflows/model_specs/prod/llm.yaml` — four `Qwen3-32B` entries; `tt_transformers`/`P300X2`
+is `0.17.0`), while the box ships `-vqb2_launch`. Confirmed by running
+`--print-docker-cmd --skip-system-sw-validation`, which printed
+`src=.../volume_id_tt_transformers-Qwen3-32B-v0.17.0` and
+`TT_CACHE_PATH=.../cache_Qwen3-32B/P300x2`. The host already carried an undocumented
+`-v0.17.0 -> -vqb2_launch` symlink working around exactly this. Taught as a deep-dive, with
+`--host-weights-dir` as the recommended default because it is version-independent. An earlier
+draft invented a `workflows.utils.get_version()` helper — it does not exist; caught and
+replaced with the verified `--print-docker-cmd` method before it shipped.
+
+**Why-it-matters framing** (the explicit ask): the weights are ~62 GB and re-downloadable,
+but the ~30 GB `tt_metal_cache` is **not** — it is compiled against your mesh and is what
+makes a first deploy minutes instead of a compile. Downloading the model again pays twice and
+still throws away the more valuable half.
+
+**Deliberately not in the guide:** the pristine VM's copy of Qwen3-32B is 2.85 GB short
+(`model.safetensors.index.json` declares 65,524,246,528; shards sum to 62,671,934,640 — shards
+2/6/10 truncated; the host's copy passes the same check). Corroborated independently by the
+guest's `du` reading 88G against the host's 91G, so it is not a `noload` mount artifact. Per
+the user this is most likely `tt-qb2-image-maker`'s own construction process rather than the
+shipping ISO, so it is reported there, not written up here as an image defect. The guide keeps
+only a light `du -sh ~/data/tt-cache/` confirmation step — which is Tenstorrent's own ISO
+acceptance check.
+
+**Guest access, for next time:** the QB2 factory image has **no sshd and no serial getty**
+(probed `/dev/pts/4`: zero bytes), the guest agent is disconnected, and networking is macvtap
+so host↔guest doesn't work. The running VM is SPICE-only. The pristine qcow2 mounted
+read-only is the practical non-interactive channel.
+
+Verified: `npx eleventy` clean, `node --test` 14/14, no leaked `:::` in `_site/`, code blocks
+intact through the chunk pipeline. `agents.md` and `llms.txt` updated with the path, the flag
+choice, and a troubleshooting row for the re-download failure mode.

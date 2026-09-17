@@ -2,7 +2,7 @@
 
 <div class="callout callout--tip">
 <span class="callout-icon illustrated-only">⚡</span>
-<strong>Already loaded:</strong> your QB2 ships with <strong>Qwen3-32B</strong> pre-cached on disk. The no-download path to your first token is <a href="https://github.com/tenstorrent/tt-studio">tt-studio</a> — run <code>tt-studio</code>, pick <strong>Qwen3-32B</strong> from the Deploy Model dropdown, click Run. The first deploy takes a few minutes (no multi-GB download — the weights are already there). You enter a Hugging Face token once; the model is gated even though the weights are local.
+<strong>Already loaded:</strong> your QB2 ships with <strong>Qwen3-32B</strong> pre-cached on disk. The no-download path to your first token is <a href="https://github.com/tenstorrent/tt-studio">tt-studio</a> — run <code>tt-studio</code>, pick <strong>Qwen3-32B</strong> from the Deploy Model dropdown, click Run. The first deploy takes a few minutes (no multi-GB download — the weights are already there). You enter a Hugging Face token once; the model is gated even though the weights are local. Prefer the command line? Those same weights are reachable from <code>tt-inference-server</code> and from plain <code>vllm serve</code> — see <strong>Use the Model That's Already on Your Box</strong> in the <a href="/ml-practitioner/03-vllm-on-qb2/">vLLM chapter</a>.
 </div>
 
 This chapter takes the *other* path — the hands-on one, where you talk to a chip directly in Python and pull a tiny model down yourself. The starter is [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) — no license gate, 1.5 GB, runs on any Tenstorrent hardware.

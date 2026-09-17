@@ -32,6 +32,8 @@ When that Python snippet ran without errors, the Blackhole chip opened a dispatc
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;"><code>ttnn.open_device(0)</code> — what happens inside the chip.</p>
 
+{% chunk "precached-model" %}
+
 ## Serving a Model with vLLM
 
 The fastest path to actually generating text is vLLM. It handles model loading,
@@ -64,9 +66,12 @@ supports: not every model is built for every topology.
 :::
 
 :::callout type="tip"
-If you already pulled weights with `hf download`, add `--host-hf-cache` so the server
-mounts `~/.cache/huggingface` read-only instead of downloading its own copy into a
-Docker volume.
+`--host-hf-cache` reuses weights you pulled yourself with `hf download`, mounting the
+Hugging Face cache read-only instead of downloading a second copy into a Docker volume. It
+resolves `HOST_HF_HOME`, then `HF_HOME`, then `~/.cache/huggingface` — so it only helps once
+you have actually downloaded something. It is **not** how you reach the Qwen3-32B that
+shipped with the box: those weights live outside any Hugging Face cache, and
+`--host-weights-dir` is the flag for them. See above.
 :::
 
 :::callout type="tip"

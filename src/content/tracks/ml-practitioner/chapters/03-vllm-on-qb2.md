@@ -151,11 +151,14 @@ entries. The full list of options is in the [tt-inference-server lesson →](htt
 On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
 derives them per model from its spec, and on a QB2 the correct value is model-dependent.
 
+{% chunk "precached-model" %}
+
 :::callout type="tip"
 **Three more flags worth knowing on this path.** `--host-hf-cache` reuses weights you've already
-downloaded to the Hugging Face cache instead of re-pulling them into a fresh Docker volume — see
-["Check Space Before Downloading"](/ml-practitioner/02-model-zoo/) in the previous chapter for
-why that disk hit matters. `--no-auth` skips JWT authentication for
+downloaded **yourself** to the Hugging Face cache instead of re-pulling them into a fresh Docker
+volume — see ["Check Space Before Downloading"](/ml-practitioner/02-model-zoo/) in the previous
+chapter for why that disk hit matters. Note it is the wrong flag for the pre-cached Qwen3-32B,
+which sits outside any Hugging Face cache — use `--host-weights-dir` for that, as above. `--no-auth` skips JWT authentication for
 local, unauthenticated serving (fine on a trusted LAN, not for internet exposure). `--service-port`
 sets the port the managed model's container API listens on — e.g. `--service-port 8002`. A full
 command combining them:

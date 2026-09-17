@@ -20,6 +20,15 @@ Recommended first model **for the direct TTNN path**: `Qwen/Qwen3-0.6B`
   `Llama-3.1-8B-Instruct` (`p300` and `p300x2` variants exist) or the pre-cached
   `Qwen3-32B` (`p300x2`).
 
+Pre-cached `Qwen3-32B` lives at
+`~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch/` — tt-inference-server's
+persistent-volume layout, **not** a Hugging Face cache. A factory QB2 has no
+`~/.cache/huggingface` and no `~/models` at all. Weights are in `weights/Qwen3-32B/`
+(~62 GB, a normal HF model directory) and ~30 GB of pre-compiled Blackhole kernels in
+`tt_metal_cache/cache_Qwen3-32B/P300x2/`. Reach the weights with
+`--host-weights-dir`, never `--host-hf-cache` (that resolves `HOST_HF_HOME` → `HF_HOME` →
+`~/.cache/huggingface`, none of which exist, and silently re-downloads 62 GB).
+
 TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). There is no
 `~/tt-metal` checkout on a factory QB2; inside the container TTNN is already on the
 default `python3` (`/opt/venv/bin/python3`) — nothing to activate.
@@ -96,6 +105,7 @@ installer. `--dry-run --mode-non-interactive` previews the plan safely.
 | `~/tt-metal` not found | Expected — nothing creates it | Not a fault. TT-Metalium is a container; run `tt-metalium`. Only clone https://github.com/tenstorrent/tt-metal for a from-source build |
 | `import ttnn` fails on the host | Wrong interpreter — TTNN only exists inside the container | Run `tt-metalium` first, then `python3` (`/opt/venv/bin/python3`) |
 | `import vllm` fails in `~/.tenstorrent-venv` | Expected — it was never installed there | That venv holds tt-smi/tt-flash only. Serve via `tt-inference-server`'s `run.py` |
+| `run.py` re-downloads a model the box already has | `--host-hf-cache` used for the shipped weights, or `--host-volume` hitting the volume-name mismatch | Use `--host-weights-dir ~/models/Qwen3-32B`. For `--host-volume`, `run.py` computes `volume_id_<impl>-<model>-v<model_spec version>` (`v0.17.0` for Qwen3-32B/p300x2) but the box ships `-vqb2_launch`; confirm with `--print-docker-cmd --skip-system-sw-validation` and symlink the expected name to the shipped one |
 | `hf: command not found` | `huggingface_hub` is not part of the stack | Install it outside `~/.tenstorrent-venv` (e.g. `uv tool install huggingface_hub`) |
 | `tt-studio` / `tt-metalium` / `tt-forge`: command not found | `~/.local/bin` not on PATH (zsh never reads `~/.profile`) | `export PATH="$HOME/.local/bin:$PATH"`, and add it to `~/.zshrc`. tt-installer warns about this at install time |
 | `apt` refuses Tenstorrent packages | `cat /etc/apt/keyrings/tt-pkg-key.asc` | Re-download the key to `/etc/apt/keyrings/tt-pkg-key.asc` from `https://ppa.tenstorrent.com/tt-pkg-key.asc`, then `sudo apt-get update` |
