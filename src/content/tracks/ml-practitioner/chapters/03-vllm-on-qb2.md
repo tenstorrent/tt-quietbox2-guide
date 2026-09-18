@@ -188,7 +188,7 @@ curl -s http://localhost:8000/v1/models | python3 -m json.tool
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Llama-3.1-8B-Instruct",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
     "messages": [
       {"role": "user", "content": "Explain tensor parallelism in one sentence."}
     ],
@@ -201,10 +201,13 @@ The response JSON has the generated text at `choices[0].message.content`. If you
 :::callout type="warn"
 **`"model"` has to match what the server actually loaded**, or you get back a 404, not a
 fallback — `{"error": {"message": "The model \`Qwen3-0.6B\` does not exist.", "code": 404}}`.
-Take the string from `/v1/models` rather than from an example: Path 2 reports the model as you
-named it in `--model`, while Path 1's `--served-model-name` above renames it to `Qwen3-0.6B`.
-The examples below use `Llama-3.1-8B-Instruct` (Path 2's naming); substitute whatever your box
-actually reports — `curl -s http://localhost:8000/v1/models | python3 -m json.tool` tells you.
+Take the string from `/v1/models` rather than from an example. **Path 2 does not serve under
+the short name you pass to `--model`** — `run.py` hands the container the model's full Hugging
+Face repo id (`hf_model_repo`) and nothing renames it, so `--model Llama-3.1-8B-Instruct` is
+served as `meta-llama/Llama-3.1-8B-Instruct`, and `--model Qwen3-32B` as `Qwen/Qwen3-32B`.
+Path 1 is different: its `--served-model-name` above deliberately renames the model to
+`Qwen3-0.6B`. The examples below use Path 2's naming; substitute whatever your box actually
+reports — `curl -s http://localhost:8000/v1/models | python3 -m json.tool` tells you.
 :::
 
 :::callout type="tip"
@@ -230,7 +233,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="Llama-3.1-8B-Instruct",
+    model="meta-llama/Llama-3.1-8B-Instruct",
     messages=[
         {"role": "system", "content": "You are a concise technical assistant."},
         {"role": "user", "content": "What is the Tenstorrent NOC fabric?"}
@@ -257,7 +260,7 @@ For applications that need to show text as it generates — chat interfaces, int
 
 ```python
 stream = client.chat.completions.create(
-    model="Llama-3.1-8B-Instruct",
+    model="meta-llama/Llama-3.1-8B-Instruct",
     messages=[{"role": "user", "content": "Describe continuous batching."}],
     stream=True
 )

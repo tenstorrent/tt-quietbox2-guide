@@ -364,3 +364,23 @@ immediately precedes this one.
 Separately added: a warn callout at the top of first-timer/05's "Serving a Model with vLLM",
 since the new chunk put a runnable server path directly above an existing one that launches a
 different model on the same chips and port.
+
+**Second Copilot round — one comment, which cascaded.** It noted my new callout said to
+substitute `Qwen3-32B` while the curl below used `meta-llama/Llama-3.1-8B-Instruct`, so a
+name-only swap yields `meta-llama/Qwen3-32B` and a 404. Checking *which* id is right proved
+the guide had this backwards. `run_docker_server.py:583` does
+`docker_command.extend(["--model", model_spec.hf_model_repo])`, and the container entrypoint
+(`/home/container_app_user/app/src/run_vllm_api_server.py`, read out of the 0.17.0 image) has
+**zero** `served_model_name` references. So Path 2 serves under the **full HF repo id**, not
+the short `--model` name: `meta-llama/Llama-3.1-8B-Instruct`, `Qwen/Qwen3-32B`.
+
+That falsified ch03's 404 callout, which claimed "Path 2 reports the model as you named it in
+`--model`". Corrected, along with its three examples (one curl, two SDK). The chunk now states
+the served id too, since that is the practical payoff. Verified from source and the image
+entrypoint, not from a live `/v1/models` response — that needs a real deploy.
+
+**Known follow-up, deliberately out of scope:** the same short-id pattern appears in
+`model-zoo.md` (2), `llama-70b.md` (4), `tinkerer/02-fun-demos.md` (1). Each needs its own
+check of which serving path it assumes — Path 1's `--served-model-name` legitimately uses short
+names — so they were left alone rather than swept. `tt-studio-coding-agents.md` is a separate
+surface (the LiteLLM gateway on :4000 has its own naming) and is likely correct as-is.

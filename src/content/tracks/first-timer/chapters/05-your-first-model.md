@@ -39,9 +39,11 @@ When that Python snippet ran without errors, the Blackhole chip opened a dispatc
 :::callout type="warn"
 **Already started Qwen3-32B above? Skip this section.** It launches a *second* model on the
 same four chips and the same port 8000, and that will fail — the chips have one owner at a
-time. This section is the path for serving a model other than the one that shipped, and the
-`curl` and Python examples below use `Llama-3.1-8B-Instruct` as their model name. If you took
-the pre-cached route, substitute `Qwen3-32B` in those examples instead of running this.
+time. This section is the path for serving a model other than the one that shipped. If you took the
+pre-cached route, the examples below still apply, but the model id changes: the server reports
+models by their **full Hugging Face repo id**, so use `Qwen/Qwen3-32B` wherever they say
+`meta-llama/Llama-3.1-8B-Instruct`. Confirm with
+`curl -s http://localhost:8000/v1/models`.
 :::
 
 The fastest path to actually generating text is vLLM. It handles model loading,

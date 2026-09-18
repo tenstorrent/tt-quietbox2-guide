@@ -65,7 +65,9 @@ python3 ~/.local/lib/tt-inference-server/run.py \
 ```
 
 `--host-weights-dir` mounts that directory into the container read-only: your weights can't
-be modified by the server, and no second copy is made. The same path works for a direct
+be modified by the server, and no second copy is made. Once it is up, the server reports the
+model by its **full Hugging Face repo id** — query it as `Qwen/Qwen3-32B`, not `Qwen3-32B`, or
+read the exact string from `curl -s http://localhost:8000/v1/models`. The same path works for a direct
 `vllm serve ~/models/Qwen3-32B` with `HF_MODEL=~/models/Qwen3-32B`, if you have built that
 environment.
 
