@@ -34,6 +34,10 @@ Both produce the same OpenAI-compatible API on port 8000.
 tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you.
 
 ```bash
+# run.py validates HF_TOKEN whenever --docker-server is passed — even when the
+# weights are already local. Without it you get "⛔ HF_TOKEN not set." and no server.
+export HF_TOKEN=hf_...
+
 # Deploy Llama-3.1-8B-Instruct with one command
 python3 ~/.local/lib/tt-inference-server/run.py \
   --model Llama-3.1-8B-Instruct \

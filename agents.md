@@ -27,7 +27,7 @@ persistent-volume layout, **not** a Hugging Face cache. A factory QB2 has no
 (~62 GB, a normal HF model directory) and ~30 GB of pre-compiled Blackhole kernels in
 `tt_metal_cache/cache_Qwen3-32B/P300x2/`. Reach the weights with
 `--host-weights-dir`, never `--host-hf-cache` (that resolves `HOST_HF_HOME` → `HF_HOME` →
-`~/.cache/huggingface`, none of which exist, and silently re-downloads 62 GB).
+`~/.cache/huggingface`, none of which exist, and silently re-downloads 62 GB). Any `run.py --docker-server` invocation also needs a valid `HF_TOKEN` exported first — it is validated before launch even when the weights are local, and Qwen3-32B itself is Apache-2.0, not gated. The API then serves the model under its full repo id (`Qwen/Qwen3-32B`), while `--model` takes the short name (`Qwen3-32B`).
 
 TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). There is no
 `~/tt-metal` checkout on a factory QB2; inside the container TTNN is already on the

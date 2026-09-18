@@ -431,3 +431,35 @@ server first" warnings.
 cutting the API/verification material that is the chapter's actual job. Other chapters remain
 optimistic too (`first-timer/04` 13 vs 10, `ml/01` 12 vs 8, `tinkerer/01` 12 vs 6,
 `tinkerer/04` 14 vs 10) — a guide-wide estimate audit is a separate piece of work.
+
+**Fifth review round — 11 comments, most of them my own extraction debt.** Moving Path 1 +
+the plugin section into a lesson was done structurally without re-editing the transplanted
+prose, so it arrived carrying chapter-relative references. The root defect: the lesson's intro
+promised "build the environment first, then serve" while its sections ran serve-then-build,
+which generated several of the comments on its own. Rewritten into real order —
+1. see what's on the box, 2. get a Python `ttnn`, 3. install the plugin, 4. serve — and the
+two near-duplicate serving blocks merged into one, which removes the same-chips/same-port
+conflict the reviewer flagged.
+
+Specific carry-over damage, all fixed: "mesh caveat from Path 1" (section no longer exists);
+"the vLLM your QB2 shipped with" ×2 (false — the shipped vLLM is inside the managed container,
+as the lesson's own intro says); "P300x2 is for the 70B example further down" (that example
+stayed in ch03); "Before installing, it is worth knowing what is on the box" appearing *after*
+installation; a **duplicated `09-vllm-demo.gif`** and a stale **"Next: Performance Tuning"**
+chapter footer — both swept in because the last section's extraction ran to end-of-file. The
+reviewer caught the duplicate GIF; the stale footer I found while fixing it.
+
+The substantive gap it also exposed: the lesson is called "Build Your Own vLLM Environment"
+and never said how to create the venv it activates on line one. Checked PyPI from the box —
+`ttnn` **is** Tenstorrent-published (`info@tenstorrent.com`, 0.78.0, manylinux x86_64 wheels
+for cp310/cp312, so it matches Ubuntu 24.04's `python3`). Added the `python3 -m venv` +
+`pip install ttnn` route with an explicit `import ttnn` gate, and said plainly that provenance
+and wheel compatibility are verified while end-to-end function on a QB2 is **not** — if the
+import fails, take the derived-container route.
+
+Also fixed: `run.py --docker-server` needs `HF_TOKEN` before ch03's *first* managed launch too,
+not only the pre-cached one; the weights lesson's alias hardcoded `v0.17.0` while Step 1 says
+the name varies (now copied from the `src=` path Step 1 prints); first-timer/05 conflated the
+two substitutions (`--model` takes `Qwen3-32B`, the API `"model"` field takes
+`Qwen/Qwen3-32B`); and `agents.md` now carries the token prerequisite and the id distinction
+next to the flag guidance.

@@ -99,10 +99,17 @@ skipping it is safe — don't carry that flag into a real run.
 
 Substituting whatever name you actually saw:
 
+Copy the directory name out of the `src=` path Step 1 printed — don't retype the `v0.17.0`
+above, which is only what *this* spec version happened to want:
+
 ```bash
 cd ~/data/tt-cache
-ln -s volume_id_tt_transformers-Qwen3-32B-vqb2_launch \
-      volume_id_tt_transformers-Qwen3-32B-v0.17.0
+
+# Paste the basename of the src= path from Step 1 here.
+WANTED=volume_id_tt_transformers-Qwen3-32B-v0.17.0
+
+ln -s volume_id_tt_transformers-Qwen3-32B-vqb2_launch "$WANTED"
+ls -l "$WANTED"        # should resolve to the -vqb2_launch directory
 ```
 
 ### Step 3 — serve, reusing both weights and kernels
