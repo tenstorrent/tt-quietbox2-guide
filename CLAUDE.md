@@ -261,3 +261,205 @@ confirmed live before fixing (see PR #21):
 tooling) checked out against real source and this box's actual installs — no changes needed.
 Every chapter across all four tracks has now been walked against real hardware or the actual
 installed packages at least once. Build clean, tests pass throughout. Pushed as PR #21.
+
+### 2026-09-17 — the pre-cached Qwen3-32B: teach the shortcut, on the branch `use_that_model`
+
+**Prompt:** "The first inference lesson in here could also give you a short cut to serving
+that qwen model with tt-inference-server the first time that already ships with the box.
+it's locked away in a non-standard directory, but we could teach how to make any tool aware
+of it right here and skip having to download any other model." Then: "really explain why
+this is a good idea to people."
+
+New shared chunk `shared/precached-model.md`, injected into `first-timer/05` (ahead of its
+first serving section) and `ml-practitioner/03` (inside Path 2).
+
+**What the directory actually is.** `~/data/tt-cache` is **tt-inference-server's
+`persistent_volume_root`**, not a Hugging Face cache — `volume_id_<impl>-<model>-v<version>/`
+containing `weights/`, `tt_metal_cache/`, `logs/`, `model_file_symlinks_map/`. So
+`--host-hf-cache` (resolves `HOST_HF_HOME` → `HF_HOME` → `~/.cache/huggingface`) is the wrong
+lever and silently re-downloads 62 GB. `--host-weights-dir` is the right one. Both places the
+guide recommended `--host-hf-cache` for reusing shipped weights were wrong; both fixed.
+
+**Verified against the pristine image, which overturned a wrong conclusion.** On the *host*
+QB2 the weights are hardlinked (`links=2`, matching inode 115122987) into
+`~/.cache/huggingface/hub/models--Qwen--Qwen3-32B`, which made it look as though the model
+ships pre-registered in the HF cache and needs no setup at all. Mounting
+`tt-qb2-one-accelerator-pristine.qcow2` read-only (`qemu-nbd --read-only`) showed
+`links=1`, **no `~/.cache/huggingface` and no `~/models`** on the shipping image. The
+hardlinks are an artifact of this host's own later `hf download` work. Had we written from
+the host alone, the chapter would have told readers `Qwen/Qwen3-32B` resolves natively.
+Textbook "trust the subject, verify the instrument."
+
+**The version trap, verified live.** `run.py` computes the volume name it expects rather than
+scanning; the version comes from the **model spec entry for model+device**
+(`workflows/model_specs/prod/llm.yaml` — four `Qwen3-32B` entries; `tt_transformers`/`P300X2`
+is `0.17.0`), while the box ships `-vqb2_launch`. Confirmed by running
+`--print-docker-cmd --skip-system-sw-validation`, which printed
+`src=.../volume_id_tt_transformers-Qwen3-32B-v0.17.0` and
+`TT_CACHE_PATH=.../cache_Qwen3-32B/P300x2`. The host already carried an undocumented
+`-v0.17.0 -> -vqb2_launch` symlink working around exactly this. Taught as a deep-dive, with
+`--host-weights-dir` as the recommended default because it is version-independent. An earlier
+draft invented a `workflows.utils.get_version()` helper — it does not exist; caught and
+replaced with the verified `--print-docker-cmd` method before it shipped.
+
+**Why-it-matters framing** (the explicit ask): the weights are ~62 GB and re-downloadable,
+but the ~30 GB `tt_metal_cache` is **not** — it is compiled against your mesh and is what
+makes a first deploy minutes instead of a compile. Downloading the model again pays twice and
+still throws away the more valuable half.
+
+**Deliberately not in the guide:** the pristine VM's copy of Qwen3-32B is 2.85 GB short
+(`model.safetensors.index.json` declares 65,524,246,528; shards sum to 62,671,934,640 — shards
+2/6/10 truncated; the host's copy passes the same check). Corroborated independently by the
+guest's `du` reading 88G against the host's 91G, so it is not a `noload` mount artifact. Per
+the user this is most likely `tt-qb2-image-maker`'s own construction process rather than the
+shipping ISO, so it is reported there, not written up here as an image defect. The guide keeps
+only a light `du -sh ~/data/tt-cache/` confirmation step — which is Tenstorrent's own ISO
+acceptance check.
+
+**Guest access, for next time:** the QB2 factory image has **no sshd and no serial getty**
+(probed `/dev/pts/4`: zero bytes), the guest agent is disconnected, and networking is macvtap
+so host↔guest doesn't work. The running VM is SPICE-only. The pristine qcow2 mounted
+read-only is the practical non-interactive channel.
+
+Verified: `npx eleventy` clean, `node --test` 14/14, no leaked `:::` in `_site/`, code blocks
+intact through the chunk pipeline. `agents.md` and `llms.txt` updated with the path, the flag
+choice, and a troubleshooting row for the re-download failure mode.
+
+**Split after review** ("I think this may make things more confusing"). The single chunk was
+174 lines dropped into a 138-line first-timer chapter — it more than doubled "Your First
+Model" with the most technical material in that track, and `deep-dive` callouts don't
+collapse. Now two chunks: `precached-model` (73 lines — why it matters, the `du` check, the
+symlink, one `--host-weights-dir` command, and the `--host-hf-cache` warning) in both tracks,
+and `precached-model-deep` (83 lines — the persistent-volume tree, `model_file_symlinks_map`,
+and the version-trap deep-dive) in `ml-practitioner/03` only.
+
+Also fixed an injection bug this surfaced: the chunk emits an `##`, so injecting it mid-Path-2
+made Path 2's own "three more flags" tip fall under the new heading. Both chunks now go in at
+the end of Path 2, immediately before `## Verifying the Server`. Rendered heading order
+checked, not assumed.
+
+**Copilot review on #23, all verified before acting.** Five accepted: (1) ch03's "full command
+combining them" paired `--model Qwen3-32B` with `--host-hf-cache` directly under new prose
+saying that pairing is wrong — switched the example to `Llama-3.1-8B-Instruct`, which is what
+`--host-hf-cache` is actually for; (2) `llms.txt` bullet ended mid-sentence; (3) "Before you
+download anything" was false in the first-timer slot, where `run-first-model` has already had
+the reader pull Qwen3-0.6B — now "another model"; (4) the deep-dive showed a runnable
+`--host-volume` *before* the alias workaround, i.e. the 62 GB failure the section exists to
+prevent — resequenced into Step 1 dry-run → Step 2 alias → Step 3 launch, with only the safe
+`--print-docker-cmd` appearing pre-alias; (5) the short chunk's command omitted `HF_TOKEN`.
+
+(5) turned up a second bug in existing content. `run.py:858` sets
+`huggingface_required = ... or runtime_config.docker_server`, and `setup_host.py:551` asserts
+plus *validates* the token — so `--docker-server` requires `HF_TOKEN` regardless of
+`--host-weights-dir`. But the guide's stated reason was wrong: `run-first-model` claimed
+Qwen3-32B "is gated even though the weights are local". It is Apache-2.0 and ungated
+(checked on its model card). Fixed the claim and documented the real reason — a `run.py`
+workflow precondition, not a license gate.
+
+One rejected: Copilot said the chunk needs a container→host transition because
+`run-first-model` leaves the reader inside `tt-metalium`. It doesn't — line 78 of that chunk
+already says "run this on the host, not inside `tt-metalium`" for the download step that
+immediately precedes this one.
+
+Separately added: a warn callout at the top of first-timer/05's "Serving a Model with vLLM",
+since the new chunk put a runnable server path directly above an existing one that launches a
+different model on the same chips and port.
+
+**Second Copilot round — one comment, which cascaded.** It noted my new callout said to
+substitute `Qwen3-32B` while the curl below used `meta-llama/Llama-3.1-8B-Instruct`, so a
+name-only swap yields `meta-llama/Qwen3-32B` and a 404. Checking *which* id is right proved
+the guide had this backwards. `run_docker_server.py:583` does
+`docker_command.extend(["--model", model_spec.hf_model_repo])`, and the container entrypoint
+(`/home/container_app_user/app/src/run_vllm_api_server.py`, read out of the 0.17.0 image) has
+**zero** `served_model_name` references. So Path 2 serves under the **full HF repo id**, not
+the short `--model` name: `meta-llama/Llama-3.1-8B-Instruct`, `Qwen/Qwen3-32B`.
+
+That falsified ch03's 404 callout, which claimed "Path 2 reports the model as you named it in
+`--model`". Corrected, along with its three examples (one curl, two SDK). The chunk now states
+the served id too, since that is the practical payoff. Verified from source and the image
+entrypoint, not from a live `/v1/models` response — that needs a real deploy.
+
+**Then folded in**, on request, after checking each file's serving path rather than sweeping:
+
+* `llama-70b.md` (4) — Path 2 throughout, and its own callout at line 188 already said the
+  container "takes the fully-qualified HuggingFace ID" while its client examples used the short
+  one. Now `meta-llama/Llama-3.3-70B-Instruct` ×3 and
+  `deepseek-ai/DeepSeek-R1-Distill-Llama-70B` ×1.
+* `tinkerer/02-fun-demos.md` (1) — Path 2 (`run.py --docker-server`), so its curl would 404.
+* `model-zoo.md` (2) — the canonical Qwen3 reasoning-modes snippets ch03 cross-links to;
+  now `Qwen/Qwen3-32B`.
+* `tt-studio-coding-agents.md` (1) — **left alone, correctly.** That is the LiteLLM gateway on
+  :4000, which has its own naming (`tt-studio/Qwen3-32B`, `Qwen3-32B-thinking`), not the vLLM
+  OpenAI surface on :8000.
+
+Repo ids taken from `prod/llm.yaml`'s `weights:` entries, not guessed. Replacement was scoped
+by regex to client payloads (`"model": "…"`, `model="…"`) so that `run.py --model <short>`,
+which correctly takes the short name, was never touched.
+
+**Holistic pass (prompted: "do these truly serve the audience or are we still providing too
+much information?").** Measured every chapter against the time budget declared in
+`personas.json`. `ml-practitioner/03` was **31 min against a 10 min budget** — the worst page
+in the guide by a wide margin, and ~25 min of that predated this PR. `first-timer/05` was 14
+against 8. The three review comments in the last Copilot round (HF_TOKEN ordering, Step 3 as a
+second launch, the chunk's launch following Path 2's) were all one structural defect: mutually
+exclusive runnable paths stacked inside a linear walkthrough, which is what happens when
+reference material is crammed into a tutorial.
+
+Restructured rather than reworded:
+
+* New `src/_includes/layouts/lesson.njk` — shared chrome for standalone lessons, driven by
+  front matter, so a lesson no longer inlines its own `<style>` block the way
+  `llama-70b.md` does. (That file was left on its inline copy; migrating it is a follow-up.)
+* New **`/lessons/build-your-own-vllm/`** ← ch03's "Path 1: Direct vLLM" (4.4 min) plus
+  "Running the latest vLLM plugin" (6.3 min). These were always one topic: Path 1 opened by
+  telling you to go read the plugin section first. The `09-vllm-demo` GIF moved with them —
+  it shows venv activation and `vllm serve`, which is now lesson content.
+* New **`/lessons/weights-caches-volumes/`** ← the `precached-model-deep` chunk, which is
+  deleted. The volume tree, `model_file_symlinks_map`, the version trap, `--host-volume`.
+* ch03 now has one path, not two. "Path 2" became "Serving with tt-inference-server"; the
+  two-chip fabric warning moved out of the departed Path 1 into Multi-Chip (it is referenced
+  there); the `MESH_DEVICE` name reference went to the lesson. **31 min → 18 min.**
+* Declared times corrected to measured reality: ch03 10→18, first-timer/05 8→14.
+
+Review fixes folded in: `HF_TOKEN` now exported *before* the Step 1 dry run (it is validated
+whenever `--docker-server` is passed — my earlier verification passed only because this host's
+`.env` already had a token, a textbook contaminated instrument), and both the chunk's launch
+and the lesson's Step 3 now carry explicit "this replaces the command near it, stop the other
+server first" warnings.
+
+**Still over budget and deliberately so:** ch03 at 18 min. Closing the last 8 would mean
+cutting the API/verification material that is the chapter's actual job. Other chapters remain
+optimistic too (`first-timer/04` 13 vs 10, `ml/01` 12 vs 8, `tinkerer/01` 12 vs 6,
+`tinkerer/04` 14 vs 10) — a guide-wide estimate audit is a separate piece of work.
+
+**Fifth review round — 11 comments, most of them my own extraction debt.** Moving Path 1 +
+the plugin section into a lesson was done structurally without re-editing the transplanted
+prose, so it arrived carrying chapter-relative references. The root defect: the lesson's intro
+promised "build the environment first, then serve" while its sections ran serve-then-build,
+which generated several of the comments on its own. Rewritten into real order —
+1. see what's on the box, 2. get a Python `ttnn`, 3. install the plugin, 4. serve — and the
+two near-duplicate serving blocks merged into one, which removes the same-chips/same-port
+conflict the reviewer flagged.
+
+Specific carry-over damage, all fixed: "mesh caveat from Path 1" (section no longer exists);
+"the vLLM your QB2 shipped with" ×2 (false — the shipped vLLM is inside the managed container,
+as the lesson's own intro says); "P300x2 is for the 70B example further down" (that example
+stayed in ch03); "Before installing, it is worth knowing what is on the box" appearing *after*
+installation; a **duplicated `09-vllm-demo.gif`** and a stale **"Next: Performance Tuning"**
+chapter footer — both swept in because the last section's extraction ran to end-of-file. The
+reviewer caught the duplicate GIF; the stale footer I found while fixing it.
+
+The substantive gap it also exposed: the lesson is called "Build Your Own vLLM Environment"
+and never said how to create the venv it activates on line one. Checked PyPI from the box —
+`ttnn` **is** Tenstorrent-published (`info@tenstorrent.com`, 0.78.0, manylinux x86_64 wheels
+for cp310/cp312, so it matches Ubuntu 24.04's `python3`). Added the `python3 -m venv` +
+`pip install ttnn` route with an explicit `import ttnn` gate, and said plainly that provenance
+and wheel compatibility are verified while end-to-end function on a QB2 is **not** — if the
+import fails, take the derived-container route.
+
+Also fixed: `run.py --docker-server` needs `HF_TOKEN` before ch03's *first* managed launch too,
+not only the pre-cached one; the weights lesson's alias hardcoded `v0.17.0` while Step 1 says
+the name varies (now copied from the `src=` path Step 1 prints); first-timer/05 conflated the
+two substitutions (`--model` takes `Qwen3-32B`, the API `"model"` field takes
+`Qwen/Qwen3-32B`); and `agents.md` now carries the token prerequisite and the id distinction
+next to the flag guidance.
