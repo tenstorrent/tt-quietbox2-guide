@@ -324,3 +324,16 @@ read-only is the practical non-interactive channel.
 Verified: `npx eleventy` clean, `node --test` 14/14, no leaked `:::` in `_site/`, code blocks
 intact through the chunk pipeline. `agents.md` and `llms.txt` updated with the path, the flag
 choice, and a troubleshooting row for the re-download failure mode.
+
+**Split after review** ("I think this may make things more confusing"). The single chunk was
+174 lines dropped into a 138-line first-timer chapter — it more than doubled "Your First
+Model" with the most technical material in that track, and `deep-dive` callouts don't
+collapse. Now two chunks: `precached-model` (73 lines — why it matters, the `du` check, the
+symlink, one `--host-weights-dir` command, and the `--host-hf-cache` warning) in both tracks,
+and `precached-model-deep` (83 lines — the persistent-volume tree, `model_file_symlinks_map`,
+and the version-trap deep-dive) in `ml-practitioner/03` only.
+
+Also fixed an injection bug this surfaced: the chunk emits an `##`, so injecting it mid-Path-2
+made Path 2's own "three more flags" tip fall under the new heading. Both chunks now go in at
+the end of Path 2, immediately before `## Verifying the Server`. Rendered heading order
+checked, not assumed.

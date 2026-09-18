@@ -151,8 +151,6 @@ entries. The full list of options is in the [tt-inference-server lesson →](htt
 On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
 derives them per model from its spec, and on a QB2 the correct value is model-dependent.
 
-{% chunk "precached-model" %}
-
 :::callout type="tip"
 **Three more flags worth knowing on this path.** `--host-hf-cache` reuses weights you've already
 downloaded **yourself** to the Hugging Face cache instead of re-pulling them into a fresh Docker
@@ -171,6 +169,10 @@ python3 ~/.local/lib/tt-inference-server/run.py \
   --no-auth --service-port 8002 --host-hf-cache
 ```
 :::
+
+{% chunk "precached-model" %}
+
+{% chunk "precached-model-deep" %}
 
 ## Verifying the Server
 
