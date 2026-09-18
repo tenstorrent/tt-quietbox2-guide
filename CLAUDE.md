@@ -379,8 +379,19 @@ That falsified ch03's 404 callout, which claimed "Path 2 reports the model as yo
 the served id too, since that is the practical payoff. Verified from source and the image
 entrypoint, not from a live `/v1/models` response — that needs a real deploy.
 
-**Known follow-up, deliberately out of scope:** the same short-id pattern appears in
-`model-zoo.md` (2), `llama-70b.md` (4), `tinkerer/02-fun-demos.md` (1). Each needs its own
-check of which serving path it assumes — Path 1's `--served-model-name` legitimately uses short
-names — so they were left alone rather than swept. `tt-studio-coding-agents.md` is a separate
-surface (the LiteLLM gateway on :4000 has its own naming) and is likely correct as-is.
+**Then folded in**, on request, after checking each file's serving path rather than sweeping:
+
+* `llama-70b.md` (4) — Path 2 throughout, and its own callout at line 188 already said the
+  container "takes the fully-qualified HuggingFace ID" while its client examples used the short
+  one. Now `meta-llama/Llama-3.3-70B-Instruct` ×3 and
+  `deepseek-ai/DeepSeek-R1-Distill-Llama-70B` ×1.
+* `tinkerer/02-fun-demos.md` (1) — Path 2 (`run.py --docker-server`), so its curl would 404.
+* `model-zoo.md` (2) — the canonical Qwen3 reasoning-modes snippets ch03 cross-links to;
+  now `Qwen/Qwen3-32B`.
+* `tt-studio-coding-agents.md` (1) — **left alone, correctly.** That is the LiteLLM gateway on
+  :4000, which has its own naming (`tt-studio/Qwen3-32B`, `Qwen3-32B-thinking`), not the vLLM
+  OpenAI surface on :8000.
+
+Repo ids taken from `prod/llm.yaml`'s `weights:` entries, not guessed. Replacement was scoped
+by regex to client payloads (`"model": "…"`, `model="…"`) so that `run.py --model <short>`,
+which correctly takes the short name, was never touched.
