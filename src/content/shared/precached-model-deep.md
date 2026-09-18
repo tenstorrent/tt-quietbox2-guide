@@ -27,28 +27,22 @@ own bookkeeping. Leave it alone.
 **Reusing the compiled kernels too, and the version trap in the way.**
 
 `--host-weights-dir` gets you the weights but not the 30 GB of compiled kernels. For those you
-point `run.py` at the whole persistent volume instead:
+point `run.py` at the whole persistent volume with `--host-volume ~/data/tt-cache` — but don't
+run that yet, because on a stock box it does the opposite of what you want.
 
-```bash
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Qwen3-32B --tt-device p300x2 \
-  --workflow server --docker-server \
-  --host-volume ~/data/tt-cache
-```
-
-There's a catch, and it's the kind that wastes an afternoon. `run.py` doesn't look inside that
-directory to see what's there — it *computes* the name it expects, as
-`volume_id_<impl>-<model>-v<version>`. That version is not the tt-inference-server release
-number; it comes from the **model spec entry matching your model and device**. For `Qwen3-32B`
-on `p300x2` that entry is `impl: tt_transformers, version: 0.17.0`, so `run.py` goes looking
-for `volume_id_tt_transformers-Qwen3-32B-v0.17.0`.
+`run.py` doesn't look inside that directory to see what's there. It *computes* the name it
+expects, as `volume_id_<impl>-<model>-v<version>`. That version is not the tt-inference-server
+release number; it comes from the **model spec entry matching your model and device**. For
+`Qwen3-32B` on `p300x2` that entry is `impl: tt_transformers, version: 0.17.0`, so `run.py`
+goes looking for `volume_id_tt_transformers-Qwen3-32B-v0.17.0`.
 
 Your box ships `volume_id_tt_transformers-Qwen3-32B-vqb2_launch` — a build label, not a
 version. The names don't match, so `run.py` finds nothing to reuse and quietly starts
-downloading into a brand-new volume beside the one it was meant to use.
+downloading 62 GB into a brand-new volume beside the one it was meant to use. Set up the alias
+first, then launch.
 
-Don't take that version on faith — it moves between releases, and there are four different
-`Qwen3-32B` spec entries. Ask your own box:
+**Step 1 — ask your box which name it wants.** Don't take the version above on faith; it moves
+between releases, and there are four different `Qwen3-32B` spec entries:
 
 ```bash
 python3 ~/.local/lib/tt-inference-server/run.py \
@@ -58,9 +52,17 @@ python3 ~/.local/lib/tt-inference-server/run.py \
   --print-docker-cmd --skip-system-sw-validation
 ```
 
-That prints the `docker run` it *would* issue without starting anything. Read the `src=` path
-in the `--mount` line — that's the exact directory name it wants. Then alias the shipped one
-to it, substituting whatever name you actually saw:
+`--print-docker-cmd` prints the `docker run` it *would* issue and starts nothing, so this is
+safe to run before the alias exists. Read the `src=` path in the `--mount` line — that's the
+exact directory name it wants. The same output carries
+`TT_CACHE_PATH=.../tt_metal_cache/cache_Qwen3-32B/P300x2`, confirming the kernel cache you're
+about to alias is the one the container will read.
+
+`--skip-system-sw-validation` is there only because validation shells out to `tt-smi` and will
+stop you before anything prints if the chips are busy. You're only printing a command, so
+skipping it is safe — don't carry that flag into a real run.
+
+**Step 2 — alias the shipped directory to that name**, substituting whatever you actually saw:
 
 ```bash
 cd ~/data/tt-cache
@@ -68,16 +70,19 @@ ln -s volume_id_tt_transformers-Qwen3-32B-vqb2_launch \
       volume_id_tt_transformers-Qwen3-32B-v0.17.0
 ```
 
-The same output carries `TT_CACHE_PATH=.../tt_metal_cache/cache_Qwen3-32B/P300x2`, which is
-precisely where the shipped kernels live — confirmation that the cache you're aliasing is the
-one the container will read.
+**Step 3 — now serve**, and this time both the weights and the compiled kernels are reused:
 
-`--skip-system-sw-validation` is there only because validation shells out to `tt-smi` and will
-stop you before anything prints if the chips are busy. You're just printing a command, so
-skipping it is safe; don't carry that flag into a real run.
+```bash
+export HF_TOKEN=hf_...
+
+python3 ~/.local/lib/tt-inference-server/run.py \
+  --model Qwen3-32B --tt-device p300x2 \
+  --workflow server --docker-server \
+  --host-volume ~/data/tt-cache
+```
 
 Because the alias tracks a version that moves, upgrading tt-inference-server will eventually
-invalidate it. That maintenance cost is exactly why `--host-weights-dir` is the better default:
-it's version-independent, and a one-time kernel compile beats a symlink that silently stops
-matching.
+invalidate it and you'll be back at step 1. That maintenance cost is exactly why
+`--host-weights-dir` is the better default: it's version-independent, and a one-time kernel
+compile beats a symlink that silently stops matching.
 :::

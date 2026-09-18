@@ -162,8 +162,10 @@ sets the port the managed model's container API listens on — e.g. `--service-p
 command combining them:
 
 ```bash
+# Llama-3.1-8B-Instruct here, not Qwen3-32B: --host-hf-cache reuses weights you
+# downloaded yourself, and this is a model you would have pulled with `hf download`.
 python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Qwen3-32B \
+  --model Llama-3.1-8B-Instruct \
   --tt-device p300x2 \
   --workflow server --docker-server \
   --no-auth --service-port 8002 --host-hf-cache

@@ -337,3 +337,30 @@ Also fixed an injection bug this surfaced: the chunk emits an `##`, so injecting
 made Path 2's own "three more flags" tip fall under the new heading. Both chunks now go in at
 the end of Path 2, immediately before `## Verifying the Server`. Rendered heading order
 checked, not assumed.
+
+**Copilot review on #23, all verified before acting.** Five accepted: (1) ch03's "full command
+combining them" paired `--model Qwen3-32B` with `--host-hf-cache` directly under new prose
+saying that pairing is wrong — switched the example to `Llama-3.1-8B-Instruct`, which is what
+`--host-hf-cache` is actually for; (2) `llms.txt` bullet ended mid-sentence; (3) "Before you
+download anything" was false in the first-timer slot, where `run-first-model` has already had
+the reader pull Qwen3-0.6B — now "another model"; (4) the deep-dive showed a runnable
+`--host-volume` *before* the alias workaround, i.e. the 62 GB failure the section exists to
+prevent — resequenced into Step 1 dry-run → Step 2 alias → Step 3 launch, with only the safe
+`--print-docker-cmd` appearing pre-alias; (5) the short chunk's command omitted `HF_TOKEN`.
+
+(5) turned up a second bug in existing content. `run.py:858` sets
+`huggingface_required = ... or runtime_config.docker_server`, and `setup_host.py:551` asserts
+plus *validates* the token — so `--docker-server` requires `HF_TOKEN` regardless of
+`--host-weights-dir`. But the guide's stated reason was wrong: `run-first-model` claimed
+Qwen3-32B "is gated even though the weights are local". It is Apache-2.0 and ungated
+(checked on its model card). Fixed the claim and documented the real reason — a `run.py`
+workflow precondition, not a license gate.
+
+One rejected: Copilot said the chunk needs a container→host transition because
+`run-first-model` leaves the reader inside `tt-metalium`. It doesn't — line 78 of that chunk
+already says "run this on the host, not inside `tt-metalium`" for the download step that
+immediately precedes this one.
+
+Separately added: a warn callout at the top of first-timer/05's "Serving a Model with vLLM",
+since the new chunk put a runnable server path directly above an existing one that launches a
+different model on the same chips and port.

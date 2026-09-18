@@ -1,6 +1,6 @@
 ## Use the Model That's Already on Your Box
 
-Before you download anything, know what you already have. Your QB2 shipped with
+Before you download another model, know what you already have. Your QB2 shipped with
 **Qwen3-32B** on disk — and not just the weights:
 
 | What | Size | Can you re-download it? |
@@ -52,6 +52,11 @@ Now `~/models/Qwen3-32B` sits beside the `~/models/Qwen3-0.6B` you'd get from `h
 and tools take it as an ordinary path:
 
 ```bash
+# run.py requires HF_TOKEN whenever --docker-server is used, local weights or not.
+# That is a workflow precondition, not a license gate: Qwen3-32B is Apache-2.0 and
+# ungated. Omit it and you get "⛔ HF_TOKEN not set." before anything starts.
+export HF_TOKEN=hf_...
+
 python3 ~/.local/lib/tt-inference-server/run.py \
   --model Qwen3-32B \
   --tt-device p300x2 \
