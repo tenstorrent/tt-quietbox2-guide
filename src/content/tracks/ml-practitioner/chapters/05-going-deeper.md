@@ -84,6 +84,10 @@ The multi-device lesson is the one worth calling out on a QB2 specifically: it d
 
 <div class="rcard-grid">
 
+{% card "lesson", "/lessons/build-your-own-vllm/", "Build Your Own vLLM Environment", "Skip the managed path and run `vllm serve` yourself — plugin install, the numpy/ttnn override, and the mesh variables you now set by hand.", "~40 min" %}
+
+{% card "lesson", "/lessons/weights-caches-volumes/", "Weights, Caches and Volumes", "Reuse the 62 GB of weights and 30 GB of compiled kernels your QB2 shipped with, instead of downloading them again.", "~15 min" %}
+
 {% card "lesson", "/lessons/llama-70b/", "Running Llama-3.3-70B on QB2", "The largest model QB2 officially supports, tensor-parallel across all four chips — exact Docker command, prerequisites, and a DeepSeek-R1 variant.", "all four chips" %}
 
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/explore-metalium/", "Explore TT-Metalium", "The layer below TTNN — how Metalium kernels are written, compiled, and dispatched, and how tensor-parallel AllReduce crosses chip boundaries.", "open-ended" %}

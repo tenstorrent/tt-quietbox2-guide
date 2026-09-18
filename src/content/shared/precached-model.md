@@ -51,6 +51,14 @@ ls ~/models/Qwen3-32B/config.json
 Now `~/models/Qwen3-32B` sits beside the `~/models/Qwen3-0.6B` you'd get from `hf download`,
 and tools take it as an ordinary path:
 
+:::callout type="warn"
+**This replaces the launch command near it — it is not a next step.** One model owns the four
+chips and port 8000 at a time, so if you already started something (the command above, or a
+deploy from tt-studio), stop it before running this: `Ctrl-C`, or `docker ps` then
+`docker stop <id>`. `sudo lsof -w /dev/tenstorrent/*` printing nothing means the chips are
+free. Pick whichever launch you want; don't run both.
+:::
+
 ```bash
 # run.py requires HF_TOKEN whenever --docker-server is used, local weights or not.
 # That is a workflow precondition, not a license gate: Qwen3-32B is Apache-2.0 and

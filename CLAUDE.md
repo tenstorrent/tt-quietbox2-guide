@@ -395,3 +395,39 @@ entrypoint, not from a live `/v1/models` response — that needs a real deploy.
 Repo ids taken from `prod/llm.yaml`'s `weights:` entries, not guessed. Replacement was scoped
 by regex to client payloads (`"model": "…"`, `model="…"`) so that `run.py --model <short>`,
 which correctly takes the short name, was never touched.
+
+**Holistic pass (prompted: "do these truly serve the audience or are we still providing too
+much information?").** Measured every chapter against the time budget declared in
+`personas.json`. `ml-practitioner/03` was **31 min against a 10 min budget** — the worst page
+in the guide by a wide margin, and ~25 min of that predated this PR. `first-timer/05` was 14
+against 8. The three review comments in the last Copilot round (HF_TOKEN ordering, Step 3 as a
+second launch, the chunk's launch following Path 2's) were all one structural defect: mutually
+exclusive runnable paths stacked inside a linear walkthrough, which is what happens when
+reference material is crammed into a tutorial.
+
+Restructured rather than reworded:
+
+* New `src/_includes/layouts/lesson.njk` — shared chrome for standalone lessons, driven by
+  front matter, so a lesson no longer inlines its own `<style>` block the way
+  `llama-70b.md` does. (That file was left on its inline copy; migrating it is a follow-up.)
+* New **`/lessons/build-your-own-vllm/`** ← ch03's "Path 1: Direct vLLM" (4.4 min) plus
+  "Running the latest vLLM plugin" (6.3 min). These were always one topic: Path 1 opened by
+  telling you to go read the plugin section first. The `09-vllm-demo` GIF moved with them —
+  it shows venv activation and `vllm serve`, which is now lesson content.
+* New **`/lessons/weights-caches-volumes/`** ← the `precached-model-deep` chunk, which is
+  deleted. The volume tree, `model_file_symlinks_map`, the version trap, `--host-volume`.
+* ch03 now has one path, not two. "Path 2" became "Serving with tt-inference-server"; the
+  two-chip fabric warning moved out of the departed Path 1 into Multi-Chip (it is referenced
+  there); the `MESH_DEVICE` name reference went to the lesson. **31 min → 18 min.**
+* Declared times corrected to measured reality: ch03 10→18, first-timer/05 8→14.
+
+Review fixes folded in: `HF_TOKEN` now exported *before* the Step 1 dry run (it is validated
+whenever `--docker-server` is passed — my earlier verification passed only because this host's
+`.env` already had a token, a textbook contaminated instrument), and both the chunk's launch
+and the lesson's Step 3 now carry explicit "this replaces the command near it, stop the other
+server first" warnings.
+
+**Still over budget and deliberately so:** ch03 at 18 min. Closing the last 8 would mean
+cutting the API/verification material that is the chapter's actual job. Other chapters remain
+optimistic too (`first-timer/04` 13 vs 10, `ml/01` 12 vs 8, `tinkerer/01` 12 vs 6,
+`tinkerer/04` 14 vs 10) — a guide-wide estimate audit is a separate piece of work.
