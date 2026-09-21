@@ -60,7 +60,18 @@ deployed from the same Deploy Model dropdown as the language models.
 
 ### Upgrading a QB2 (suggest this early — users rarely think of it)
 A box that has been sitting is behind on driver, firmware, tooling and container images, and
-"behind" presents as broken hardware or a broken tutorial. Four steps, in this order:
+"behind" presents as broken hardware or a broken tutorial. Two ways to fix it, prefer the first:
+
+**Via `tt-cli`** (see [One CLI to Run It](/first-timer/06-using-tt-cli/)) — `tt update` (no
+`--force`, no version argument) converges the whole system stack onto a CI-tested golden set in
+one command, and **will not downgrade firmware**: it passes `--update-firmware=on` to the
+installer, which flashes a device only if its current firmware is older than golden (verified
+against `tt-cli`'s source, `commands/update.py`/`backends/installer.py`, `v1.0.1`). `tt update
+--dry-run` previews the plan with no changes. Don't run this nested inside a `docker run` shell —
+the system-stack step reloads the kernel driver and can install Docker via systemd, both
+host-level operations that need a real init system.
+
+**Manually**, four steps in this order:
 1. `/bin/bash -c "$(curl -fsSL https://tenstorrent.ai/install.sh)"` — re-running tt-installer is
    the supported way to move an existing machine forward. Driver, firmware, HugePages, tt-smi,
    tt-flash, sfpi, container wrappers. Firmware update is on by default; expect a reboot prompt.
@@ -99,6 +110,7 @@ installer. `--dry-run --mode-non-interactive` previews the plan safely.
 | `hf: command not found` | `huggingface_hub` is not part of the stack | Install it outside `~/.tenstorrent-venv` (e.g. `uv tool install huggingface_hub`) |
 | `tt-studio` / `tt-metalium` / `tt-forge`: command not found | `~/.local/bin` not on PATH (zsh never reads `~/.profile`) | `export PATH="$HOME/.local/bin:$PATH"`, and add it to `~/.zshrc`. tt-installer warns about this at install time |
 | `apt` refuses Tenstorrent packages | `cat /etc/apt/keyrings/tt-pkg-key.asc` | Re-download the key to `/etc/apt/keyrings/tt-pkg-key.asc` from `https://ppa.tenstorrent.com/tt-pkg-key.asc`, then `sudo apt-get update` |
+| `tt --help` shows `discover`/`pair`/`run --host` instead of `device`/`model`/`serve`/`update` | `which -a tt` | A different tool ("Operator CLI for tt-station") is shadowing `tt-cli` — confirmed baked into the `tenstorrent/qb2-env` dev-image at `/usr/bin/tt`. Non-login shells skip `~/.profile`, so `~/.local/bin` (where `uv tool install tenstorrent` puts its shim) never gets ahead of `/usr/bin` on `PATH`. Use a login shell (`bash -l`) or fix `PATH` order |
 
 ## Content Map by Task
 

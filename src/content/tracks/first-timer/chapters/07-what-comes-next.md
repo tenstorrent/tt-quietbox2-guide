@@ -1,7 +1,7 @@
 ---
 title: What Comes Next
-currentChapter: 06-what-comes-next
-permalink: /first-timer/06-what-comes-next/
+currentChapter: 07-what-comes-next
+permalink: /first-timer/07-what-comes-next/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
@@ -23,6 +23,8 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Start with **tt-to
 </figure>
 
 <div class="rcard-grid">
+
+{% card "repo", "https://github.com/tenstorrent/tt-cli", "tt-cli", "Unified CLI for device management, model serving, and system updates — one command instead of five. See One CLI to Run It.", "uv tool install tenstorrent" %}
 
 {% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips: temps, power, utilization, DRAM bandwidth, live in the terminal.", "sudo apt install tt-toplike" %}
 
