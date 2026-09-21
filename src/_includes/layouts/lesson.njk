@@ -1,0 +1,44 @@
+---
+layout: layouts/base.njk
+---
+{# Shared chrome for standalone cross-track lessons under /lessons/.
+   Long-form, operator-grade material that would blow a chapter's time budget
+   lives here instead of inside a track chapter. Driven by front matter:
+   eyebrow, title, subtitle, time, prereq, and an optional `backlinks` list of
+   {href, label, colorVar} for the footer. Styles mirror the ones that were
+   inlined in lessons/llama-70b.md, so the two render identically. #}
+<style>
+.lesson-layout { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; }
+.lesson-eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.lesson-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; color: var(--teal); margin: 0 0 12px; line-height: 1.15; }
+.lesson-subtitle { font-size: 1.1rem; color: var(--text2); margin: 0 0 32px; max-width: 640px; }
+.lesson-meta { display: flex; flex-wrap: wrap; gap: 20px; font-size: 12px; color: var(--muted); margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--bg2); }
+.track-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--bg1); }
+.track-pill--teal  { color: var(--teal); border: 1px solid rgba(79,209,197,0.3); }
+.track-pill--pink  { color: var(--pink); border: 1px solid rgba(236,150,184,0.3); }
+.track-pill--gold  { color: var(--gold); border: 1px solid rgba(244,196,113,0.3); }
+.track-pill--green { color: var(--green); border: 1px solid rgba(39,174,96,0.3); }
+.lesson-backlinks { display: flex; flex-wrap: wrap; gap: 12px; margin: 40px 0 0; }
+.lesson-backlinks a { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; background: var(--bg1); border: 1px solid var(--bg2); border-radius: var(--radius); text-decoration: none; font-weight: 600; font-size: 14px; }
+</style>
+
+<div class="lesson-layout">
+
+<p class="lesson-eyebrow">{{ eyebrow or "Cross-track lesson" }}</p>
+<h1 class="lesson-title">{{ title }}</h1>
+{% if subtitle %}<p class="lesson-subtitle">{{ subtitle }}</p>{% endif %}
+
+<div class="lesson-meta">
+  {% if time %}<span>{{ time }}</span>{% endif %}
+  {% if prereq %}<span>Prerequisites: {{ prereq }}</span>{% endif %}
+</div>
+
+{{ content | safe }}
+
+{% if backlinks %}
+<div class="lesson-backlinks">
+  {% for b in backlinks %}<a href="{{ b.href }}" style="color:var({{ b.colorVar or '--pink' }});">{{ b.label }} →</a>{% endfor %}
+</div>
+{% endif %}
+
+</div>

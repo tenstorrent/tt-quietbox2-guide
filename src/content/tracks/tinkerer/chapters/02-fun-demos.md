@@ -138,7 +138,7 @@ Wait for `Application startup complete` — first run downloads 140 GB of weight
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Llama-3.3-70B-Instruct",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
     "messages": [{"role": "user", "content": "Explain the tradeoffs between data-parallel and model-parallel inference for large language models. Be specific about memory and latency."}]
   }' | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])"
 ```

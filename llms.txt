@@ -39,6 +39,12 @@ The Tenstorrent Quietbox 2 (QB2) contains:
 - Starter model for the direct TTNN path: Qwen/Qwen3-0.6B (no license gate, 1.5 GB). It is
   **not** in tt-inference-server's model list, so it cannot be served via `run.py`; for serving,
   start with Llama-3.1-8B-Instruct or the pre-cached Qwen3-32B
+- Pre-cached Qwen3-32B is at `~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch/`
+  (tt-inference-server persistent volume, not an HF cache; a factory QB2 has no
+  `~/.cache/huggingface` and no `~/models`). Serve it with `--host-weights-dir`
+  pointed at `weights/Qwen3-32B/`; `--host-hf-cache` is the wrong flag here and silently
+  re-downloads the full ~62 GB. `run.py --docker-server` still requires HF_TOKEN even with
+  local weights (a workflow precondition — Qwen3-32B itself is Apache-2.0 and not gated)
 - Multi-device API: use `ttnn.CreateDevices` / `ttnn.CloseDevices` (not individual open/close)
 - `TT_METAL_ARCH_NAME` must be `blackhole` for QB2
 
