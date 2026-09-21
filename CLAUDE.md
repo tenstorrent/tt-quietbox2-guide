@@ -529,3 +529,45 @@ corrected `time: 14` (from the PR #23 timing audit) landing next to this chapter
 kept both. CLAUDE.md's own conflict was two session-log entries appended at the same
 location; reordered chronologically (PR #23's 09-17 entry before this chapter's 09-21 one)
 rather than picking one.
+
+### 2026-09-21 (continued) — PR #24 review: `tt update` does NOT keep tt-studio or the
+guide's tt-inference-server path current
+
+Copilot review on #24 flagged two things, and a direct question ("do we get tt-studio in a
+different place than we suggest elsewhere?") asked for the second one to be traced all the
+way down rather than patched at the surface.
+
+**Confirmed from `tt-cli`'s own source, not inferred from behavior:**
+* `tools/supplement.toml`'s `[tools.tt-inference-server]` entry (`kind = "git-venv"`,
+  `golden_version = "v0.22.0"`) plus `GitVenvInstaller._tool_dir` in `tools/installers.py`
+  put `tt-cli`'s copy at `~/.local/share/tenstorrent/tools/tt-inference-server-<version>/src/`
+  — `platformdirs.user_data_dir("tenstorrent")` resolves to `~/.local/share/tenstorrent`,
+  confirmed by running it. This is a **different, separate checkout** from
+  `~/.local/lib/tt-inference-server`, the path `tt-installer` creates and every other chapter's
+  manual `run.py` command uses. `tt update` passes `--no-install-inference-server` specifically
+  so the two don't collide, which also means: they don't sync either.
+* `tools/supplement.toml` has **no `tt-studio` entry at all**. `_APP_CLONES = ("tt-inference-server",
+  "tt-studio")` in `backends/installer.py` is used only by `warn_unmanaged_app_clones()` — which
+  suggests deleting an existing `~/.local/lib/tt-studio` for disk space, never updating it.
+  `tt update` passes `--no-install-studio` unconditionally. Net effect: `tt-cli` cannot install,
+  update, or otherwise manage tt-studio, in any location, ever.
+* No `tt-metalium`/container-image reference anywhere in `tt-cli`'s registry either — `tt update`
+  doesn't touch the `tt-metalium` docker image either.
+
+**Fixed:** `agents.md`'s "Upgrading a QB2" section no longer presents `tt update` as an
+alternative to the four manual steps — it now says plainly that steps 3 (tt-studio /
+tt-inference-server `git pull`) and 4 (`docker pull` the Metalium image) are required
+regardless of whether `tt-cli` is in use, with the two-checkout fact spelled out inline.
+`06-using-tt-cli.md` gained a matching section ("`tt update` does not touch tt-studio, and
+gets its own copy of tt-inference-server") with the exact paths, plus a one-line correction to
+"Serving a model the short way" (it was claiming "the same tt-inference-server underneath",
+which is only true in the sense of same upstream project — not the same checkout).
+
+**Also fixed (Copilot's other finding, same review):** `uv tool update-shell` only rewrites
+shell startup files for *future* shells — it cannot change the `PATH` of the shell the reader
+is already sitting in, so the chapter's own `tt --help` right after it could fail or silently
+invoke whatever else answers to `tt`. Added an explicit `export PATH="$HOME/.local/bin:$PATH"`
+to the install block, with a note that the rest of the chapter's examples assume that same
+session rather than repeating the export in every block.
+
+Verified: `npx eleventy` clean, `node --test` 14/14, no leaked `:::` in `_site/`.

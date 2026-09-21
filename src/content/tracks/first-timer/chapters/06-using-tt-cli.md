@@ -20,9 +20,12 @@ Everything so far — `tt-smi`, `tt-installer`, `tt-metalium`, `tt-inference-ser
 
 ```bash
 uv tool install tenstorrent
-uv tool update-shell   # makes sure ~/.local/bin is on PATH
+uv tool update-shell            # puts ~/.local/bin on PATH for future shells
+export PATH="$HOME/.local/bin:$PATH"   # ...and this one, right now
 tt --help
 ```
+
+`uv tool update-shell` edits shell startup files (`.bashrc`, `.zshrc`) — it can't change the `PATH` of the shell you're already sitting in. Without that `export`, `tt --help` in the same terminal either fails outright or picks up something else already on `PATH` (see below). The `export` only matters for this one session; a new terminal after `update-shell` has run once already has `~/.local/bin` in place. The rest of this chapter's examples assume that same session, so do this once, up front.
 
 No `uv`? A QB2 that's already run `tt-installer` has it at `~/.local/bin/uv` (the installer's `--use-uv` python path pulls it in as a side effect), so this is usually already true on a real box. On a fresh Ubuntu machine, get it first:
 
@@ -83,6 +86,18 @@ This is the part worth trusting rather than guessing about, so here's what's act
 
 So: **the happy path already avoids what you're worried about.** Just run `tt update` without `--force` and without naming an older version, and firmware only ever moves forward.
 
+### `tt update` does not touch tt-studio, and gets its own copy of tt-inference-server
+
+This matters if you've already been through [Installing the Stack](/first-timer/04-installing-the-stack/): `tt update` isn't a drop-in replacement for re-running `tt-installer` by hand, because the two disagree about where — and whether — two specific pieces of the stack live.
+
+* **tt-inference-server: two separate checkouts, not one shared copy.** `tt-installer` clones it to `~/.local/lib/tt-inference-server` — the path this guide's manual `run.py` commands use everywhere else. `tt-cli` passes `--no-install-inference-server` to `tt-installer` and instead manages its **own** pinned clone, at `~/.local/share/tenstorrent/tools/tt-inference-server-<version>/src/` (`~/.local/share/tenstorrent/tools/tt-inference-server-v0.22.0/src/run.py` on this box) — confirmed straight from `tt-cli`'s source (`tools/supplement.toml`'s `[tools.tt-inference-server]` entry, `tools/installers.py`'s `GitVenvInstaller`). `tt serve` and `tt model` commands go through this second copy. Both can exist on the same machine at different versions; neither one updates the other.
+* **tt-studio isn't managed by `tt-cli` at all.** `tt update` also passes `--no-install-studio`, but there's no matching `tt-studio` entry anywhere in `tt-cli`'s own tool registry — it doesn't install a copy, doesn't track a version, and doesn't update one. If `~/.local/lib/tt-studio` already exists from an earlier plain `tt-installer` run, `tt update` prints a one-time warning suggesting you delete it for disk space; it never offers to update it.
+
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+So <strong><code>tt update</code> alone will not keep tt-studio current</strong>, and won't touch the <code>~/.local/lib/tt-inference-server</code> copy this guide's other manual <code>run.py</code> examples point at. If you use both tt-cli and tt-studio, keep running <code>git -C ~/.local/lib/tt-studio pull</code> and <code>git -C ~/.local/lib/tt-inference-server pull</code> yourself (see <a href="/agents.md">agents.md</a>'s upgrade section) — <code>tt update</code> covers the system stack and tt-cli's own tools, not those two.
+</div>
+
 ## Validating it worked
 
 ```bash
@@ -122,7 +137,7 @@ tt launch openwebui                 # in another — auto-discovers what's being
 
 `tt model info Qwen3-32B` already reports `cached yes` on a box with the pre-cached weights from [Your First Model](/first-timer/05-your-first-model/) — `tt serve` finds them the same way `tt-inference-server`'s `run.py` does, no re-download. (Qwen3-0.6B, the small model used for the direct TTNN device handshake in that chapter, isn't in the catalog `tt serve` draws from — same restriction as `run.py`, not a `tt-cli` limitation.)
 
-`tt model ps` shows what's running and where; `tt model stop Qwen3-32B` stops it. This is the same `tt-inference-server` underneath — `tt-cli` is just giving it one consistent front door alongside device management and updates.
+`tt model ps` shows what's running and where; `tt model stop Qwen3-32B` stops it. This runs through `tt-cli`'s own `tt-inference-server` checkout — see **`tt update` does not touch tt-studio** above — not the `~/.local/lib/tt-inference-server` copy the manual `run.py` commands elsewhere in this guide use, though both wrap the same underlying project.
 
 ---
 
