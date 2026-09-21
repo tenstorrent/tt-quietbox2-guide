@@ -516,3 +516,16 @@ install/`tt-smi`/`tt-flash` convergence and the firmware-compare logic were veri
 real; the full system-stack converge is documented as something to run directly on hardware,
 never nested in another container, consistent with `tt-developer-image`'s own stated
 host/container split.
+
+**Merged forward against `main`'s `use_that_model` PR #23** (landed after this chapter was
+written): `first-timer/05` now teaches the pre-cached Qwen3-32B as the recommended serving
+path and explicitly says Qwen3-0.6B isn't in `tt-inference-server`'s catalog at all.
+`06-using-tt-cli.md`'s `tt serve` example originally used Qwen3-0.6B — checked live
+(`tt model info Qwen3-0.6B` → not in tt-cli's catalog either; `tt model info Qwen3-32B` →
+`servable yes`, `cached yes (90.6 GB)`) and switched the example to Qwen3-32B, which also ties
+the two chapters together: `tt serve` picks up the same pre-cached weights `run.py` does, no
+re-download, verified rather than assumed. `personas.json`'s conflict was just ch05's
+corrected `time: 14` (from the PR #23 timing audit) landing next to this chapter's insertion —
+kept both. CLAUDE.md's own conflict was two session-log entries appended at the same
+location; reordered chronologically (PR #23's 09-17 entry before this chapter's 09-21 one)
+rather than picking one.
