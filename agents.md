@@ -120,7 +120,7 @@ installer. `--dry-run --mode-non-interactive` previews the plan safely.
 | `hf: command not found` | `huggingface_hub` is not part of the stack | Install it outside `~/.tenstorrent-venv` (e.g. `uv tool install huggingface_hub`) |
 | `tt-studio` / `tt-metalium` / `tt-forge`: command not found | `~/.local/bin` not on PATH (zsh never reads `~/.profile`) | `export PATH="$HOME/.local/bin:$PATH"`, and add it to `~/.zshrc`. tt-installer warns about this at install time |
 | `apt` refuses Tenstorrent packages | `cat /etc/apt/keyrings/tt-pkg-key.asc` | Re-download the key to `/etc/apt/keyrings/tt-pkg-key.asc` from `https://ppa.tenstorrent.com/tt-pkg-key.asc`, then `sudo apt-get update` |
-| `tt --help` shows `discover`/`pair`/`run --host` instead of `device`/`model`/`serve`/`update` | `which -a tt` | A different tool ("Operator CLI for tt-station") is shadowing `tt-cli` — confirmed baked into the `tenstorrent/qb2-env` dev-image at `/usr/bin/tt`. Non-login shells skip `~/.profile`, so `~/.local/bin` (where `uv tool install tenstorrent` puts its shim) never gets ahead of `/usr/bin` on `PATH`. Use a login shell (`bash -l`) or fix `PATH` order |
+| `tt --help` doesn't show `device`/`model`/`serve`/`update` | `which -a tt` | Something else on `PATH` answers to `tt` first — `tt` is a short name and more than one tool has claimed it. Non-login shells skip `~/.profile`, so `~/.local/bin` (where `uv tool install tenstorrent` puts `tt-cli`'s shim) never gets ahead of whatever else is on `PATH`. Use a login shell (`bash -l`) or `export PATH="$HOME/.local/bin:$PATH"`; don't uninstall the other tool, that doesn't fix PATH order |
 
 ## Content Map by Task
 

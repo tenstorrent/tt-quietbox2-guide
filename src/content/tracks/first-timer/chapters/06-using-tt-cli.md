@@ -11,7 +11,7 @@ Everything so far — `tt-smi`, `tt-installer`, `tt-metalium`, `tt-inference-ser
 
 <div class="callout callout--warn">
 <span class="callout-icon illustrated-only">⚠️</span>
-<strong>Don't confuse this with the <code>tt</code> you may already have.</strong> Some Tenstorrent images and lesson environments ship a different <code>tt</code> — a remote "operator" CLI for pairing with and controlling boxes over the network (subcommands like <code>discover</code>, <code>pair</code>, <code>run --host</code>). If <code>tt --help</code> shows those instead of <code>device</code>/<code>model</code>/<code>serve</code>/<code>update</code>, something earlier on your <code>PATH</code> is shadowing the CLI this chapter describes — see <strong>A naming collision to watch for</strong> below.
+<strong>Already have something answering to <code>tt</code>?</strong> `tt` is a short, popular name, and more than one Tenstorrent tool has claimed it over time. Run <code>tt --help</code> after installing — if the commands don't look like <code>device</code>/<code>model</code>/<code>serve</code>/<code>update</code>, something earlier on your <code>PATH</code> is answering instead. See <strong>If <code>tt</code> already means something else</strong> below.
 </div>
 
 ## Installing it
@@ -32,9 +32,16 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 `pipx install tenstorrent` or a plain venv + `pip install tenstorrent` both work too — see [DEVELOPERS.md](https://github.com/tenstorrent/tt-cli/blob/main/docs/DEVELOPERS.md#other-ways-to-install-tt-cli) for the full list. Whatever you pick, keep `tt-cli` in a venv with nothing else in it — that isolation is what lets `tt self update` upgrade it in place later instead of refusing.
 
-### A naming collision to watch for
+### If `tt` already means something else
 
-Verified on the `tenstorrent/qb2-env` container image used to test this chapter: it also ships a *different* tool at `/usr/bin/tt` — an "Operator CLI for tt-station" (network pairing: `discover`, `pair`, `run --host`, …), unrelated to the CLI this chapter covers. `uv tool install` puts its own shim at `~/.local/bin/tt`, and on a normal interactive shell `~/.local/bin` comes before `/usr/bin` in `PATH`, so the install "just works" — but a non-login shell (a plain `docker run <image> bash -c '...'`, some CI runners) skips `~/.profile` entirely and can leave `/usr/bin/tt` shadowing the one you just installed. Check with `which -a tt` if `tt --help` ever looks unfamiliar; the fix is either a login shell (`bash -l`) or making sure `~/.local/bin` is first on `PATH`.
+`uv tool install` puts its shim at `~/.local/bin/tt`. On a normal interactive shell, `~/.local/bin` comes before the rest of `PATH`, so the install "just works" — but a non-login shell (a plain `docker run <image> bash -c '...'`, some CI runners) skips `~/.profile` entirely and can leave whatever else answers to `tt` in place.
+
+If `tt --help` doesn't look like this chapter:
+
+1. **Find out what's actually running:** `which -a tt` lists every `tt` on your `PATH`, in the order the shell would try them.
+2. **Check `~/.local/bin` comes first.** If it doesn't, either start a login shell (`bash -l`) or fix the order yourself: `export PATH="$HOME/.local/bin:$PATH"`.
+3. **In the meantime, call it by its full path** — `~/.local/bin/tt --help` — to confirm the install itself worked before chasing `PATH`.
+4. **Don't uninstall the other tool** to make room. `uv tool uninstall tenstorrent` and reinstalling won't change the PATH order either — the fix is always PATH order, not which tool is present.
 
 ## Upgrading the stack
 
