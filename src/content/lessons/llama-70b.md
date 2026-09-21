@@ -267,7 +267,7 @@ The server exposes an OpenAI-compatible API on port 8000. Test it with curl:
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Llama-3.3-70B-Instruct",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
     "messages": [
       {
         "role": "user",
@@ -284,7 +284,7 @@ Or pipe straight to the content:
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Llama-3.3-70B-Instruct",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
     "messages": [{"role": "user", "content": "Write a haiku about Blackhole silicon."}]
   }' | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])"
 ```
@@ -304,7 +304,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="Llama-3.3-70B-Instruct",
+    model="meta-llama/Llama-3.3-70B-Instruct",
     messages=[
         {
             "role": "system",
@@ -407,7 +407,7 @@ The reasoning model produces output in a different format: it wraps its thinking
 
 ```python
 response = client.chat.completions.create(
-    model="DeepSeek-R1-Distill-Llama-70B",
+    model="deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
     messages=[{
         "role": "user",
         "content": "A train travels at 60 mph for 2 hours, then 90 mph for 1.5 hours. "

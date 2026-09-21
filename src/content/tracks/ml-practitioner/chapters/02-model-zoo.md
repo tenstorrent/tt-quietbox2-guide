@@ -149,14 +149,14 @@ the same way vLLM passes any other kwarg into the tokenizer's `apply_chat_templa
 ```python
 # Thinking mode (default for Qwen3) — slower, more thorough
 response = client.chat.completions.create(
-    model="Qwen3-32B",
+    model="Qwen/Qwen3-32B",
     messages=[{"role": "user", "content": "What is 17 * 23 + 48?"}],
     extra_body={"chat_template_kwargs": {"enable_thinking": True}}
 )
 
 # Non-thinking mode — faster, direct answers
 response = client.chat.completions.create(
-    model="Qwen3-32B",
+    model="Qwen/Qwen3-32B",
     messages=[{"role": "user", "content": "What is 17 * 23 + 48?"}],
     extra_body={"chat_template_kwargs": {"enable_thinking": False}}
 )

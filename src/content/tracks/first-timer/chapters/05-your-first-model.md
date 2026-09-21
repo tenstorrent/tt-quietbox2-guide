@@ -32,7 +32,23 @@ When that Python snippet ran without errors, the Blackhole chip opened a dispatc
 
 <p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;"><code>ttnn.open_device(0)</code> — what happens inside the chip.</p>
 
+{% chunk "precached-model" %}
+
 ## Serving a Model with vLLM
+
+:::callout type="warn"
+**Already started Qwen3-32B above? Skip this section.** It launches a *second* model on the
+same four chips and the same port 8000, and that will fail — the chips have one owner at a
+time. This section is the path for serving a model other than the one that shipped. If you took the
+pre-cached route, the examples below still apply with two *different* substitutions — they are
+easy to cross-wire:
+
+- **`run.py --model`** takes the short spec name: `Qwen3-32B`, never the repo id.
+- **The `"model"` field in `curl` and the Python SDK** takes the full id the server reports:
+  `Qwen/Qwen3-32B`, where the examples say `meta-llama/Llama-3.1-8B-Instruct`.
+
+`curl -s http://localhost:8000/v1/models` settles the second one on your box.
+:::
 
 The fastest path to actually generating text is vLLM. It handles model loading,
 tokenization, batching, and presents an OpenAI-compatible HTTP API.
@@ -64,9 +80,12 @@ supports: not every model is built for every topology.
 :::
 
 :::callout type="tip"
-If you already pulled weights with `hf download`, add `--host-hf-cache` so the server
-mounts `~/.cache/huggingface` read-only instead of downloading its own copy into a
-Docker volume.
+`--host-hf-cache` reuses weights you pulled yourself with `hf download`, mounting the
+Hugging Face cache read-only instead of downloading a second copy into a Docker volume. It
+resolves `HOST_HF_HOME`, then `HF_HOME`, then `~/.cache/huggingface` — so it only helps once
+you have actually downloaded something. It is **not** how you reach the Qwen3-32B that
+shipped with the box: those weights live outside any Hugging Face cache, and
+`--host-weights-dir` is the flag for them. See above.
 :::
 
 :::callout type="tip"

@@ -109,11 +109,13 @@ As of <code>v1.0.1</code>, <code>tt model list</code> takes <code>--community</c
 Once `tt update` has converged the system stack, the rest of the workflow you saw in [Your First Model](/first-timer/05-your-first-model/) collapses into two commands:
 
 ```bash
-tt serve Qwen3-0.6B --port 8000    # in one terminal
+tt serve Qwen3-32B --port 8000     # in one terminal
 tt launch openwebui                 # in another — auto-discovers what's being served
 ```
 
-`tt model ps` shows what's running and where; `tt model stop Qwen3-0.6B` stops it. This is the same `tt-inference-server` underneath — `tt-cli` is just giving it one consistent front door alongside device management and updates.
+`tt model info Qwen3-32B` already reports `cached yes` on a box with the pre-cached weights from [Your First Model](/first-timer/05-your-first-model/) — `tt serve` finds them the same way `tt-inference-server`'s `run.py` does, no re-download. (Qwen3-0.6B, the small model used for the direct TTNN device handshake in that chapter, isn't in the catalog `tt serve` draws from — same restriction as `run.py`, not a `tt-cli` limitation.)
+
+`tt model ps` shows what's running and where; `tt model stop Qwen3-32B` stops it. This is the same `tt-inference-server` underneath — `tt-cli` is just giving it one consistent front door alongside device management and updates.
 
 ---
 
