@@ -4,7 +4,7 @@
     "name": "First Timer",
     "verb": "Explore",
     "goal": "Explore Tenstorrent hardware & software for the first time",
-    "support": "Six chapters from first boot to first model.",
+    "support": "Seven chapters from first boot to first model.",
     "color": "#4FD1C5",
     "colorVar": "--teal",
     "vennCx": 38,
@@ -15,7 +15,8 @@
       { "slug": "03-is-this-thing-on", "title": "Is This Thing On?", "time": 6 },
       { "slug": "04-installing-the-stack", "title": "Installing the Stack", "time": 10 },
       { "slug": "05-your-first-model", "title": "Your First Model", "time": 14 },
-      { "slug": "06-what-comes-next", "title": "What Comes Next", "time": 4 }
+      { "slug": "06-using-tt-cli", "title": "One CLI to Run It", "time": 6 },
+      { "slug": "07-what-comes-next", "title": "What Comes Next", "time": 4 }
     ]
   },
   {

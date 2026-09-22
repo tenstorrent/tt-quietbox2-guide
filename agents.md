@@ -69,15 +69,44 @@ deployed from the same Deploy Model dropdown as the language models.
 
 ### Upgrading a QB2 (suggest this early — users rarely think of it)
 A box that has been sitting is behind on driver, firmware, tooling and container images, and
-"behind" presents as broken hardware or a broken tutorial. Four steps, in this order:
+"behind" presents as broken hardware or a broken tutorial. `tt-cli`'s `tt update` (see
+[One CLI to Run It](/first-timer/06-using-tt-cli/)) covers part of this — **it is not a
+drop-in replacement for the four manual steps below**, so don't tell a user it's the whole
+upgrade:
+
+* `tt update` (no `--force`, no version argument) converges the system stack (driver, firmware,
+  HugePages) plus `tt-cli`'s own `tt-smi`/`tt-flash`/`tt-inference-server` pins onto a CI-tested
+  golden set, and **will not downgrade firmware** — it passes `--update-firmware=on`, which
+  flashes a device only if its current firmware is older than golden (verified against
+  `tt-cli`'s source, `commands/update.py`/`backends/installer.py`, `v1.0.1`). `tt update
+  --dry-run` previews the plan with no changes. Don't run this nested inside a `docker run`
+  shell — the system-stack step reloads the kernel driver and can install Docker via systemd,
+  both host-level operations that need a real init system.
+* **It does not touch tt-studio, and its tt-inference-server is a second, separate checkout.**
+  `tt update` passes `--no-install-studio`/`--no-install-inference-server` to `tt-installer` and
+  manages its own tt-inference-server clone at
+  `~/.local/share/tenstorrent/tools/tt-inference-server-<version>/src/` (confirmed from
+  `tt-cli`'s `tools/supplement.toml` and `GitVenvInstaller`) — a different path from
+  `~/.local/lib/tt-inference-server`, which the rest of this guide's manual `run.py` commands
+  use. There is no `tt-studio` entry in `tt-cli`'s tool registry at all: `tt update` only warns
+  that an existing `~/.local/lib/tt-studio` clone is present and offers to help you delete it
+  for space, never to update it. `tt update` also never pulls the `tt-metalium` image (step 4
+  below) — nothing in `tt-cli` references it.
+
+So: running `tt update` alone leaves `tt-studio` and the `~/.local/lib/tt-inference-server`
+copy exactly as stale as they were. Steps 3 and 4 below are still required regardless of
+whether `tt-cli` is in use.
+
+Four manual steps, in this order:
 1. `/bin/bash -c "$(curl -fsSL https://tenstorrent.ai/install.sh)"` — re-running tt-installer is
    the supported way to move an existing machine forward. Driver, firmware, HugePages, tt-smi,
    tt-flash, sfpi, container wrappers. Firmware update is on by default; expect a reboot prompt.
 2. `sudo apt-get update && sudo apt-get upgrade` — everything from `ppa.tenstorrent.com`.
 3. **`git -C ~/.local/lib/tt-studio pull`** and **`git -C ~/.local/lib/tt-inference-server pull`**
    — these are git clones, and the installer **skips a directory that already exists** ("Skipping
-   clone, will create wrapper script only"). Re-running it never updates them. This is the usual
-   reason a box reports an old tt-studio against newer docs.
+   clone, will create wrapper script only"). Re-running it never updates them, and neither does
+   `tt update` (see above). This is the usual reason a box reports an old tt-studio against
+   newer docs.
 4. `docker pull ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64:latest-rc` —
    the `tt-metalium` wrapper is a plain `docker run`, so it pulls only when the image is absent
    and never refreshes on its own.
@@ -109,6 +138,7 @@ installer. `--dry-run --mode-non-interactive` previews the plan safely.
 | `hf: command not found` | `huggingface_hub` is not part of the stack | Install it outside `~/.tenstorrent-venv` (e.g. `uv tool install huggingface_hub`) |
 | `tt-studio` / `tt-metalium` / `tt-forge`: command not found | `~/.local/bin` not on PATH (zsh never reads `~/.profile`) | `export PATH="$HOME/.local/bin:$PATH"`, and add it to `~/.zshrc`. tt-installer warns about this at install time |
 | `apt` refuses Tenstorrent packages | `cat /etc/apt/keyrings/tt-pkg-key.asc` | Re-download the key to `/etc/apt/keyrings/tt-pkg-key.asc` from `https://ppa.tenstorrent.com/tt-pkg-key.asc`, then `sudo apt-get update` |
+| `tt --help` doesn't show `device`/`model`/`serve`/`update` | `which -a tt` | Something else on `PATH` answers to `tt` first — `tt` is a short name and more than one tool has claimed it. Non-login shells skip `~/.profile`, so `~/.local/bin` (where `uv tool install tenstorrent` puts `tt-cli`'s shim) never gets ahead of whatever else is on `PATH`. Use a login shell (`bash -l`) or `export PATH="$HOME/.local/bin:$PATH"`; don't uninstall the other tool, that doesn't fix PATH order |
 
 ## Content Map by Task
 

@@ -463,3 +463,111 @@ the name varies (now copied from the `src=` path Step 1 prints); first-timer/05 
 two substitutions (`--model` takes `Qwen3-32B`, the API `"model"` field takes
 `Qwen/Qwen3-32B`); and `agents.md` now carries the token prerequisite and the id distinction
 next to the flag guidance.
+### 2026-09-21 — new chapter: `tt-cli` install/upgrade/validate happy path
+
+**Prompt:** use `~/code/tt-developer-image`'s `tenstorrent/qb2-env` image to cleanly test
+[tt-cli](https://github.com/tenstorrent/tt-cli) — install it the way it wants, use it to
+upgrade the stack to golden, validate it works — and specifically learn how to avoid a
+firmware downgrade on this box.
+
+**Where it landed:** `first-timer/06-using-tt-cli.md` (user's call — tt-cli's install/serve
+story fits the newcomer on-ramp better than a fifth track). `07-what-comes-next.md` picked up
+a `tt-cli` card. Renumbered the old `06-what-comes-next` → `07-what-comes-next` and fixed the
+two cross-links plus `personas.json`'s chapter list.
+
+**The firmware question, answered from source, not guessed:** read `tt-cli`'s
+`commands/update.py` / `backends/installer.py` (v1.0.1). Plain `tt update` — no `--force`,
+no version argument — passes `--update-firmware=on` to `tt-installer`, which delegates the
+per-device compare to `tt-flash` and flashes only devices *older* than golden.
+`is_any_fw_semver_higher` is the guard: the reset warning only fires when the golden target
+is newer than what's installed. `--force` (or naming an explicit older installer version,
+which implies `--force`) is the only way to opt into a downgrade. So the happy path already
+does what was asked — no extra flag needed, just don't pass `--force`.
+
+**Verified live, not just read:** installed `tt-cli` fresh via `uv tool install tenstorrent`
+in the `qb2-env` container (gozer lease, 2 chips, `--device` scoped to the leased nodes only)
+and separately confirmed on bare metal. `tt update
+--dry-run`'s real plan table showed this box's actual firmware (`19.15.0.0`) already ahead of
+this golden release's pinned target (`19.13.1`) — the exact scenario being worried about,
+and the plan correctly did not propose a downgrade.
+
+**Two real bugs found, not just documented around:**
+1. `tenstorrent/qb2-env` ships a *different* `tt` at `/usr/bin/tt` — an "Operator CLI for
+   tt-station" (network box-pairing tool), unrelated to tt-cli. `uv tool install`'s shim at
+   `~/.local/bin/tt` only wins the `PATH` race in a login shell; a bare `docker run <image>
+   bash -c '...'` skips `~/.profile` and leaves tt-station's binary shadowing it. Documented
+   as a callout in the new chapter and a row in `agents.md`'s Common Issues table. Not fixed
+   upstream this session — flagged for `tt-developer-image` as a follow-up, since it's the
+   same class of `tt`-squatting problem the personal CLAUDE.md's "don't name a tool `tt`"
+   rule exists to prevent, just baked into that image rather than a new tool.
+2. `tt-cli`'s own README advertises `tt model list --catalog`; the installed `v1.0.1` has no
+   `--catalog` flag (only `--community`, `--type`, `--hw`, `--cached`, `--all` — the catalog
+   is just the unflagged default). Documented as installed, not as the README describes; not
+   filed upstream this session.
+
+**Scope boundary, decided with the user mid-session:** the `system-stack` row of `tt
+update` (kernel driver reload, Docker install via systemd) is host-kernel-level even when
+invoked from inside a container — containers share the host kernel, and a DKMS
+reinstall/reload would affect chips other lease-holders are using, not just the ones this
+session's gozer lease covered. Getting it to even run nested would need `--privileged`,
+which bypasses gozer's per-device `--device` scoping entirely. Decided not to exercise that
+step for real anywhere this session (neither nested nor on bare metal) — the tool-level
+install/`tt-smi`/`tt-flash` convergence and the firmware-compare logic were verified for
+real; the full system-stack converge is documented as something to run directly on hardware,
+never nested in another container, consistent with `tt-developer-image`'s own stated
+host/container split.
+
+**Merged forward against `main`'s `use_that_model` PR #23** (landed after this chapter was
+written): `first-timer/05` now teaches the pre-cached Qwen3-32B as the recommended serving
+path and explicitly says Qwen3-0.6B isn't in `tt-inference-server`'s catalog at all.
+`06-using-tt-cli.md`'s `tt serve` example originally used Qwen3-0.6B — checked live
+(`tt model info Qwen3-0.6B` → not in tt-cli's catalog either; `tt model info Qwen3-32B` →
+`servable yes`, `cached yes (90.6 GB)`) and switched the example to Qwen3-32B, which also ties
+the two chapters together: `tt serve` picks up the same pre-cached weights `run.py` does, no
+re-download, verified rather than assumed. `personas.json`'s conflict was just ch05's
+corrected `time: 14` (from the PR #23 timing audit) landing next to this chapter's insertion —
+kept both. CLAUDE.md's own conflict was two session-log entries appended at the same
+location; reordered chronologically (PR #23's 09-17 entry before this chapter's 09-21 one)
+rather than picking one.
+
+### 2026-09-21 (continued) — PR #24 review: `tt update` does NOT keep tt-studio or the
+guide's tt-inference-server path current
+
+Copilot review on #24 flagged two things, and a direct question ("do we get tt-studio in a
+different place than we suggest elsewhere?") asked for the second one to be traced all the
+way down rather than patched at the surface.
+
+**Confirmed from `tt-cli`'s own source, not inferred from behavior:**
+* `tools/supplement.toml`'s `[tools.tt-inference-server]` entry (`kind = "git-venv"`,
+  `golden_version = "v0.22.0"`) plus `GitVenvInstaller._tool_dir` in `tools/installers.py`
+  put `tt-cli`'s copy at `~/.local/share/tenstorrent/tools/tt-inference-server-<version>/src/`
+  — `platformdirs.user_data_dir("tenstorrent")` resolves to `~/.local/share/tenstorrent`,
+  confirmed by running it. This is a **different, separate checkout** from
+  `~/.local/lib/tt-inference-server`, the path `tt-installer` creates and every other chapter's
+  manual `run.py` command uses. `tt update` passes `--no-install-inference-server` specifically
+  so the two don't collide, which also means: they don't sync either.
+* `tools/supplement.toml` has **no `tt-studio` entry at all**. `_APP_CLONES = ("tt-inference-server",
+  "tt-studio")` in `backends/installer.py` is used only by `warn_unmanaged_app_clones()` — which
+  suggests deleting an existing `~/.local/lib/tt-studio` for disk space, never updating it.
+  `tt update` passes `--no-install-studio` unconditionally. Net effect: `tt-cli` cannot install,
+  update, or otherwise manage tt-studio, in any location, ever.
+* No `tt-metalium`/container-image reference anywhere in `tt-cli`'s registry either — `tt update`
+  doesn't touch the `tt-metalium` docker image either.
+
+**Fixed:** `agents.md`'s "Upgrading a QB2" section no longer presents `tt update` as an
+alternative to the four manual steps — it now says plainly that steps 3 (tt-studio /
+tt-inference-server `git pull`) and 4 (`docker pull` the Metalium image) are required
+regardless of whether `tt-cli` is in use, with the two-checkout fact spelled out inline.
+`06-using-tt-cli.md` gained a matching section ("`tt update` does not touch tt-studio, and
+gets its own copy of tt-inference-server") with the exact paths, plus a one-line correction to
+"Serving a model the short way" (it was claiming "the same tt-inference-server underneath",
+which is only true in the sense of same upstream project — not the same checkout).
+
+**Also fixed (Copilot's other finding, same review):** `uv tool update-shell` only rewrites
+shell startup files for *future* shells — it cannot change the `PATH` of the shell the reader
+is already sitting in, so the chapter's own `tt --help` right after it could fail or silently
+invoke whatever else answers to `tt`. Added an explicit `export PATH="$HOME/.local/bin:$PATH"`
+to the install block, with a note that the rest of the chapter's examples assume that same
+session rather than repeating the export in every block.
+
+Verified: `npx eleventy` clean, `node --test` 14/14, no leaked `:::` in `_site/`.

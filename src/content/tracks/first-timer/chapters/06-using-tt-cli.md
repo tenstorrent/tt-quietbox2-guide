@@ -1,0 +1,144 @@
+---
+title: One CLI to Run It
+currentChapter: 06-using-tt-cli
+permalink: /first-timer/06-using-tt-cli/
+---
+{% set persona = personas | findPersona(personaId) %}
+
+# One CLI to Run It
+
+Everything so far — `tt-smi`, `tt-installer`, `tt-metalium`, `tt-inference-server`, `tt-studio` — is a separate tool with its own flags and its own mental model. [`tt-cli`](https://github.com/tenstorrent/tt-cli) (the `tt` command) is Tenstorrent's answer to that sprawl: one entry point that either does the thing itself or delegates to the tool that already does.
+
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+<strong>Already have something answering to <code>tt</code>?</strong> `tt` is a short, popular name, and more than one Tenstorrent tool has claimed it over time. Run <code>tt --help</code> after installing — if the commands don't look like <code>device</code>/<code>model</code>/<code>serve</code>/<code>update</code>, something earlier on your <code>PATH</code> is answering instead. See <strong>If <code>tt</code> already means something else</strong> below.
+</div>
+
+## Installing it
+
+`tt-cli` is a Python package (`tenstorrent` on PyPI), and it wants to live in its own isolated environment so it can safely update itself later:
+
+```bash
+uv tool install tenstorrent
+uv tool update-shell            # puts ~/.local/bin on PATH for future shells
+export PATH="$HOME/.local/bin:$PATH"   # ...and this one, right now
+tt --help
+```
+
+`uv tool update-shell` edits shell startup files (`.bashrc`, `.zshrc`) — it can't change the `PATH` of the shell you're already sitting in. Without that `export`, `tt --help` in the same terminal either fails outright or picks up something else already on `PATH` (see below). The `export` only matters for this one session; a new terminal after `update-shell` has run once already has `~/.local/bin` in place. The rest of this chapter's examples assume that same session, so do this once, up front.
+
+No `uv`? A QB2 that's already run `tt-installer` has it at `~/.local/bin/uv` (the installer's `--use-uv` python path pulls it in as a side effect), so this is usually already true on a real box. On a fresh Ubuntu machine, get it first:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+`pipx install tenstorrent` or a plain venv + `pip install tenstorrent` both work too — see [DEVELOPERS.md](https://github.com/tenstorrent/tt-cli/blob/main/docs/DEVELOPERS.md#other-ways-to-install-tt-cli) for the full list. Whatever you pick, keep `tt-cli` in a venv with nothing else in it — that isolation is what lets `tt self update` upgrade it in place later instead of refusing.
+
+### If `tt` already means something else
+
+`uv tool install` puts its shim at `~/.local/bin/tt`. On a normal interactive shell, `~/.local/bin` comes before the rest of `PATH`, so the install "just works" — but a non-login shell (a plain `docker run <image> bash -c '...'`, some CI runners) skips `~/.profile` entirely and can leave whatever else answers to `tt` in place.
+
+If `tt --help` doesn't look like this chapter:
+
+1. **Find out what's actually running:** `which -a tt` lists every `tt` on your `PATH`, in the order the shell would try them.
+2. **Check `~/.local/bin` comes first.** If it doesn't, either start a login shell (`bash -l`) or fix the order yourself: `export PATH="$HOME/.local/bin:$PATH"`.
+3. **In the meantime, call it by its full path** — `~/.local/bin/tt --help` — to confirm the install itself worked before chasing `PATH`.
+4. **Don't uninstall the other tool** to make room. `uv tool uninstall tenstorrent` and reinstalling won't change the PATH order either — the fix is always PATH order, not which tool is present.
+
+## Upgrading the stack
+
+`tt update` is the one command that replaces "check tt-smi's changelog, check tt-installer's changelog, remember which `.deb` versions are compatible with which firmware." It converges your system onto a single tested **golden set** — one pinned version per component (firmware, kernel driver, `tt-smi`, `tt-flash`, and more), published and CI-validated by [tt-sw-manifest](https://github.com/tenstorrent/tt-sw-manifest):
+
+```bash
+tt update --dry-run   # show the plan, change nothing
+tt update             # apply it (prompts before anything that resets a device)
+```
+
+`--dry-run` prints a table like this (captured on a real QB2 board):
+
+```
+  Update plan (goldens: bundled supplement.toml + golden.json v1.0.0 (cached))
+┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ component           ┃ kind     ┃ installed ┃ golden               ┃ action   ┃
+┡━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ tt-flash            │ uv-tool  │ —         │ 3.10.0               │ install  │
+│ tt-smi              │ uv-tool  │ —         │ 6.1.0                │ install  │
+│ system-stack        │ system   │ —         │ firmware 19.13.1,    │ converge │
+│                     │          │           │ kmd 2.10.0, …        │          │
+└─────────────────────┴──────────┴───────────┴──────────────────────┴──────────┘
+```
+
+`tt-flash`/`tt-smi` are pulled in as their own isolated `uv`-managed tools under `~/.local/share/tenstorrent/` — separate from whatever's already in `~/.tenstorrent-venv`, so the two can't conflict. The `system-stack` row is where `tt update` hands off to `tt-installer` (which needs `sudo`) to converge drivers, firmware, and the rest of the apt-delivered pieces.
+
+<div class="callout callout--tip">
+<span class="callout-icon illustrated-only">✅</span>
+<strong>Not run nested in a container.</strong> The <code>system-stack</code> row reloads the kernel driver and can install/enable Docker via systemd — real host-level operations. Run <code>tt update</code> on the machine itself, not inside a <code>docker run</code> shell (which typically has no systemd/PID 1 to hand the install off to, and would fail partway through anyway). The <code>tt-cli</code>-managed tool rows (<code>tt-flash</code>, <code>tt-smi</code>) install fine either way.
+</div>
+
+### Firmware will not be downgraded by accident
+
+This is the part worth trusting rather than guessing about, so here's what's actually in the source (`tt-cli`'s `commands/update.py` / `backends/installer.py`, current as of `v1.0.1`):
+
+* Plain `tt update` — no `--force`, no version argument — passes `--update-firmware=on` to `tt-installer`. That flag hands the per-device version check to `tt-flash`, which **flashes only devices whose running firmware is older than the golden bundle.** A device already at or ahead of golden is left alone.
+* `--force` is what opts into a downgrade — it's the flag whose help text literally says "even when that means a downgrade." Passing an explicit `tt update <version>` (an older installer release) implies `--force` too, "since an explicit version means you know what you're doing."
+* Confirmed on a real board during testing: this box's firmware (`19.15.0.0`) was already newer than this golden release's pinned target (`19.13.1`). A plain `tt update --yes` printed the standard "could not confirm current firmware, continue?" prompt (because `tt-smi` wasn't installed *yet* at plan time) but — per the source path above — would not have flashed anything once it got there, since `is_any_fw_semver_higher` only trips the reset warning when the **target** is newer than what's installed.
+
+So: **the happy path already avoids what you're worried about.** Just run `tt update` without `--force` and without naming an older version, and firmware only ever moves forward.
+
+### `tt update` does not touch tt-studio, and gets its own copy of tt-inference-server
+
+This matters if you've already been through [Installing the Stack](/first-timer/04-installing-the-stack/): `tt update` isn't a drop-in replacement for re-running `tt-installer` by hand, because the two disagree about where — and whether — two specific pieces of the stack live.
+
+* **tt-inference-server: two separate checkouts, not one shared copy.** `tt-installer` clones it to `~/.local/lib/tt-inference-server` — the path this guide's manual `run.py` commands use everywhere else. `tt-cli` passes `--no-install-inference-server` to `tt-installer` and instead manages its **own** pinned clone, at `~/.local/share/tenstorrent/tools/tt-inference-server-<version>/src/` (`~/.local/share/tenstorrent/tools/tt-inference-server-v0.22.0/src/run.py` on this box) — confirmed straight from `tt-cli`'s source (`tools/supplement.toml`'s `[tools.tt-inference-server]` entry, `tools/installers.py`'s `GitVenvInstaller`). `tt serve` and `tt model` commands go through this second copy. Both can exist on the same machine at different versions; neither one updates the other.
+* **tt-studio isn't managed by `tt-cli` at all.** `tt update` also passes `--no-install-studio`, but there's no matching `tt-studio` entry anywhere in `tt-cli`'s own tool registry — it doesn't install a copy, doesn't track a version, and doesn't update one. If `~/.local/lib/tt-studio` already exists from an earlier plain `tt-installer` run, `tt update` prints a one-time warning suggesting you delete it for disk space; it never offers to update it.
+
+<div class="callout callout--warn">
+<span class="callout-icon illustrated-only">⚠️</span>
+So <strong><code>tt update</code> alone will not keep tt-studio current</strong>, and won't touch the <code>~/.local/lib/tt-inference-server</code> copy this guide's other manual <code>run.py</code> examples point at. If you use both tt-cli and tt-studio, keep running <code>git -C ~/.local/lib/tt-studio pull</code> and <code>git -C ~/.local/lib/tt-inference-server pull</code> yourself (see <a href="/agents.md">agents.md</a>'s upgrade section) — <code>tt update</code> covers the system stack and tt-cli's own tools, not those two.
+</div>
+
+## Validating it worked
+
+```bash
+tt device status      # per-board temp, power, clock — a one-line-per-chip tt-smi summary
+tt device info         # firmware bundle versions, PCI info, per device
+tt model list          # the model catalog, filtered to what this box's hardware can run
+tt self update --check # confirms tt itself is current
+```
+
+`tt device status` on a two-chip P300 board looks like this:
+
+```
+                Tenstorrent devices (driver: TT-KMD 2.11.0)
+┏━━━┳━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━┓
+┃ # ┃ Board ┃ Bus ID       ┃ Temp    ┃ Power  ┃ AIClk     ┃ Voltage ┃ DRAM ┃
+┡━━━╇━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━┩
+│ 0 │ p300c │ 0000:01:00.0 │ 41.2 °C │ 17.0 W │ 800.0 MHz │ 0.72 V  │ True │
+│ 1 │ p300c │ 0000:02:00.0 │ 43.6 °C │ 13.0 W │ 800.0 MHz │ 0.73 V  │ True │
+└───┴───────┴──────────────┴─────────┴────────┴───────────┴─────────┴──────┘
+```
+
+If `tt device status` complains that `tt-smi` isn't installed, that's normal on a box that has never run `tt update` yet through `tt-cli` — it manages its own pinned copy separately from anything already in `~/.tenstorrent-venv`. Run `tt update` once and the error goes away.
+
+<div class="callout callout--tip">
+<span class="callout-icon illustrated-only">📎</span>
+As of <code>v1.0.1</code>, <code>tt model list</code> takes <code>--community</code> (Hugging Face community bundles) and filters like <code>--type</code>/<code>--hw</code>/<code>--cached</code> — the README's older <code>--catalog</code> flag isn't there; the catalog is just the default when you don't pass <code>--community</code>.
+</div>
+
+## Serving a model the short way
+
+Once `tt update` has converged the system stack, the rest of the workflow you saw in [Your First Model](/first-timer/05-your-first-model/) collapses into two commands:
+
+```bash
+tt serve Qwen3-32B --port 8000     # in one terminal
+tt launch openwebui                 # in another — auto-discovers what's being served
+```
+
+`tt model info Qwen3-32B` already reports `cached yes` on a box with the pre-cached weights from [Your First Model](/first-timer/05-your-first-model/) — `tt serve` finds them the same way `tt-inference-server`'s `run.py` does, no re-download. (Qwen3-0.6B, the small model used for the direct TTNN device handshake in that chapter, isn't in the catalog `tt serve` draws from — same restriction as `run.py`, not a `tt-cli` limitation.)
+
+`tt model ps` shows what's running and where; `tt model stop Qwen3-32B` stops it. This runs through `tt-cli`'s own `tt-inference-server` checkout — see **`tt update` does not touch tt-studio** above — not the `~/.local/lib/tt-inference-server` copy the manual `run.py` commands elsewhere in this guide use, though both wrap the same underlying project.
+
+---
+
+**Next:** [What Comes Next →](/first-timer/07-what-comes-next/)

@@ -149,4 +149,4 @@ print('Done.')
 
 ---
 
-**Next:** [What Comes Next →](/first-timer/06-what-comes-next/)
+**Next:** [One CLI to Run It →](/first-timer/06-using-tt-cli/)
