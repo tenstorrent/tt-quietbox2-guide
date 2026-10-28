@@ -25,26 +25,27 @@ The Tenstorrent Quietbox 2 (QB2) contains:
 
 ## Key Facts
 
-- Check hardware: `tt-smi -s` — returns JSON with 4 device entries on a healthy QB2
-- Upgrade first on any box that has been sitting: re-run tt-installer
-  (`curl -fsSL https://tenstorrent.ai/install.sh`), then `sudo apt-get update && sudo apt-get
-  upgrade`, then `git pull` in `~/.local/lib/tt-studio` and `~/.local/lib/tt-inference-server`
-  (the installer skips existing checkouts), then `docker pull` the Metalium image (the wrapper
-  only pulls when it's missing)
+- The `tt` CLI is the front door: `tt device status` (hardware), `tt update` (install/upgrade to
+  the tested golden set; `tt self update` upgrades `tt`), `tt model list|info|pull|ps|curl|stop`,
+  `tt serve <model>`, `tt launch <client>`. PyPI package is `tenstorrent`. Preview with `--dry-run`
+- Check hardware: `tt device status` — 4 rows (`p300c`, `DRAM True`) on a healthy QB2; `tt-smi -s`
+  is the lower-level JSON
+- Happy path: `tt update`, `tt model login`, `tt serve Qwen3-32B` (default port 20000, served id
+  `Qwen/Qwen3-32B`), `tt model curl "..."`, `tt launch openwebui`
 - TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). TTNN is on the
   container's default `python3` (`/opt/venv/bin/python3`) — there is no venv to activate
 - `~/.tenstorrent-venv` holds only the hardware tooling (tt-smi, tt-flash) — not vLLM, not `hf`
-- Serving: `~/.local/lib/tt-inference-server/run.py --workflow server --tt-device p300x2
-  --docker-server` runs vLLM in a container
+- `tt serve` runs tt-inference-server from `tt`'s own pinned copy under
+  `~/.local/share/tenstorrent/tools/`, not the older `~/.local/lib/tt-inference-server` checkout
 - Starter model for the direct TTNN path: Qwen/Qwen3-0.6B (no license gate, 1.5 GB). It is
   **not** in tt-inference-server's model list, so it cannot be served via `run.py`; for serving,
   start with Llama-3.1-8B-Instruct or the pre-cached Qwen3-32B
 - Pre-cached Qwen3-32B is at `~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch/`
-  (tt-inference-server persistent volume, not an HF cache; a factory QB2 has no
-  `~/.cache/huggingface` and no `~/models`). Serve it with `--host-weights-dir`
-  pointed at `weights/Qwen3-32B/`; `--host-hf-cache` is the wrong flag here and silently
-  re-downloads the full ~62 GB. `run.py --docker-server` still requires HF_TOKEN even with
-  local weights (a workflow precondition — Qwen3-32B itself is Apache-2.0 and not gated)
+  (tt-inference-server persistent volume, not an HF cache). `tt serve` reuses it only if a
+  directory named `volume_id_tt_transformers-Qwen3-32B-v<spec version>` exists (`v0.17.0` at golden
+  v3.0.0): check `tt serve Qwen3-32B --dry-run` for `pre-seeded volume`, else symlink the name
+- Symlinks: in the `tt-metalium` container `$HOME` is mounted at `/home/user`; relative links inside
+  home resolve, absolute links and links out of home dangle
 - Multi-device API: use `ttnn.CreateDevices` / `ttnn.CloseDevices` (not individual open/close)
 - `TT_METAL_ARCH_NAME` must be `blackhole` for QB2
 

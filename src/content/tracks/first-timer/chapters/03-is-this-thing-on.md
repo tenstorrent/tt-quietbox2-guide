@@ -9,6 +9,42 @@ permalink: /first-timer/03-is-this-thing-on/
 
 Before running a model, confirm the hardware is alive and the software can see it. One command, four chips, zero guessing.
 
+## Ask `tt`
+
+```bash
+tt device status
+```
+
+```
+                 Tenstorrent devices (driver: TT-KMD 2.11.0)
+┏━━━┳━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━┓
+┃ # ┃ Board ┃ Bus ID       ┃ Temp    ┃ Power  ┃ AIClk      ┃ Voltage ┃ DRAM ┃
+┡━━━╇━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━┩
+│ 0 │ p300c │ 0000:01:00.0 │ 55.0 °C │ 74.0 W │ 1337.0 MHz │ 0.81 V  │ True │
+│ 1 │ p300c │ 0000:02:00.0 │ 59.9 °C │ 49.0 W │ 1343.0 MHz │ 0.82 V  │ True │
+│ 2 │ p300c │ 0000:03:00.0 │ 45.9 °C │ 13.0 W │ 800.0 MHz  │ 0.73 V  │ True │
+│ 3 │ p300c │ 0000:04:00.0 │ 47.9 °C │ 18.0 W │ 800.0 MHz  │ 0.73 V  │ True │
+└───┴───────┴──────────────┴─────────┴────────┴────────────┴─────────┴──────┘
+```
+
+Four rows, all `p300c`, all `DRAM True`: the machine is healthy. (If you get `tt: command not
+found`, see the PATH note in
+[Install and Upgrade with tt](/first-timer/04-installing-the-stack/).)
+
+Two more `tt` commands answer the next questions:
+
+```bash
+tt device info      # board ids, PCIe speed and width, firmware versions, one column per chip
+tt smi              # hands the terminal to the live tt-smi dashboard (q to quit)
+```
+
+`tt device info` shows the firmware bundle on each chip (`fw.fw_bundle_version`), which is the
+first thing support asks for. `tt device status --json` gives the same data as JSON, plus the
+host's OS, kernel, memory and driver version, so scripts do not have to parse a table.
+
+The rest of this chapter looks one level lower, at `tt-smi`, which `tt` runs for you. You need
+it for the raw fields, and when something is wrong and you are diagnosing.
+
 {% chunk "tt-smi-basics" %}
 
 ## Reading the Output

@@ -463,3 +463,64 @@ the name varies (now copied from the `src=` path Step 1 prints); first-timer/05 
 two substitutions (`--model` takes `Qwen3-32B`, the API `"model"` field takes
 `Qwen/Qwen3-32B`); and `agents.md` now carries the token prerequisite and the id distinction
 next to the flag guidance.
+
+### 2026-10-28 — happy path rebuilt around the `tt` CLI (branch `docs/tt-cli-happy-path`, based on `use_that_model`)
+
+**Prompt:** "take the latest changes to documentation from Nate Daly, the latest factual
+information from the core reference docs, and the documentation for the projects themselves to
+transform the entire 'happy path' of this guide to 'installing and upgrading your system with
+tt-installer through tt-cli' and 'serving models through tt-cli' and 'launching software for
+your models through tt-cli' and then more advanced topics from there ... the happy path should
+choose a tt-inference-server well-supported model ... on the qb2, that should be the model the
+box ships with ... you can execute and test every single example and proof point on the
+quietbox itself by sshing into it." Mid-task: "add a 'Magic of symlinks' section".
+
+**Sources blended:** `tenstorrent/tt-cli` (README, `docs/`, source for the volume logic),
+`tt-installer`, `tt-inference-server` v0.25.0 `run.py`, Nate Daly's three open docs-site PRs
+(`tenstorrent.github.io` #213 install, #215 deploy models, #218 stack overview), and the box.
+
+**Shape.** First-timer is now 7 chapters: 03 `tt device status`, 04 `tt update`/`tt self update`
+(install and upgrade), 05 `tt serve` + `tt model curl`, 06 `tt launch` (new), 07 what comes next.
+The symlink material is a callout in ch05, not a lesson. New lessons: `tt-installer-by-hand` (the old install chunk and the manual
+path), `first-ttnn-program` (the old TTNN handshake chunk). ml-practitioner/03 is now "Serving
+Models on QB2" (what `tt serve` does, `run.py` by hand, chip pinning); ml-practitioner/02 gained
+Community Models (tt-model-manager). Chunks `install-stack`, `run-first-model`,
+`precached-model`, `tt-studio-intro` were removed (content moved to lessons, or superseded; the
+old `tt-studio` wrapper intro is in git history).
+
+**Findings from the box (QB2, `ttuser@quietbox`, tt 1.2.0, golden v3.0.0, KMD 2.11.0, fw 19.16):**
+* `tt serve` **reuses the pre-seeded `~/data/tt-cache` volume** with no flags, but only when a
+  directory named `volume_id_<impl>-<model>-v<spec version>` exists. The shipped dir is
+  `-vqb2_launch` and the spec asks for `-v0.17.0`; without a symlink `tt serve --dry-run` falls
+  back to the HF cache (a 62 GB re-download). Tested both ways. This supersedes the
+  `--host-weights-dir` workaround the earlier chunk taught.
+* `tt serve` has **no way to pin chips**: run.py maps all of `/dev/tenstorrent`. `run.py
+  --device-id 2,3` does. It also prompts (`MODEL_SOURCE`, `JWT_SECRET`) when not run via `tt`.
+* A one-board `p300` mesh (chips 2,3) came up and served Llama-3.1-8B-Instruct while another
+  server held chips 0,1. The old "two-chip meshes fail" note was rewritten to say so (retested
+  only for one board pair).
+* Default `tt serve` port is **20000**, not 8000. Served model id is the full HF repo id.
+* The `tt-metalium` wrapper mounts `$HOME` at `/home/user`: relative links inside home resolve;
+  absolute links and links out of home dangle. A HF cache whose blobs live in a shared store
+  outside `models--<org>--<name>` fails in the serving container with `FileNotFoundError`.
+* `~/.local/lib/tt-inference-server` (old installer checkout) was v0.10.0, `tt`'s pinned copy
+  v0.25.0; `tt update` ignores the old one. `tt` 1.2.0 has no `tt status` or `tt doctor`.
+* Llama-3.1-8B invented a company history when asked what Tenstorrent is; the guide's example
+  prompt avoids Tenstorrent knowledge.
+
+**Not verified end to end (be honest in review):**
+* `tt serve Qwen3-32B` itself: needs all four chips and another agent held two of them (gozer).
+  Verified instead: `--dry-run`, the pre-seeded detection both ways, and a real two-chip serve of
+  Llama-3.1-8B-Instruct via `run.py --device-id 2,3` with the same image, parser flags and
+  `tt model curl/ps/logs/stop` against it. The `tt serve` checklist text and ready box come from
+  the tt-cli docs, not this box.
+* `tt update` (real run), `uv tool install tenstorrent` and a fresh install: the box is already
+  installed and a real `tt update` flashes firmware. Verified `--dry-run` and `self update --check`.
+* `first-ttnn-program` handshake not re-run this session: the permission classifier blocked a
+  privileged container opening chips on the shared box.
+* `tt agent` is in tt-cli `main` (after 1.2.1) and not on the box; documented as development-only.
+* GIFs are unchanged and some are stale (04b venv demo, 12 tt-studio); re-record via `tt-demo`.
+
+**Open question for Taylor:** Nate's PRs use Qwen3.8-27B (COMPLETE on p300x2) as the example,
+while the brief here says to use the shipped Qwen3-32B (FUNCTIONAL). The guide teaches
+Qwen3-32B and lists the COMPLETE models in a table.

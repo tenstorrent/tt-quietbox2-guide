@@ -1,13 +1,13 @@
 ---
 title: What Comes Next
-currentChapter: 06-what-comes-next
-permalink: /first-timer/06-what-comes-next/
+currentChapter: 07-what-comes-next
+permalink: /first-timer/07-what-comes-next/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
 # What Comes Next
 
-You unboxed a machine that most people have never touched. You confirmed four Blackhole chips were alive and talking to the system. You navigated Python environments that would trip up someone who wasn't paying attention. You ran a model on accelerator hardware and watched tokens come back. That's not a tutorial warmup — that's the actual thing.
+You unboxed a machine that most people have never touched. You confirmed four Blackhole chips were alive, upgraded the software with `tt update`, served a model with `tt serve`, asked it a question, and connected an app to it with `tt launch`. That is the whole loop, and you ran it on your own hardware.
 
 The rest is up to you.
 
@@ -45,6 +45,12 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Start with **tt-to
 Pick a thing you want to do and jump straight in.
 
 <div class="rcard-grid">
+{% card "lesson", "/ml-practitioner/03-vllm-on-qb2/", "Serving Models on QB2", "What tt serve does underneath: ports, two servers at once, run.py, pinning chips.", "18 min" %}
+
+{% card "lesson", "/ml-practitioner/02-model-zoo/", "Community Models", "Find, pull and serve models other people have brought up, with tt-model-manager.", "10 min" %}
+
+{% card "lesson", "/lessons/first-ttnn-program/", "Your First TTNN Program", "Open a chip from Python inside the tt-metalium container.", "10 min" %}
+
 
 {% card "lesson", "https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/vllm-production/", "Production Inference with vLLM", "Serve a model behind an OpenAI-compatible API.", "30 min" %}
 

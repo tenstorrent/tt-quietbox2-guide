@@ -4,38 +4,74 @@ This file is for AI assistants helping users with a Tenstorrent Quietbox 2.
 
 ## What You Can Help With
 
+### Start with `tt`
+`tt` is the Tenstorrent CLI and the front door for almost everything. `tt device status`
+(hardware), `tt update` (install/upgrade), `tt model list|info|pull|ps|logs|stop|curl`, `tt serve`,
+`tt launch`. If `tt: command not found`, `~/.local/bin` is not on PATH
+(`uv tool update-shell` or `export PATH="$HOME/.local/bin:$PATH"`). Always preview with
+`--dry-run` (`tt update --dry-run`, `tt serve <model> --dry-run`, `tt launch <client> --dry-run`).
+The PyPI package is `tenstorrent`; `tt-cli` on PyPI is an unrelated time tracker.
+
 ### Hardware Verification
-Run `tt-smi -s` and interpret the JSON output.
-- Healthy: 4 entries in `device_info`, each with `"board_type": "BLACKHOLE"`
-- Missing device: check `dmesg | grep tenstorrent` for PCIe errors
+Run `tt device status` (table, `--json` for scripts) and `tt device info` (firmware, board ids).
+- Healthy: 4 rows, all `board_type` `p300c`, `DRAM True`. A clock near 1.3 GHz and tens of watts
+  means the chip is in use; 800 MHz means idle.
+- `tt-smi -s` is the lower-level JSON snapshot (`board_info`, `telemetry`, `firmwares` nested).
+- Missing device: `sudo dmesg | grep -i tenstorrent` for PCIe errors, then reboot if `tt update`
+  just installed the driver.
 - Temperature normal range: 35–55°C idle, up to 85°C under load
 
-### Model Running
-Recommended first model **for the direct TTNN path**: `Qwen/Qwen3-0.6B`
-- No Hugging Face license required
-- Fast to download (~1.5GB)
-- Runs on a single chip; fine for a device handshake and TTNN experiments
-- **Cannot be served via `tt-inference-server`** — it is absent from
-  `release_model_spec.json` entirely. For serving, point users at
-  `Llama-3.1-8B-Instruct` (`p300` and `p300x2` variants exist) or the pre-cached
-  `Qwen3-32B` (`p300x2`).
+### Model Running (the happy path)
+1. `tt update --dry-run`, then `tt update` (sudo; asks before flashing firmware; reboot after a
+   first install). `tt self update` upgrades `tt` itself.
+2. `tt model login` (or `hf auth login`, or `HF_TOKEN`): serving needs a Hugging Face token.
+3. `tt serve Qwen3-32B` — the model the QB2 ships with. Default port **20000** (`--port` to
+   change). Returns only when the endpoint answers. The served model id is the full HF id
+   (`Qwen/Qwen3-32B`).
+4. `tt model curl "prompt" --max-tokens 2048`, `tt model ps`, `tt model logs`, `tt model stop`.
+5. `tt launch list`, then `tt launch openwebui` or a coding agent (`opencode`, `pi`, `aider`,
+   `qwencode`, `hermes`). TT-Studio is `tt serve <model> --studio`, not a launch client.
 
-Pre-cached `Qwen3-32B` lives at
-`~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch/` — tt-inference-server's
-persistent-volume layout, **not** a Hugging Face cache. A factory QB2 has no
-`~/.cache/huggingface` and no `~/models` at all. Weights are in `weights/Qwen3-32B/`
-(~62 GB, a normal HF model directory) and ~30 GB of pre-compiled Blackhole kernels in
-`tt_metal_cache/cache_Qwen3-32B/P300x2/`. Reach the weights with
-`--host-weights-dir`, never `--host-hf-cache` (that resolves `HOST_HF_HOME` → `HF_HOME` →
-`~/.cache/huggingface`, none of which exist, and silently re-downloads 62 GB). Any `run.py --docker-server` invocation also needs a valid `HF_TOKEN` exported first — it is validated before launch even when the weights are local, and Qwen3-32B itself is Apache-2.0, not gated. The API then serves the model under its full repo id (`Qwen/Qwen3-32B`), while `--model` takes the short name (`Qwen3-32B`).
+**Pre-seeded Qwen3-32B.** `~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch/`
+holds the shipped weights and compiled kernels (tt-inference-server's persistent-volume layout,
+not a Hugging Face cache). `tt serve` reuses it only when a directory named exactly
+`volume_id_<impl>-<model>-v<version>` exists, where the version comes from the model spec
+(`0.17.0` for Qwen3-32B on p300x2 at golden v3.0.0). Check with
+`tt serve Qwen3-32B --dry-run`: the `weights` row must say `pre-seeded volume`. If it says
+`~/.cache/huggingface`, create the alias:
+`ln -s ~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch ~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-v0.17.0`
+(tested: without the link `tt` falls back to the HF cache and would re-download 62 GB). Details
+in the guide's Ch5 callout and `/lessons/weights-caches-volumes/`.
+
+Models for a QB2 (`p300x2`) marked COMPLETE in the catalog: `Qwen3.8-27B`, `gemma-4-31B-it`,
+`gemma-4-12B-it`, `FLUX.1-dev`, `FLUX.1-schnell`, `whisper-large-v3`, `distil-large-v3`,
+`Wan2.2-T2V-A14B-Diffusers`. `Qwen3-32B`, `Llama-3.1-8B-Instruct`, `Llama-3.3-70B-Instruct` are
+FUNCTIONAL. Always confirm with `tt model list` / `tt model info`. Community bundles
+(`namespace/name`, served by tt-model-manager) come from `tt model search` and
+`tt model list --community`.
+
+Recommended first model **for the direct TTNN path**: `Qwen/Qwen3-0.6B` (~1.5GB, no license
+gate, one chip). **Cannot be served via `tt-inference-server`** — it is absent from
+`release_model_spec.json`.
+
+Symlink rules that bite in containers (tested): `tt-metalium` mounts `$HOME` at `/home/user`.
+Relative links inside home resolve; absolute links and links leaving home dangle. A Hugging Face
+cache whose `snapshots/` files link to a shared blob store outside the model directory fails
+inside the serving container with `FileNotFoundError` even though the host can read it.
+
+Shared boxes: `tt serve` maps every `/dev/tenstorrent` node into the container, so it cannot be
+pinned to two chips. `run.py --device-id 2,3` can (from the pinned checkout under
+`~/.local/share/tenstorrent/tools/tt-inference-server-<ver>/src`, with `MODEL_SOURCE=huggingface`
+and `JWT_SECRET=unused` set so it does not prompt). Take a `gozer` lease first.
 
 TTNN environment: run `tt-metalium` (container wrapper in `~/.local/bin`). There is no
 `~/tt-metal` checkout on a factory QB2; inside the container TTNN is already on the
 default `python3` (`/opt/venv/bin/python3`) — nothing to activate.
 
 vLLM: not installed on the host. `~/.tenstorrent-venv` holds only `tt-smi` / `tt-flash`.
-Serve models with `~/.local/lib/tt-inference-server/run.py --workflow server
---tt-device p300x2 --docker-server`, which runs vLLM in a container.
+`tt` keeps its own pinned tt-inference-server under `~/.local/share/tenstorrent/tools/`; the
+`~/.local/lib/tt-inference-server` checkout from an older tt-installer run is not used by `tt` and
+may be far older (v0.10.0 vs v0.25.0 on the test box).
 
 ### Coding Agents — Claude Code / OpenCode (tt-studio v2.8.0+)
 tt-studio can serve a deployed model to a coding agent via a built-in LiteLLM
@@ -69,23 +105,19 @@ deployed from the same Deploy Model dropdown as the language models.
 
 ### Upgrading a QB2 (suggest this early — users rarely think of it)
 A box that has been sitting is behind on driver, firmware, tooling and container images, and
-"behind" presents as broken hardware or a broken tutorial. Four steps, in this order:
-1. `/bin/bash -c "$(curl -fsSL https://tenstorrent.ai/install.sh)"` — re-running tt-installer is
-   the supported way to move an existing machine forward. Driver, firmware, HugePages, tt-smi,
-   tt-flash, sfpi, container wrappers. Firmware update is on by default; expect a reboot prompt.
-2. `sudo apt-get update && sudo apt-get upgrade` — everything from `ppa.tenstorrent.com`.
-3. **`git -C ~/.local/lib/tt-studio pull`** and **`git -C ~/.local/lib/tt-inference-server pull`**
-   — these are git clones, and the installer **skips a directory that already exists** ("Skipping
-   clone, will create wrapper script only"). Re-running it never updates them. This is the usual
-   reason a box reports an old tt-studio against newer docs.
-4. `docker pull ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64:latest-rc` —
-   the `tt-metalium` wrapper is a plain `docker run`, so it pulls only when the image is absent
-   and never refreshes on its own.
+"behind" presents as broken hardware or a broken tutorial.
+1. `tt update --dry-run` shows what would change against the golden set (driver, firmware,
+   HugePages, tt-smi, tt-flash, tt-inference-server, tt-studio). `optional` rows are fetched on
+   first use (`--include-lazy` to fetch now).
+2. `tt update` — sudo, runs tt-installer at the matching release, asks before flashing firmware.
+   Stop served models first. Reboot after a first install.
+3. `tt self update --check`, then `tt self update` — upgrades `tt` itself (separate from step 2).
 
-Order matters: the installer pins to a golden baseline (`--versions=release`) and passes
-`--allow-downgrades`, so apt-upgrading past it and *then* re-running the installer walks those
-packages back. Use `--versions=rolling` if the user wants newest-of-everything from the
-installer. `--dry-run --mode-non-interactive` previews the plan safely.
+`tt update` ignores and warns about older `~/.local/lib/tt-inference-server` and
+`~/.local/lib/tt-studio` checkouts left by a plain tt-installer run. The manual route (installer,
+then apt, then git pulls, then `docker pull` of the `tt-metalium` image, in that order, because the
+installer pins a golden baseline and passes `--allow-downgrades`) is documented in the guide's
+`/lessons/tt-installer-by-hand/`.
 
 ### Install Troubleshooting
 - apt says the Tenstorrent repository "is not signed" / `NO_PUBKEY`: the signing key is
@@ -100,7 +132,7 @@ installer. `--dry-run --mode-non-interactive` previews the plan safely.
 ### Common Issues
 | Symptom | Check | Fix |
 |---------|-------|-----|
-| `tt-smi` shows <4 devices | `dmesg | grep tenstorrent` | Reseat PCIe card or reflash firmware |
+| `tt device status` shows <4 devices | `dmesg | grep tenstorrent` | Reseat PCIe card or reflash firmware |
 | `DispatchCoreAxis.ROW` error | Code uses wrong dispatch config | Use `ttnn.DispatchCoreConfig(ttnn.DispatchCoreType.WORKER)` |
 | `~/tt-metal` not found | Expected — nothing creates it | Not a fault. TT-Metalium is a container; run `tt-metalium`. Only clone https://github.com/tenstorrent/tt-metal for a from-source build |
 | `import ttnn` fails on the host | Wrong interpreter — TTNN only exists inside the container | Run `tt-metalium` first, then `python3` (`/opt/venv/bin/python3`) |
@@ -114,10 +146,13 @@ installer. `--dry-run --mode-non-interactive` previews the plan safely.
 
 | User wants to... | Send them to |
 |-----------------|-------------|
-| Verify hardware works | Explore Ch3: Is This Thing On? |
-| Install the stack | Explore Ch4: Installing the Stack |
+| Verify hardware works | Explore Ch3: Is This Thing On? (`tt device status`) |
+| Install or upgrade the stack | Explore Ch4: Install and Upgrade with tt |
 | Fix an apt/repository signing error | Customize: Breaking & Fixing Things (pattern 9) |
-| Run first model | Explore Ch5: Your First Model |
+| Serve first model | Explore Ch5: Serve a Model |
+| Connect a chat UI or coding agent | Explore Ch6: Launch Software |
+| Reuse the shipped Qwen3-32B / symlinks | Ch5: Serve a Model ("Magic of symlinks" callout) |
+| Community models / tt-model-manager | Run & build: The Model Zoo (Community Models) |
 | Serve models via API | Run & build: Serving Models on QB2 |
 | Run Claude Code / OpenCode on local models | Run & build: Serving Models on QB2 (coding-agents section) |
 | Generate video / images | Run & build: The Model Zoo (media-gen section) |

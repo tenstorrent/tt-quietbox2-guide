@@ -16,6 +16,11 @@ backlinks:
     colorVar: "--pink"
 ---
 
+**`tt serve` now does most of this for you.** It finds a pre-seeded volume when the directory name
+matches what the model spec expects, and the symlink that makes it match is in
+[Magic of symlinks](/first-timer/05-your-first-model/). This lesson is the layer underneath, for
+running `run.py` yourself.
+
 Your QB2 shipped with Qwen3-32B already on disk. [Serving Models on
 QB2](/ml-practitioner/03-vllm-on-qb2/) shows the one command that uses it. This lesson is
 the layer underneath: what that directory actually is, why the obvious flag is the wrong
