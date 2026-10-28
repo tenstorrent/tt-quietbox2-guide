@@ -27,6 +27,12 @@ If you get `tt: command not found`, `~/.local/bin` is not on your `PATH` in this
 `uv tool update-shell` (or add `export PATH="$HOME/.local/bin:$PATH"` to `~/.bashrc`) and open a
 new terminal.
 
+If `tt --help` does not list `device`, `model`, `serve` and `update`, another program named `tt`
+is earlier on your `PATH`. `which -a tt` lists every match in the order the shell tries them.
+Put `~/.local/bin` first (`export PATH="$HOME/.local/bin:$PATH"`), or start a login shell with
+`bash -l`. A non-login shell, such as a plain `docker run <image> bash -c '...'`, skips
+`~/.profile` and can leave the other program in place.
+
 `tt device status` lists one row per chip. A QB2 has four, on two p300 boards:
 
 ```
@@ -100,6 +106,14 @@ tt self update
 On the QB2 used to test this guide, `tt self update --check` reported
 `tt 1.2.1 is available (you have 1.2.0)`. `tt update` brings the system and its tools onto the
 golden set, and `tt self update` upgrades `tt`. Run both when you want to be current.
+
+:::callout type="tip"
+**Firmware only moves forward.** A plain `tt update`, with no `--force` and no version
+argument, flashes a device only when its firmware is older than the golden bundle. A box that is
+already ahead is left alone. `--force`, or naming an older installer version, is what allows a
+downgrade. Run `tt update` on the machine itself, not inside a `docker run` shell: it reloads the
+kernel driver and can install Docker through systemd.
+:::
 
 :::callout type="warn"
 **Reboot after a first install, or if the driver changed.** `tt update` never reboots for you.

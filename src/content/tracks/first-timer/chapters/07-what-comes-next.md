@@ -24,6 +24,8 @@ The QB2 ships with a full stack, but the ecosystem is bigger. Start with **tt-to
 
 <div class="rcard-grid">
 
+{% card "repo", "https://github.com/tenstorrent/tt-cli", "tt-cli", "Unified CLI for device management, model serving, and system updates — one command instead of five. Chapters 4 to 6 use it.", "uv tool install tenstorrent" %}
+
 {% card "repo", "https://github.com/tenstorrent/tt-toplike", "tt-toplike", "Real-time hardware monitor — htop for your chips: temps, power, utilization, DRAM bandwidth, live in the terminal.", "sudo apt install tt-toplike" %}
 
 {% card "repo", "https://github.com/tenstorrent/tt-studio", "tt-studio", "Web UI for model serving. Pick a model, click Run, get tokens — plus Claude Code / OpenCode backing, video and image generation, a deployable general agent, and (new in v2.10.0) an Apps Marketplace with hybrid RAG.", "tt-studio → localhost:3000" %}
