@@ -1,0 +1,12 @@
+[
+  {
+    "from": "/first-timer/06-what-comes-next/",
+    "to": "/first-timer/07-what-comes-next/",
+    "note": "Chapter renumbered when Launch Software became chapter 6."
+  },
+  {
+    "from": "/first-timer/06-using-tt-cli/",
+    "to": "/first-timer/04-installing-the-stack/",
+    "note": "One CLI to Run It was merged into Install and Upgrade with tt, Serve a Model and Launch Software."
+  }
+]

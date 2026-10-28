@@ -638,3 +638,13 @@ to the install block, with a note that the rest of the chapter's examples assume
 session rather than repeating the export in every block.
 
 Verified: `npx eleventy` clean, `node --test` 14/14, no leaked `:::` in `_site/`.
+
+### 2026-10-28 — redirects for renamed pages
+
+GitHub Pages cannot send HTTP redirects, so `src/_data/redirects.json` + `src/content/redirects.njk`
+generate a stub page (meta refresh, JS fallback with query/hash preserved, canonical link) at each
+old URL. **When you rename, renumber or remove a published page, add an entry; never delete one.**
+Seeded with `/first-timer/06-what-comes-next/` and `/first-timer/06-using-tt-cli/`. Gotcha:
+`EleventyHtmlBasePlugin` already prefixes root-absolute URLs inside the meta refresh, so do not
+pass it through `| url` there (that doubled the prefix); the `<script>` is not rewritten and does
+need `| url`.
