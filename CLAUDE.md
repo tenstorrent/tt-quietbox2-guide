@@ -648,3 +648,14 @@ Seeded with `/first-timer/06-what-comes-next/` and `/first-timer/06-using-tt-cli
 `EleventyHtmlBasePlugin` already prefixes root-absolute URLs inside the meta refresh, so do not
 pass it through `| url` there (that doubled the prefix); the `<script>` is not rewritten and does
 need `| url`.
+
+### 2026-10-28 — QB2 hardware specs synced to tenstorrent.github.io
+
+Source of truth: `core/systems/quietbox/quietbox-bh-2/specifications.md` in
+`tenstorrent/tenstorrent.github.io` (PR #214 set idle power to 320 W; the 2026-08-27 and 08-21 edits set
+max draw to 1,300 W, card power to 1,100 W, storage and bandwidth wording). Updated the home-page spec
+sheet (`src/content/index.njk`): maximum draw 1,500 → 1,300 W, idle power 320 W (new), storage PCIe
+Gen5 → Gen4 x4, bandwidth now 2,048 GB/s total, card power 1,100 W (new), cooling "liquid + forced air",
+and "Warp400" replaced by the page's "800 Gbps between any two chips / Samtec ARP6". Also fixed the
+"Warp cables" sentence in ml-practitioner/01. Price ($9,999) comes from Kaitlyn Franz's competitive
+brief, not that page. Re-check this table against the spec page whenever it changes.
