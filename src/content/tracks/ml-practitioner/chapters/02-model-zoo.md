@@ -41,7 +41,19 @@ Beyond it, anyone can publish a **model bundle** to the Hugging Face Hub with
 [tt-model-manager](https://github.com/tenstorrent/tt-model-manager): a bring-up packaged so that
 someone else can serve it with the same commands they use for catalog models. A bundle carries
 the engine the author built and a pointer to the weights, which download into your own Hugging
-Face cache under your own token. Bundles are not tested or maintained by Tenstorrent.
+Face cache under your own token.
+
+:::callout type="warn"
+**Community models are not reviewed by Tenstorrent. Serve at your own risk.** Bundles are
+published by their owners. Tenstorrent does not test or maintain them, and a bundle can run code
+and download weights you have not looked at. Read `tt model info` and the author's page before you
+pull one, and do not point one at data you would not trust to a stranger's software. Compatibility
+checks (below) catch a wrong chip architecture, not a bad or unsafe model.
+:::
+
+To browse instead of search, the [tt-awesome model browser](https://docs.tenstorrent.com/tt-awesome/models/)
+lists every catalog model and community bundle by collection, family, kind and hardware, with the
+commands to install and run each. It marks community bundles with the same warning.
 
 ```bash
 tt model search qwen3 --limit 5     # find published bundles on the Hub
@@ -83,6 +95,7 @@ box has fewer chips than the profile needs. Read `tt model info` before a large 
 
 ### "I want to..." and what to search
 
+These are all community bundles, so the warning above applies to every row.
 `tt model search` matches the text of a bundle's name, so search for a model family or a task
 word that models usually carry in their name. These all returned bundles on a QB2 on 2026-10-28.
 Bundles are published often, so your results will differ.

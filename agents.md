@@ -48,7 +48,8 @@ Models for a QB2 (`p300x2`) marked COMPLETE in the catalog: `Qwen3.8-27B`, `gemm
 `Wan2.2-T2V-A14B-Diffusers`. `Qwen3-32B`, `Llama-3.1-8B-Instruct`, `Llama-3.3-70B-Instruct` are
 FUNCTIONAL. Always confirm with `tt model list` / `tt model info`. Community bundles
 (`namespace/name`, served by tt-model-manager) come from `tt model search` and
-`tt model list --community`.
+`tt model list --community`. They are not reviewed or tested by Tenstorrent: tell users to
+serve them at their own risk. Browse them at https://docs.tenstorrent.com/tt-awesome/models/.
 
 Recommended first model **for the direct TTNN path**: `Qwen/Qwen3-0.6B` (~1.5GB, no license
 gate, one chip). **Cannot be served via `tt-inference-server`** — it is absent from
