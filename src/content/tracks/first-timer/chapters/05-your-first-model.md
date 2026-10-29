@@ -1,152 +1,260 @@
 ---
-title: Your First Model
+title: Serve a Model
 currentChapter: 05-your-first-model
 permalink: /first-timer/05-your-first-model/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
-# Your First Model
+# Serve a Model
 
-Everything up to now was preparation. This is the part where the machine does something interesting. Four chips, waiting. One small model, about to arrive.
+Four chips, one command. `tt serve` downloads or finds the weights, starts the model in a
+container, waits until it answers, and tells you the address. What you get is an
+OpenAI-compatible HTTP API running on your own hardware, which every chat app, coding agent
+and SDK already knows how to talk to.
 
-{% chunk "run-first-model" %}
+This chapter serves **Qwen3-32B**, the model your QB2 shipped with. Its weights and compiled
+kernels are already on disk, so the first serve does not download 62 GB.
 
-## What Just Happened
+## Pick the Model
 
-When that Python snippet ran without errors, the Blackhole chip opened a dispatch channel through the PCIe link, initialized its RISC-V cores, and confirmed it can receive work. Nothing computed yet. But the handshake — software to silicon — is the prerequisite for everything else.
-
-{% tensixviz "blackhole", [
-  {"step": "highlight", "cores": [[8,1],[8,2],[8,3],[8,4],[8,5],[8,6],[8,7],[8,8],[8,9],[8,10]], "color": "pcie", "label": "PCIe column — your open_device() call crosses here", "ms": 700},
-  {"step": "pause", "ms": 500},
-  {"step": "transfer", "from": [8,5], "to": [4,5], "ms": 600},
-  {"step": "highlight", "cores": [[4,5]], "color": "pink", "label": "Dispatch core initialized", "ms": 600},
-  {"step": "pause", "ms": 400},
-  {"step": "transfer", "from": [4,5], "to": [7,5], "ms": 400},
-  {"step": "transfer", "from": [4,5], "to": [4,7], "ms": 400},
-  {"step": "transfer", "from": [4,5], "to": [10,5], "ms": 400},
-  {"step": "pause", "ms": 600},
-  {"step": "highlight", "cores": [[7,5],[4,7],[10,5]], "color": "teal", "label": "Worker cores ready", "ms": 600},
-  {"step": "pause", "ms": 1000},
-  {"step": "clear"}
-] %}
-
-<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;"><code>ttnn.open_device(0)</code> — what happens inside the chip.</p>
-
-{% chunk "precached-model" %}
-
-## Serving a Model with vLLM
-
-:::callout type="warn"
-**Already started Qwen3-32B above? Skip this section.** It launches a *second* model on the
-same four chips and the same port 8000, and that will fail — the chips have one owner at a
-time. This section is the path for serving a model other than the one that shipped. If you took the
-pre-cached route, the examples below still apply with two *different* substitutions — they are
-easy to cross-wire:
-
-- **`run.py --model`** takes the short spec name: `Qwen3-32B`, never the repo id.
-- **The `"model"` field in `curl` and the Python SDK** takes the full id the server reports:
-  `Qwen/Qwen3-32B`, where the examples say `meta-llama/Llama-3.1-8B-Instruct`.
-
-`curl -s http://localhost:8000/v1/models` settles the second one on your box.
-:::
-
-The fastest path to actually generating text is vLLM. It handles model loading,
-tokenization, batching, and presents an OpenAI-compatible HTTP API.
-
-On a QB2 you do not invoke `vllm` yourself, and it is **not** installed in
-`~/.tenstorrent-venv` — that venv holds only the hardware tooling (`tt-smi`, `tt-flash`).
-vLLM ships inside a container that `tt-inference-server` launches for you:
+`tt` knows which models run on your hardware:
 
 ```bash
-cd ~/.local/lib/tt-inference-server
-
-export HF_TOKEN=hf_...   # required; gated repos need it even when weights are local
-
-python3 run.py \
-  --model Llama-3.1-8B-Instruct \
-  --workflow server \
-  --tt-device p300x2 \
-  --docker-server
+tt model list
 ```
 
-`run.py` selects the right container image, sets `TT_METAL_ARCH_NAME`, `MESH_DEVICE` and
-the vLLM RPC timeout for you, and publishes the OpenAI-compatible API. Add
-`--print-docker-cmd` to see the exact `docker run` it would issue before it launches.
-
-:::callout type="tip"
-`--tt-device p300x2` is the whole QB2 — two P300 boards, four Blackhole chips. Passing
-`p300` uses a single board, so half the machine sits idle. Check what a given model
-supports: not every model is built for every topology.
-:::
-
-:::callout type="tip"
-`--host-hf-cache` reuses weights you pulled yourself with `hf download`, mounting the
-Hugging Face cache read-only instead of downloading a second copy into a Docker volume. It
-resolves `HOST_HF_HOME`, then `HF_HOME`, then `~/.cache/huggingface` — so it only helps once
-you have actually downloaded something. It is **not** how you reach the Qwen3-32B that
-shipped with the box: those weights live outside any Hugging Face cache, and
-`--host-weights-dir` is the flag for them. See above.
-:::
-
-:::callout type="tip"
-Llama-3.1-8B is the safer first model here. Very small models like Qwen3-0.6B will load — the
-plugin maps them by architecture — but they have no tuned implementation in tt-metal's
-`tt_transformers`, so output quality is not something to judge the hardware by. Note that
-Qwen3-0.6B is not in `tt-inference-server`'s model list at all: it is fine for the direct
-TTNN handshake above, but you cannot serve it with the command in this section.
-:::
-
-You'll see initialization messages as the model loads. This takes a minute or two on first run — the model weights are being compiled for the Blackhole architecture. Subsequent runs are faster.
-
-Once you see `INFO: Application startup complete`, the server is ready. In a new terminal:
+On a QB2 it detects a `p300x2` configuration (two p300 boards, four chips) and lists the
+models that have a serving profile for it. `tt model info` tells you what a model needs and how
+well it is validated:
 
 ```bash
-curl -s http://localhost:8000/v1/chat/completions \
+tt model info Qwen3-32B
+```
+
+```
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ hf_repo             │ Qwen/Qwen3-32B                                         │
+│ type                │ llm                                                    │
+│ engines             │ vLLM                                                   │
+│ via                 │ inference-server, studio                               │
+│ servable            │ yes — `tt serve Qwen3-32B` (`--studio` deploys it with │
+│                     │ TT-Studio)                                             │
+│ parameters          │ 32B                                                    │
+│ min disk            │ 84 GB                                                  │
+│ min ram             │ 80 GB                                                  │
+│ on p300x2           │ vLLM — FUNCTIONAL, max context 131072                  │
+│ ...                 │                                                        │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+```
+
+Validation status goes `EXPERIMENTAL`, `FUNCTIONAL`, `COMPLETE`. `FUNCTIONAL` means it runs
+correctly and is not fully tuned. The status is per board, so check the `p300x2` row.
+
+### Models worth starting with on a QB2
+
+These have a `p300x2` profile in the released catalog, from `tt model list --catalog`:
+
+| Model | Kind | Status on QB2 | Why start here |
+|---|---|---|---|
+| `Qwen3-32B` | LLM | FUNCTIONAL | Ships with the box. Weights and compiled cache are local. |
+| `Qwen3.8-27B` | LLM | COMPLETE | Fully validated chat and reasoning model, 262k context. |
+| `gemma-4-31B-it` / `gemma-4-12B-it` | LLM | COMPLETE | Fully validated, 262k context. |
+| `Llama-3.3-70B-Instruct` | LLM | FUNCTIONAL | The largest LLM in the catalog for this box. |
+| `FLUX.1-dev` / `FLUX.1-schnell` | Image | COMPLETE | Image generation. |
+| `whisper-large-v3` | Audio | COMPLETE | Speech to text. |
+| `Wan2.2-T2V-A14B-Diffusers` | Video | COMPLETE | Text to video. |
+
+Gated models (Llama, Gemma) need you to accept the license on the model's Hugging Face page
+first. The `hf_repo` line in `tt model info` names the page.
+
+## Log In to Hugging Face
+
+Serving needs a Hugging Face token, even for models that are free to download, because
+`tt-inference-server` checks it before it starts. Log in once:
+
+```bash
+tt model login
+```
+
+Choose **Log in with your browser** (it shows a URL and a short code) or paste a read token
+from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). `tt` finds the
+token again on every later run, and `tt serve --dry-run` tells you where it came from without
+printing it.
+
+## Check That `tt` Will Reuse the Shipped Weights
+
+Preview the serve before you run it. `--dry-run` starts nothing:
+
+```bash
+tt serve Qwen3-32B --dry-run
+```
+
+```
+✓ Detecting device configuration  p300x2 (override with --device)
+                    tt serve Qwen3-32B — dry run
+┌──────────────────┬──────────────────────────────────────────────────────────┐
+│ backend          │ tt-inference-server                                      │
+│ workflow         │ server                                                   │
+│ device           │ p300x2                                                   │
+│ engines          │ vLLM                                                     │
+│ status           │ FUNCTIONAL                                               │
+│ docker image     │ ghcr.io/tenstorrent/tt-inference-server/vllm-tt-metal-…  │
+│ tool-call parser │ hermes                                                   │
+│ reasoning parser │ qwen3                                                    │
+│ weights          │ /home/ttuser/data/tt-cache                               │
+│                  │ pre-seeded volume — weights and tt_metal_cache reused;   │
+│                  │ the HF cache is not consulted                            │
+│ HF token         │ from the Hugging Face login store                        │
+│ port             │ 20000  (server default)                                  │
+└──────────────────┴──────────────────────────────────────────────────────────┘
+```
+
+Look at the `weights` row. **`pre-seeded volume`** means `tt` found the shipped weights *and*
+the compiled kernel cache, so the first start takes minutes and downloads nothing. If it says
+`~/.cache/huggingface` instead, `tt` did not recognize the shipped directory and a real serve
+would download 62 GB. The fix is one symbolic link:
+
+:::callout type="tip"
+**Magic of symlinks.** `tt` looks for a volume named `volume_id_tt_transformers-Qwen3-32B-v<version>`
+(the version comes from the model spec; the dry run's image tag shows it). The shipped directory
+on our QB2 ended in `-vqb2_launch`, so we aliased it:
+
+```bash
+ln -s ~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch \
+      ~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-v0.17.0
+```
+
+Re-run the dry run after every `tt update`; if it falls back to the Hugging Face cache, the
+version changed. Two more links are handy: `ln -s .cache/huggingface/hub ~/models` (run from your home
+directory, so the target is relative) for a short path to the Hugging Face cache (skip this one if you use the
+`hf download --local-dir ~/models/...` steps elsewhere in this guide, which want `~/models` to be a real directory), and `ln -s code/tt-metal ~/tt-metal` so older instructions work.
+**Make links relative and keep targets inside your home directory.** Containers mount home at
+`/home/user`, so absolute links and links that leave home dangle inside them (a Hugging Face
+cache linking to a blob store outside the model directory failed this way).
+:::
+
+## Serve It
+
+```bash
+tt serve Qwen3-32B
+```
+
+`tt serve` shows the boot as a live checklist instead of thousands of log lines: host ready,
+weights ready, image ready, container started, engine started, device opened, KV cache
+configured, model warmed up, endpoint answering. It returns only once the endpoint answers, so
+whatever you run next will work. When it finishes you get a box with the endpoint
+(`http://127.0.0.1:20000/v1`) and the commands to look at logs and stop the model.
+
+To watch the raw server log while it boots, run this in a second terminal:
+
+```bash
+tt model logs Qwen3-32B --follow
+```
+
+Pressing Ctrl-C in the `tt serve` terminal stops *watching*. The server is a separate container and keeps
+booting, and `tt model stop Qwen3-32B` ends it.
+
+:::callout type="tip"
+**A first serve of a model you have not run before takes longer.** The image (about 18 GB) and
+the weights are downloaded, then the model is compiled for your chips and warmed up. In the
+`tt` documentation, a first serve of a 27B model on a QB2 took about 15 minutes, 7 of them
+downloading weights. The shipped Qwen3-32B skips the download and the compile.
+:::
+
+:::callout type="warn"
+**The endpoint has no password.** In `tt` 1.2.1 and later, `tt serve` starts the server with
+authentication off, and the server's default bind address is `0.0.0.0` (every network
+interface). Anyone who can reach port 20000 can use your model. Serve only on a network you
+trust or behind a firewall, and do not forward the port to the internet. To keep a server
+local-only, or to turn authentication on, run `tt-inference-server` yourself as shown in
+[Serving Models on QB2](/ml-practitioner/03-vllm-on-qb2/).
+:::
+
+## Ask It a Question
+
+```bash
+tt model curl "Explain what an API is in one sentence." --max-tokens 2048
+```
+
+`tt model curl` asks the server which model it is serving, sends your prompt as a chat
+completion, and prints the JSON reply. The text is in `choices[0].message.content`. Unknown
+options become fields of the request, so `--max-tokens 2048` sets `max_tokens`. Add `--print` to
+see the equivalent `curl` command.
+
+Qwen3-32B is a **reasoning model** (the dry run above shows a `qwen3` reasoning parser): it
+thinks first, in a separate `reasoning` field, and then answers in `content`. A small token
+budget can be used up by the thinking, so give it room when `content` comes back empty.
+
+:::callout type="warn"
+**Pick prompts that do not depend on the model knowing about Tenstorrent.** We asked
+Llama-3.1-8B "In one sentence, what is Tenstorrent?" and it replied with a confident, invented
+company history. Small models do not know recent or niche facts. That is a property of the
+model and says nothing about your hardware.
+:::
+
+The same endpoint speaks the standard OpenAI API, so any client works. Note the model name:
+the server reports the **full Hugging Face id**, which differs from the short name you gave `tt serve`
+(for Llama-3.1-8B-Instruct we saw `meta-llama/Llama-3.1-8B-Instruct`).
+
+```bash
+curl -s http://localhost:20000/v1/models | python3 -m json.tool | grep '"id"'
+```
+
+```bash
+curl -s http://localhost:20000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "messages": [{"role": "user", "content": "What makes the Tenstorrent Blackhole chip different?"}]
+    "model": "Qwen/Qwen3-32B",
+    "messages": [{"role": "user", "content": "Explain what an API is in one sentence."}],
+    "max_tokens": 2048
   }' | python3 -m json.tool
 ```
 
-The response is JSON. The answer is in `choices[0].message.content`.
-
-<div class="callout callout--tip">
-<span class="callout-icon illustrated-only">💡</span>
-<strong>Why two different models?</strong> Qwen3-0.6B is the starter for the <em>direct TTNN</em> path earlier in this chapter: ~1.5 GB, no Hugging Face license gate, fast to pull. For <em>serving</em>, use Llama-3.1-8B-Instruct — Qwen3-0.6B has no tuned <code>tt_transformers</code> implementation and is not in <code>tt-inference-server</code>'s model list, so the vLLM command above cannot serve it.
-</div>
-
-## Using tt-studio (the Web UI)
-
-{% chunk "tt-studio-intro" %}
-
-## Multi-Device: Using All Four Chips
-
-To spread a model across all four Blackhole chips, use `CreateDevices` instead of `open_device`:
+## Manage What Is Running
 
 ```bash
-tt-metalium
-
-python3 -c "
-import ttnn
-devices = ttnn.CreateDevices({0, 1, 2, 3})
-print('All devices:', devices)
-ttnn.CloseDevices(devices)
-print('Done.')
-"
+tt model ps                    # what is served, on which port, and whether it is healthy
+tt model logs Qwen3-32B        # the newest server log
 ```
 
-`CreateDevices` handles the mesh configuration that lets the chips coordinate. Models loaded this way can distribute layers across chips, increasing the effective memory pool and throughput. Large models (Llama-3.1-70B) require this — they don't fit on one chip's memory alone.
+Keep the model running for the next chapter. When you are finished with it, `tt model stop
+Qwen3-32B` stops it.
 
-{% tensixsystem "qb2", "One mesh, four chips — what CreateDevices opens" %}
+`tt model ps` shows every server `tt` started, including ones on other ports:
 
-<p class="illustrated-only" style="font-size:12px;color:var(--muted);text-align:center;margin-top:-8px;"><code>CreateDevices</code> spans all four chips: a large model's layers spread across them for more memory and throughput. (A small model like Qwen3-0.6B runs happily on one chip.)</p>
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━━┓
+┃ name                  ┃ backend          ┃ container                    ┃ port  ┃ health  ┃ uptime ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━╇━━━━━━━━┩
+│ Llama-3.1-8B-Instruct │ inference-server │ tt-inference-server-162a825f │ 20000 │ healthy │ 5m     │
+└───────────────────────┴──────────────────┴──────────────────────────────┴───────┴─────────┴────────┘
+```
 
-<figure class="video-demo">
-<img src="/assets/video/05-first-model-demo.gif" alt="TTNN device open and Qwen3-0.6B model files on a live QB2" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Opening TTNN device and browsing model files on a live QB2</figcaption>
-</figure>
+`healthy` means the server answers `GET /v1/models`. `starting` means the container is running
+and not answering yet. `tt model stop` stops only the named model's container.
+
+## Serving on Half the Machine
+
+A QB2 is two p300 boards. A model with a `p300` profile uses one board (two chips). For example,
+`Llama-3.1-8B-Instruct` has a `p300` profile:
+
+```bash
+tt serve Llama-3.1-8B-Instruct --device p300 --dry-run
+```
+
+Use `--device` to override what `tt` detected. `tt serve` does not let you choose *which* board:
+the container is given every Tenstorrent device node on the machine, so run a half-machine model
+only when nothing else is using the chips. How to pin a server to specific chips is in
+[Serving Models on QB2](/ml-practitioner/03-vllm-on-qb2/).
+
+## What Just Happened
+
+`tt serve` ran `tt-inference-server`, which started a container holding vLLM and the
+Tenstorrent plugin. The container opened a mesh across your chips, loaded the weights into
+device memory, compiled and warmed up the kernels, and published the API. The detail of each
+stage, and how to run `tt-inference-server` yourself, is in
+[Serving Models on QB2](/ml-practitioner/03-vllm-on-qb2/).
 
 ---
 
-**Next:** [One CLI to Run It →](/first-timer/06-using-tt-cli/)
+**Next:** [Launch Software →](/first-timer/06-launch-software/)

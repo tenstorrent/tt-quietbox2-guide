@@ -1,4 +1,24 @@
-## Installing the Tenstorrent Software Stack
+---
+layout: layouts/lesson.njk
+title: Installing by Hand with tt-installer
+subtitle: "What `tt update` does underneath, and how to run tt-installer, apt and the container pulls yourself when you want that control."
+eyebrow: "Cross-track lesson · Run & build"
+description: "How to run tt-installer directly on a Tenstorrent QuietBox 2: the order of installer, apt, git checkouts and container images, the apt repository and signing key, and what ends up on disk."
+permalink: /lessons/tt-installer-by-hand/
+time: "~12 min"
+prereq: "Ubuntu 22.04 or 24.04 with sudo"
+backlinks:
+  - href: /first-timer/04-installing-the-stack/
+    label: "Back to Install and Upgrade with tt"
+---
+
+:::callout type="tip"
+**Most people should run `tt update` instead.** It runs `tt-installer` for you at the version
+Tenstorrent has tested with everything else, and it keeps its own pinned copies of
+`tt-inference-server` and `tt-studio`. Use this page when you want to run the pieces yourself.
+:::
+
+## The pieces, in order
 
 On a QB2 from Tenstorrent, the stack is already there — but it is the stack that was current
 when your box was built, not the stack that is current today. So there are two jobs here:
@@ -7,10 +27,9 @@ people). Upgrading comes first.
 
 ### Upgrade before you start
 
-This is the step nobody thinks to take, and it is the one that saves the most time. A QB2 that
+Do this first, because it saves the most time. A QB2 that
 has been in a box for a few weeks is behind on driver, firmware, tooling and container images,
-and the symptoms of being behind rarely say "you are behind" — they look like broken hardware or
-a broken tutorial.
+and being behind rarely announces itself. It looks like broken hardware or a broken tutorial.
 
 See where you are first:
 

@@ -1,190 +1,171 @@
 ---
-title: Installing the Stack
+title: Install and Upgrade with tt
 currentChapter: 04-installing-the-stack
 permalink: /first-timer/04-installing-the-stack/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
-# Installing the Stack
+# Install and Upgrade with `tt`
 
-On a QB2 from Tenstorrent, this is already done. The venvs are there, the driver is loaded, the firmware is flashed. This chapter is for understanding what exists and where — so you know which environment to activate when, and what to do if something's missing.
+`tt` is the Tenstorrent command line. It is the single tool you use to install the software
+stack, keep it current, look at your hardware, serve models and connect apps to them. Under
+the hood it runs [`tt-installer`](https://github.com/tenstorrent/tt-installer), `tt-smi`,
+`tt-flash`, `tt-inference-server` and `tt-studio` for you, each at a version Tenstorrent has
+tested together.
 
-<div class="callout callout--tip">
-<span class="callout-icon illustrated-only">✅</span>
-If your QB2 came pre-configured: jump to <strong>What You Have</strong> below. The install already ran.
-</div>
+A QB2 ships with the software already installed, so this chapter is mostly about **upgrading**.
+The same two commands install everything on a fresh Ubuntu machine.
 
-{% chunk "install-stack" %}
+## See What You Have
 
-## What You Have
+```bash
+tt --version
+tt device status
+```
 
-On a QB2 from Tenstorrent, the stack is pre-installed. Here's your map:
+If you get `tt: command not found`, `~/.local/bin` is not on your `PATH` in this shell. Run
+`uv tool update-shell` (or add `export PATH="$HOME/.local/bin:$PATH"` to `~/.bashrc`) and open a
+new terminal.
 
-| Component | Location | When to use it |
-|-----------|----------|----------------|
-| TTNN / Metalium | `tt-metalium` wrapper in `~/.local/bin/` | Direct API work, TTNN operations, cookbook examples |
-| Hardware tooling | `~/.tenstorrent-venv/` — `tt-smi`, `tt-flash` | Monitoring and firmware. Nothing else belongs in here |
-| Serving | `~/.local/lib/tt-inference-server` | Serving models via HTTP, OpenAI-compatible API — runs vLLM in a container |
-| Forge/XLA | `tt-forge` wrapper in `~/.local/bin/` | Compile PyTorch/JAX models via container — *opt-in, may not be present* |
-| `tt-smi` | in `~/.tenstorrent-venv/bin/` — on PATH once that venv is active | Hardware monitoring, always available |
-| Model storage | `~/models/` (convention) | Where you put downloaded model weights |
-| Scratch space | `~/tt-scratchpad/` | Working directory for scripts and experiments |
+If `tt --help` does not list `device`, `model`, `serve` and `update`, another program named `tt`
+is earlier on your `PATH`. `which -a tt` lists every match in the order the shell tries them.
+Put `~/.local/bin` first (`export PATH="$HOME/.local/bin:$PATH"`), or start a login shell with
+`bash -l`. A non-login shell, such as a plain `docker run <image> bash -c '...'`, skips
+`~/.profile` and can leave the other program in place.
+
+`tt device status` lists one row per chip. A QB2 has four, on two p300 boards:
+
+```
+                 Tenstorrent devices (driver: TT-KMD 2.11.0)
+┏━━━┳━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━┓
+┃ # ┃ Board ┃ Bus ID       ┃ Temp    ┃ Power  ┃ AIClk      ┃ Voltage ┃ DRAM ┃
+┡━━━╇━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━┩
+│ 0 │ p300c │ 0000:01:00.0 │ 55.0 °C │ 74.0 W │ 1337.0 MHz │ 0.81 V  │ True │
+│ 1 │ p300c │ 0000:02:00.0 │ 59.9 °C │ 49.0 W │ 1343.0 MHz │ 0.82 V  │ True │
+│ 2 │ p300c │ 0000:03:00.0 │ 45.9 °C │ 13.0 W │ 800.0 MHz  │ 0.73 V  │ True │
+│ 3 │ p300c │ 0000:04:00.0 │ 47.9 °C │ 18.0 W │ 800.0 MHz  │ 0.73 V  │ True │
+└───┴───────┴──────────────┴─────────┴────────┴────────────┴─────────┴──────┘
+```
+
+In that capture, chips 0 and 1 were running a model (high power, 1.3 GHz clock) and chips 2 and
+3 were idle (800 MHz). The clock column is the quickest way to see which chips are in use.
+
+## Preview an Upgrade
+
+Tenstorrent publishes a **golden set**: the versions of the kernel driver, firmware, HugePages
+setup, `tt-smi`, `tt-flash`, `tt-inference-server` and `tt-studio` that have been tested
+together. `tt update` moves your machine onto it. Preview first. This changes nothing:
+
+```bash
+tt update --dry-run
+```
+
+```
+  Update plan (goldens: bundled supplement.toml + golden.json v3.0.0 (cached))
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ component       ┃ kind     ┃ installed       ┃ golden           ┃ action     ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ tt-flash        │ uv-tool  │ 4.0.0           │ 4.0.0            │ up-to-date │
+│ tt-inference-s… │ git-venv │ v0.25.0         │ v0.25.0          │ up-to-date │
+│ tt-model        │ uv-tool  │ a7aa9cefdd3086… │ a7aa9cefdd3086b… │ up-to-date │
+│ tt-smi          │ uv-tool  │ 6.6.0           │ 6.6.0            │ up-to-date │
+│ tt-studio       │ git-venv │ —               │ v2.12.0          │ optional   │
+│ system-stack    │ system   │ —               │ hugepages 1.4.1, │ converge   │
+│                 │          │                 │ kmd 2.11.0, ...  │            │
+└─────────────────┴──────────┴─────────────────┴──────────────────┴────────────┘
+```
+
+Read the `action` column:
+
+| Action | Meaning |
+|---|---|
+| `up-to-date` | Nothing to do. |
+| `install` / `update` | `tt update` will install or upgrade it. |
+| `optional` | Fetched the first time a command needs it (`tt-studio` here). Add `--include-lazy` to fetch it now. |
+| `converge` | The system layer (driver, firmware, HugePages) is checked and brought to the golden versions by `tt-installer`. |
+
+## Upgrade
+
+```bash
+tt update
+```
+
+`tt update` runs in three phases: it checks the golden manifest, installs or upgrades the
+tools into isolated environments under `~/.local/share/tenstorrent/`, and then downloads the
+matching `tt-installer` release and runs it. The last phase uses `sudo`, so it asks for your
+password. It also asks before flashing firmware, because flashing resets the devices. Stop any
+model you are serving first (`tt model ps` shows what is running).
+
+Upgrade the `tt` command itself separately:
+
+```bash
+tt self update --check    # is there a newer release?
+tt self update
+```
+
+On the QB2 used to test this guide, `tt self update --check` reported
+`tt 1.2.1 is available (you have 1.2.0)`. `tt update` brings the system and its tools onto the
+golden set, and `tt self update` upgrades `tt`. Run both when you want to be current.
+
+:::callout type="tip"
+**Firmware only moves forward.** A plain `tt update`, with no `--force` and no version
+argument, flashes a device only when its firmware is older than the golden bundle. A box that is
+already ahead is left alone. `--force`, or naming an older installer version, is what allows a
+downgrade. Run `tt update` on the machine itself, not inside a `docker run` shell: it reloads the
+kernel driver and can install Docker through systemd.
+:::
 
 :::callout type="warn"
-**There is no `~/tt-metal` and no `~/tt-metal/python_env`.** Older QB2 notes — and earlier
-versions of this page — told you to activate a TTNN venv at that path. Nothing on a current
-machine creates it: `tt-installer` ships TT-Metalium as a container image and gives you the
-`tt-metalium` wrapper instead. If a command in some other guide starts with
-`source ~/tt-metal/python_env/bin/activate`, substitute `tt-metalium`.
+**Reboot after a first install, or if the driver changed.** `tt update` never reboots for you.
+If it installed the kernel driver or changed the HugePages configuration, run `sudo reboot`
+before you serve anything. On a first install it also adds you to the `docker` group, which
+takes effect at your next login.
 :::
 
 :::callout type="tip"
-**Installing on a fresh Ubuntu machine?** `tt-installer` uses Docker containers for Metalium and
-(optionally) Forge. It creates `~/.tenstorrent-venv` for the Python *hardware tools* and installs
-the `tt-metalium` / `tt-forge` wrapper scripts in `~/.local/bin/`. The paths here reflect a
-configured QB2; a fresh install may differ slightly.
+`tt update` ignores older copies of tools that a previous `tt-installer` run left in
+`~/.local/lib/` (for example `tt-inference-server` and `tt-studio`) and warns you about them. It
+manages its own pinned copies under `~/.local/share/tenstorrent/tools/`. The warning prints the
+`rm -rf` commands that reclaim the space.
 :::
 
-Create the scratch directory if it doesn't exist yet:
+## Installing on a Fresh Machine
+
+You need Ubuntu 22.04 or 24.04, `sudo`, and a network connection. Install `uv`, then `tt`:
 
 ```bash
-mkdir -p ~/tt-scratchpad ~/models
+sudo apt update && sudo apt install -y python3 python3-venv python3-pip git curl ca-certificates
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"   # uv and tt install here; this makes them work in this terminal
+uv tool install tenstorrent
+uv tool update-shell        # puts ~/.local/bin on PATH for future terminals
+tt update
 ```
 
-## The Three Environments, Explained
+The PyPI package is named **`tenstorrent`**. The unrelated `tt-cli` package on PyPI is a
+time tracker. `tt update` installs the kernel driver, firmware tooling and HugePages
+configuration as root, so reboot afterwards.
 
-Two of them are containers and one is a venv. That's the thing worth internalising: only the
-hardware tooling lives in a virtual environment on the host.
+## Using `tt-installer` Directly
 
-### TTNN — the `tt-metalium` container
+`tt update` runs [`tt-installer`](https://github.com/tenstorrent/tt-installer) for you, and
+for almost everyone that is the right way to use it. `tt update <VERSION>` runs a specific
+installer release instead (and implies `--force`, which allows downgrades). The installer's own
+options, and the manual path it replaces, are covered in
+[Installing by hand](/lessons/tt-installer-by-hand/).
 
-This is the workhorse. Use it for direct Python API work — opening devices, running TTNN operations, the cookbook examples in this guide.
+## Check Your Work
 
 ```bash
-tt-metalium
-# you're now in a shell inside the container, home directory mounted
-python3 -c "import ttnn; print('TTNN ready')"
-exit
+tt --version
+tt update --dry-run      # every row should say up-to-date
+tt device status         # four rows, all DRAM True
+tt model list            # models for your hardware
 ```
 
-TTNN is already on the container's default interpreter (`/opt/venv/bin/python3`), so there's
-nothing to activate. The first run pulls a multi-GB image; later runs start immediately.
-
-### Serving — `tt-inference-server`
-
-Use this to run a model as a server with an OpenAI-compatible HTTP API. You don't invoke `vllm`
-yourself and it isn't installed on the host — it ships inside a container that
-`tt-inference-server` launches:
-
-```bash
-export HF_TOKEN=hf_...   # gated repos need it even when the weights are already local
-
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-8B-Instruct \
-  --workflow server \
-  --tt-device p300x2 \
-  --docker-server
-```
-
-`run.py` picks the container image, sets `TT_METAL_ARCH_NAME`, `MESH_DEVICE` and the vLLM
-timeouts per model, and publishes the API on port 8000. `--tt-device p300x2` is the whole QB2 —
-two P300 boards, four chips. Add `--print-docker-cmd` to see the `docker run` it would issue.
-
-Or use `tt-studio` for a no-code UI that handles all of this for you.
-
-:::callout type="tip"
-Watch the startup log for a line saying the `tt` platform has been selected. Without it, vLLM is
-running but cannot see your hardware — see the
-[vLLM on QB2 chapter](/ml-practitioner/03-vllm-on-qb2/), which also covers running `vllm serve`
-by hand if you want the lower-level control surface.
-:::
-
-### TT-Forge (`tt-forge` wrapper)
-
-`tt-forge` is a Docker container wrapper installed to `~/.local/bin/` by tt-installer. It runs the TT-XLA/Forge compiler stack without requiring a local Python venv:
-
-```bash
-# Use the tt-forge wrapper directly
-tt-forge --help
-```
-
-For scripting with `import forge` in Python, use the `tt-forge-fe` source tree or check [docs.tenstorrent.com/tt-forge](https://docs.tenstorrent.com/tt-forge-onnx/) for current installation instructions.
-
-## Confirming Each Environment Works
-
-Run this check sequence:
-
-```bash
-# TTNN — inside the container
-tt-metalium -c 'python3 -c "import ttnn; print(\"OK TTNN\")"'""
-
-# The serving stack — the launcher is a file on disk, so just check it's there
-python3 ~/.local/lib/tt-inference-server/run.py --help > /dev/null && echo '✓ tt-inference-server'
-
-# The hardware tooling
-which tt-smi && tt-smi --version
-```
-
-All three should respond without errors.
-
-Note what is *not* in that list: there's no `import vllm` check, because vLLM isn't installed on
-the host — it lives in the container `run.py` starts. If you run `python3 -c "import vllm"` in
-`~/.tenstorrent-venv` and get a `ModuleNotFoundError`, nothing is broken; that venv only ever
-contained `tt-smi` and `tt-flash`.
-
-If any Tenstorrent command comes back `command not found`, the wrapper is almost certainly
-installed and merely unreachable — add `~/.local/bin` to your PATH (see below).
-
-<figure class="video-demo">
-<img src="/assets/video/04b-venv-demo.gif" alt="Checking which python3 is active on the QB2 host and inside the tt-metalium container" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">Checking what <code>which python3</code> reports on the host versus inside <code>tt-metalium</code></figcaption>
-</figure>
-
-<div class="callout callout--deep-dive">
-<span class="callout-icon illustrated-only">📁</span>
-<strong>Why there's no <code>~/tt-metal</code> at all:</strong> TT-Metalium reaches your QB2 as a container image — <code>ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64</code> — with the Python environment and compiled shared libraries inside it. Nothing is unpacked into your home directory, which is why <code>ls ~/tt-metal</code> comes back empty-handed and why the TTNN import only works after <code>tt-metalium</code>. Most users never need more than that. If you do want a real checkout to build from source (for kernel modification or upstream contributions), the <a href="https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/build-tt-metal/">build-tt-metal lesson</a> walks through it.
-</div>
-
-## Installing tt-smi if it's Missing
-
-On a QB2 it shouldn't be missing, but on another Ubuntu system:
-
-```bash
-# Option A — public PyPI (any machine, no PPA needed):
-pip install tt-smi
-
-# Option B — via apt (requires the Tenstorrent repository, set up by tt-installer):
-sudo apt install tt-smi
-```
-
-Both install the same tool. Option A works anywhere with Python; option B integrates with your system package manager. On a freshly installed Ubuntu machine without tt-installer, option A is the easier path.
-
-Option B needs the Tenstorrent repository *and* its signing key at `/etc/apt/keyrings/tt-pkg-key.asc` — see [The Tenstorrent apt repository](#the-tenstorrent-apt-repository-and-its-signing-key) above. If `apt` complains the repository isn't signed, that key is what's missing.
-
-## Disk Space and Model Storage
-
-Models consume significant disk space. Plan accordingly:
-
-| Model | Size on disk |
-|-------|-------------|
-| Qwen3-0.6B | ~1.5 GB |
-| Qwen3-8B | ~16 GB |
-| Llama-3.1-8B-Instruct | ~16 GB |
-| Llama-3.1-70B | ~140 GB |
-
-The convention across all Tenstorrent documentation is `~/models/<model-name>/`. Nothing enforces this — you can store models anywhere and point `--model` at any path — but using the convention means every tutorial command works without substitution.
-
-Check space before any download:
-
-```bash
-df -h ~/models
-```
-
-<figure class="video-demo">
-<img src="/assets/video/04-tt-installer-demo.gif" alt="tt-installer post-install state on a QB2 — the hardware-tooling venv and tt-smi on PATH" loading="lazy" style="width:100%;border-radius:var(--radius);border:1px solid var(--bg2);">
-<figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px;">After tt-installer and reboot — the tooling venv and <code>tt-smi</code> are ready</figcaption>
-</figure>
+If `tt device status` shows fewer than four rows, go back to
+[Is This Thing On?](/first-timer/03-is-this-thing-on/) for the diagnosis steps.
 
 ---
 
-**Next:** [Your First Model →](/first-timer/05-your-first-model/)
+**Next:** [Serve a Model →](/first-timer/05-your-first-model/)

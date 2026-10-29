@@ -25,13 +25,14 @@ Before anything else: power switch on the back panel to the ON position, then pr
 Tenstorrent ships the QB2 ready to serve models. You don't install drivers. You don't compile anything. The full stack is already there:
 
 - **Kernel driver** — loaded automatically at boot, makes the chips visible to software
+- **`tt`** — the Tenstorrent CLI. One command for updating the stack, checking hardware, serving models and launching apps (`~/.local/bin/tt`)
 - **`tt-smi`** — hardware monitoring tool, lives at `/usr/bin/tt-smi`
 - **TTNN / TT-Metalium** — as a container, started by the `tt-metalium` wrapper in `~/.local/bin/`
 - **Hardware tooling venv** — `~/.tenstorrent-venv/`, holding `tt-smi` and `tt-flash`
-- **tt-inference-server** — at `~/.local/lib/tt-inference-server`; its `run.py` serves models with vLLM in a container
+- **tt-inference-server** — what `tt serve` runs to serve a model with vLLM in a container
 - **TT-Forge/XLA** — container wrapper at `~/.local/bin/tt-forge`, if it was installed (it's opt-in)
-- **tt-studio** — the no-code web UI for serving models, pre-installed (launch with `tt-studio`)
-- **A ready-to-run model** — Qwen3-32B, weights pre-cached on disk, deployable from tt-studio with no download (your fastest path to a first token: launch `tt-studio`, pick it, click Run)
+- **tt-studio** — the no-code web UI for serving models (`tt serve <model> --studio`)
+- **A ready-to-run model** — Qwen3-32B, weights pre-cached on disk, served with `tt serve Qwen3-32B` and no download (your fastest path to a first token)
 - **Firmware** — already flashed to all four chips
 
 What's intentionally absent: `~/tt-metal` — not just the source code, the whole directory. TT-Metalium reaches you as a container image instead, and `tt-metalium` is how you get inside it. You can build models, run inference, and work with the full API stack without ever having a checkout. Building from source is a later chapter — a much later chapter.

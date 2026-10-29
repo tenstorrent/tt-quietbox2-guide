@@ -1,87 +1,138 @@
 ---
-title: vLLM on QB2
+title: Serving Models on QB2
 currentChapter: 03-vllm-on-qb2
 permalink: /ml-practitioner/03-vllm-on-qb2/
 ---
 {% set persona = personas | findPersona(personaId) %}
 
-# vLLM on QB2
+# Serving Models on QB2
 
-This is the chapter with the most practical density. By the end of it you'll have a running OpenAI-compatible inference server, a working curl command, and a Python client snippet you can drop into any application. Everything in this chapter is production-ready, not toy code.
+[Serve a Model](/first-timer/05-your-first-model/) got a model answering with one `tt serve`
+command. This chapter is what is underneath that command, and what to do when you need more
+than the default: another port, two servers at once, a model that is not in the catalog, or
+a server on specific chips. By the end you will have an OpenAI-compatible server, a working
+curl command, and a Python client snippet you can drop into an application.
 
 ## The Deployment Stack
 
-There are two ways to run models as a server, and only one of them works out of the box.
+`tt serve <model>` picks one of three serving paths from the model:
 
-The **tt-inference-server path** wraps the vLLM backend in a Docker container with
-one-command deploy syntax. This is what tt-studio and tt-local-generator use internally. It
-handles Docker pulls, environment setup, and port mapping automatically. It is pre-installed
-at `~/.local/lib/tt-inference-server`, and it is the whole of this chapter.
+| Path | Chosen when | What it runs |
+|---|---|---|
+| **tt-inference-server** | The model is in the released catalog (`tt model list` shows source `tt-inference-server`). The default. | tt-inference-server's `run.py`, which starts a vLLM container from a pinned image. |
+| **TT-Studio** | The model is only in TT-Studio's catalog, or you pass `--studio`. | TT-Studio's `run.py`, which brings up its services, deploys the model, and gives you a web UI. |
+| **tt-model-manager** | The name is a community bundle (`namespace/name`). | `tt-model`, which serves a bundle published to Hugging Face. See [Community Models](/ml-practitioner/02-model-zoo/). |
 
-The **direct vLLM path** runs `vllm serve` yourself, for flags the managed path doesn't
-expose or a newer vLLM than the pinned image ships. **vLLM is not installed on a QB2** — not
-in `~/.tenstorrent-venv`, not on the host at all; the copy the managed path uses lives inside
-a container image. Building that environment is its own project, so it has its own lesson:
-**[Build Your Own vLLM Environment →](/lessons/build-your-own-vllm/)**. Come back here when
-you want a server running rather than a toolchain.
+`tt model info <model>` lists the paths a model supports, and `--inference-server`, `--studio` or
+`--model-manager` forces one. All three produce an OpenAI-compatible API.
 
-Both produce the same OpenAI-compatible API on port 8000.
+The **direct vLLM path** runs `vllm serve` yourself, for flags the managed path doesn't expose or
+a newer vLLM than the pinned image ships. **vLLM is not installed on a QB2**, not in
+`~/.tenstorrent-venv` and not on the host at all; the copy the managed path uses lives inside a
+container image. Building that environment is its own project:
+**[Build Your Own vLLM Environment →](/lessons/build-your-own-vllm/)**.
 
-<img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" class="spot-illustration" style="max-width:100%; margin: 2em 0;">
+<img src="/assets/illustrations/inference-stack.svg" alt="Inference stack diagram showing the path from user interfaces through tt-inference-server and vLLM down to four Blackhole chips" class="spot-illustration">
 
-## Serving with tt-inference-server
-
-tt-inference-server is pre-installed at `~/.local/lib/tt-inference-server`. It handles the Docker container lifecycle for you.
-
-```bash
-# run.py validates HF_TOKEN whenever --docker-server is passed — even when the
-# weights are already local. Without it you get "⛔ HF_TOKEN not set." and no server.
-export HF_TOKEN=hf_...
-
-# Deploy Llama-3.1-8B-Instruct with one command
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-8B-Instruct \
-  --tt-device p300x2 \
-  --workflow server --docker-server
-
-# p300x2 = a QB2: two P300 cards, four Blackhole chips
-# On first run: Docker pull + weight compilation (~5 min)
-# Then: port 8000 is ready
-```
-
-`--tt-device p300x2` is what identifies a QB2 — two P300 cards, four chips, and the value you
-want almost every time. `p300` selects a single card (two chips), which is the mesh that has
-failed fabric bring-up on our hardware — prefer `p150` if you deliberately want less than the
-whole box. **`p100` is a single Blackhole chip**, so it under-uses a QB2 rather than failing
-loudly. Not every model has an entry for every topology: `Qwen3-8B`, for instance, is listed for
-`p300` but not `p300x2`, while `Llama-3.1-8B-Instruct` and `Qwen3-32B` both have `p300x2`
-entries. The full list of options is in the [tt-inference-server lesson →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/tt-inference-server/)
-
-On this path you do **not** set `MESH_DEVICE` or `TT_MESH_GRAPH_DESC_PATH` yourself — `run.py`
-derives them per model from its spec, and on a QB2 the correct value is model-dependent.
-
-:::callout type="tip"
-**Three more flags worth knowing on this path.** `--host-hf-cache` reuses weights you've already
-downloaded **yourself** to the Hugging Face cache instead of re-pulling them into a fresh Docker
-volume — see ["Check Space Before Downloading"](/ml-practitioner/02-model-zoo/) in the previous
-chapter for why that disk hit matters. Note it is the wrong flag for the pre-cached Qwen3-32B,
-which sits outside any Hugging Face cache — use `--host-weights-dir` for that, as above. `--no-auth` skips JWT authentication for
-local, unauthenticated serving (fine on a trusted LAN, not for internet exposure). `--service-port`
-sets the port the managed model's container API listens on — e.g. `--service-port 8002`. A full
-command combining them:
+## Serving with `tt serve`
 
 ```bash
-# Llama-3.1-8B-Instruct here, not Qwen3-32B: --host-hf-cache reuses weights you
-# downloaded yourself, and this is a model you would have pulled with `hf download`.
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-8B-Instruct \
-  --tt-device p300x2 \
-  --workflow server --docker-server \
-  --no-auth --service-port 8002 --host-hf-cache
+tt serve Qwen3-32B                    # the model that ships with the box
+tt serve Qwen3-32B --port 8000        # choose the host port
+tt serve Qwen3-32B --dry-run          # show the resolved configuration and command
+tt serve Llama-3.1-8B-Instruct --device p300   # use a different mesh than the detected one
 ```
+
+**The default port is 20000**, which is `tt-inference-server`'s own default through `tt`. The
+curl examples later in this chapter use 8000, so either start the server with `--port 8000` or
+substitute `20000` in the examples.
+
+`tt serve --dry-run` prints the exact `run.py` command `tt` would run. This is the best way to
+learn what `tt` does for you, and to copy a command when you want to run it yourself:
+
+```
+/home/ttuser/.local/share/tenstorrent/tools/tt-inference-server-v0.25.0/venv/bin/python
+  .../src/run.py --model Qwen3-32B --workflow server --docker-server --no-auth
+  --host-volume /home/ttuser/data/tt-cache --device p300x2
+  --vllm-override-args '{"enable-auto-tool-choice": true, "tool-call-parser": "hermes",
+  "reasoning-parser": "qwen3"}' --service-port 20000
+```
+
+Three things `tt` adds that a bare `run.py` call does not:
+
+* **The parsers.** `tool-call-parser` and `reasoning-parser` are in the model spec but
+  `run.py` does not apply them on its own. Without them a container cannot answer
+  `tool_choice: "auto"` requests, and coding agents get empty replies.
+* **Weights.** It reuses a pre-seeded volume when one matches (the `--host-volume` above), and
+  otherwise the Hugging Face cache (`--host-hf-cache`). See
+  [Magic of symlinks](/first-timer/05-your-first-model/) and
+  [Weights, Caches and Volumes](/lessons/weights-caches-volumes/).
+* **The checklist.** It answers `run.py`'s interactive prompts for you and returns only when the
+  endpoint is answering.
+
+## Running `run.py` Yourself
+
+:::callout type="warn"
+**Two copies of tt-inference-server can be on the box.** `tt` uses its own pinned copy under
+`~/.local/share/tenstorrent/tools/`. A machine set up with `tt-installer` alone also has a
+checkout at `~/.local/lib/tt-inference-server` that `tt` does not use or update. On the test QB2
+the two were `v0.25.0` and `v0.10.0-1138-g2aa7f72f`. Older guides, including some chapters of
+this one, call the `~/.local/lib` copy. It still works, but it is older and its model list and
+flags differ. Prefer `tt serve`, or the pinned copy below.
 :::
 
-{% chunk "precached-model" %}
+`tt` keeps its own pinned copy of tt-inference-server under
+`~/.local/share/tenstorrent/tools/tt-inference-server-<version>/`. You can call it directly. Two
+reasons to: pinning a server to specific chips, and passing an option `tt serve` does not expose.
+These details were verified on a QB2:
+
+```bash
+cd ~/.local/share/tenstorrent/tools/tt-inference-server-v0.25.0/src   # run.py reads ./VERSION
+export HF_TOKEN=$(cat ~/.cache/huggingface/token)
+export MODEL_SOURCE=huggingface     # otherwise it asks "How do you want to provide a model?"
+export JWT_SECRET=unused            # otherwise it asks for a secret, even with --no-auth
+
+../venv/bin/python run.py \
+  --model Llama-3.1-8B-Instruct --workflow server --docker-server --no-auth \
+  --host-hf-cache ~/.cache/huggingface \
+  --device p300 --device-id 2,3 --service-port 20000 --bind-host 127.0.0.1 \
+  --vllm-override-args '{"enable-auto-tool-choice": true, "tool-call-parser": "llama3_json"}'
+```
+
+`--no-auth` turns authentication off, and `run.py` publishes the port on every network
+interface by default (`--bind-host 0.0.0.0` in v0.25.0). `--bind-host 127.0.0.1` keeps this server
+reachable from the QB2 itself only; reach it from another machine with an SSH tunnel. Leave auth
+on, and drop `--no-auth`, before you expose a server to a network. (The flag is in v0.25.0's
+`run.py`; we added it to this command after the test run described above.)
+
+Without `MODEL_SOURCE` and `JWT_SECRET`, run from a script or an SSH session, `run.py` stops with
+`EOFError` at a prompt nobody can answer. Without the `--vllm-override-args` line the server
+starts but cannot do tool calling.
+
+### Pinning a server to specific chips
+
+`tt serve` gives the container every `/dev/tenstorrent` node. `run.py --device-id 2,3` gives it
+only chips 2 and 3, which lets two servers share the machine. In our test, Llama-3.1-8B served on
+chips 2 and 3 (one P300 board) while Qwen3-Coder-Next kept running on chips 0 and 1; the
+`Opening user mode device driver` and `Fabric initialized on 2 devices` lines in the server log
+confirm which chips it opened. Which board holds which chip numbers is in `tt device status`
+(the `#` column) and `tt device info` (the `board_id` row). If you share the machine with other
+people or agents, take a lease first (`gozer`) so two servers never claim the same chips.
+
+:::callout type="warn"
+**A weights cache that contains links leaving its directory fails inside the container.** The
+server mounts only `~/.cache/huggingface/hub/models--<org>--<name>`. If the files in
+`snapshots/` are links into a shared blob store elsewhere, they dangle inside the container and
+the server stops with `FileNotFoundError: …/model-00001-of-00004.safetensors`, even though the
+files open on the host. See [Magic of symlinks](/first-timer/05-your-first-model/).
+:::
+
+:::callout type="tip"
+**`--device`.** `p300x2` is the whole QB2. `p300` is one board. `p100` is a single Blackhole chip,
+so it under-uses a QB2 rather than failing loudly. Not every model has every profile: `tt model
+list` shows each model's profiles, and `tt model info <model>` shows the status per board. The
+flag `--tt-device` is an accepted spelling of the same option, and many guides use it.
+:::
 
 ## Verifying the Server
 
@@ -198,7 +249,8 @@ Keep these ports clear. Other services on the QB2 use them.
 
 | Port | Service |
 |---|---|
-| `8000` | vLLM / tt-inference-server (OpenAI-compatible API) |
+| `20000` | `tt serve` default for tt-inference-server (OpenAI-compatible API) |
+| `8000` | vLLM / `run.py` default, and `tt serve --port 8000` |
 | `3000` | tt-studio (web UI) |
 | `4000` | tt-studio's LiteLLM gateway (coding-agent surface — see `agents.md`) |
 | `8001` | tt-local-generator's prompt server — **not** tt-inference-server |
@@ -247,10 +299,7 @@ On the managed path you don't choose the mesh — `run.py` derives it per model 
 For a 70B across all four Blackhole chips that is just:
 
 ```bash
-python3 ~/.local/lib/tt-inference-server/run.py \
-  --model Llama-3.1-70B-Instruct \
-  --tt-device p300x2 \
-  --workflow server --docker-server
+tt serve Llama-3.3-70B-Instruct --device p300x2
 ```
 
 The model weights distribute across all four chips' DRAM, and the KV cache is allocated per
@@ -261,17 +310,14 @@ Setting the mesh by hand is a direct-vLLM concern — `MESH_DEVICE`, its accepte
 case difference from `--tt-device` are covered in [Build Your Own vLLM
 Environment](/lessons/build-your-own-vllm/). One thing carries over to this path regardless:
 
-:::callout type="warn"
-**Two-chip meshes fail on our QB2.** Whichever path you use, asking for exactly two chips dies
-during fabric bring-up:
-
-```text
-Fabric Router Sync: Timeout after 10000 ms on Device 2 ... Ethernet handshake likely failed
-```
-
-One chip and all four both work; two does not, reproducibly across board resets. On this path
-that means `--tt-device p300` is the value to avoid — prefer `p150` to go narrower, or
-`p300x2` for the whole box.
+:::callout type="tip"
+**Two-chip meshes.** Earlier versions of this page said a two-chip mesh fails fabric bring-up
+(`Fabric Router Sync: Timeout after 10000 ms … Ethernet handshake likely failed`). On a QB2
+running TT-KMD 2.11.0 and firmware bundle 19.16.0, a `p300` mesh on **one board** (chips 2 and
+3) came up cleanly (`Fabric initialized on 2 devices`) and served Llama-3.1-8B-Instruct. We did
+not retest the older failure, a pair of chips on different boards, or the other board's pair.
+If you see the timeout on your box, check `tt update --dry-run` for a newer firmware first, and
+use `p150` (one chip) or `p300x2` (the whole box) in the meantime.
 :::
 
 :::callout type="tip"

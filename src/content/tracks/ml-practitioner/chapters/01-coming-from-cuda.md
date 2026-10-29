@@ -117,7 +117,7 @@ Multi-device tensor parallelism maps directly too. The QB2 has four chips. When 
 
 ## Blackhole's NoC Fabric
 
-The four Blackhole chips in your QB2 sit on two p300c cards, linked by Warp cables and on-chip Ethernet — not PCIe (PCIe is only the host-to-card link). Intra-chip, the NoC connects every core to every other core and to the DRAM banks at roughly 1 TB/s aggregate bandwidth. This is not the same topology as NVLink or PCIe between discrete GPUs — it's a different architecture where the cost of moving data within a chip is much lower relative to compute throughput than on a GPU.
+The four Blackhole chips in your QB2 sit on two p300c cards, linked by an internal Samtec ARP6 cable and on-chip Ethernet (800 Gbps between any two chips) — not PCIe (PCIe is only the host-to-card link). Intra-chip, the NoC connects every core to every other core and to the DRAM banks at roughly 1 TB/s aggregate bandwidth. This is not the same topology as NVLink or PCIe between discrete GPUs — it's a different architecture where the cost of moving data within a chip is much lower relative to compute throughput than on a GPU.
 
 For multi-chip workloads, the four chips form a mesh using their Ethernet cores (the left and right columns of the chip grid). This is how tensor-parallel models distribute their KV-cache updates — not through the host CPU, but directly chip-to-chip.
 

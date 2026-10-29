@@ -11,6 +11,14 @@ Four chips. Up to 560 Tensix compute cores available at once. The question isn't
 
 ## What's Supported
 
+:::callout type="tip"
+**Ask `tt` first.** The table below is a snapshot. The live answer for your machine is
+`tt model list` (models with a serving profile for your detected hardware) and
+`tt model info <name>` (disk and RAM needed, and the validation status on each board). `tt model
+list --catalog` shows only the released catalog, `--type llm` narrows by kind, and `--all` shows
+every model on every device.
+:::
+
 The QB2 supports a focused set of model families, optimized for Blackhole silicon. These aren't compatibility hacks — they're models with hand-tuned TTNN kernels for the Blackhole architecture, validated for throughput and output quality.
 
 | Model Family | Variants | Chips Required | Disk Space |
@@ -25,6 +33,98 @@ The QB2 supports a focused set of model families, optimized for Blackhole silico
 The model zoo lesson in tt-vscode-toolkit covers this in interactive depth, with live benchmarks you can run against your own QB2: [tt-vscode-toolkit lessons →](https://docs.tenstorrent.com/tt-vscode-toolkit/lessons/)
 
 {% chunk "tt-studio-media-gen" %}
+
+## Community Models and tt-model-manager
+
+The released catalog is the models Tenstorrent ships and tests through tt-inference-server.
+Beyond it, anyone can publish a **model bundle** to the Hugging Face Hub with
+[tt-model-manager](https://github.com/tenstorrent/tt-model-manager): a bring-up packaged so that
+someone else can serve it with the same commands they use for catalog models. A bundle carries
+the engine the author built and a pointer to the weights, which download into your own Hugging
+Face cache under your own token.
+
+:::callout type="warn"
+**Community models are not reviewed by Tenstorrent. Serve at your own risk.** Bundles are
+published by their owners. Tenstorrent does not test or maintain them, and a bundle can run code
+and download weights you have not looked at. Read `tt model info` and the author's page before you
+pull one, and do not point one at data you would not trust to a stranger's software. Compatibility
+checks (below) catch a wrong chip architecture, not a bad or unsafe model.
+:::
+
+To browse instead of search, the [tt-awesome model browser](https://docs.tenstorrent.com/tt-awesome/models/)
+lists every catalog model and community bundle by collection, family, kind and hardware, with the
+commands to install and run each. It marks community bundles with the same warning.
+
+```bash
+tt model search qwen3 --limit 5     # find published bundles on the Hub
+tt model list --community           # community bundles that run on this machine
+tt model info raahemnabeel/qwen3-coder-next    # manifest and compatibility verdict
+tt model pull raahemnabeel/qwen3-coder-next
+tt model profiles raahemnabeel/qwen3-coder-next
+tt serve raahemnabeel/qwen3-coder-next         # served by tt-model-manager
+```
+
+A real search on a QB2:
+
+```
+          tt-model bundles on the Hub — every published bundle matching 'qwen3'
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ name                                ┃ visibility ┃ downloads ┃ updated    ┃ installed ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ raahemnabeel/qwen3-5-122b-a10b      │ public     │ 0         │ 2026-10-28 │ —         │
+│ raahemnabeel/qwen3-coder-next       │ public     │ 0         │ 2026-10-28 │ ✓         │
+│ episod/qwen3.8-27b-dflash2-p300     │ public     │ 0         │ 2026-10-28 │ ✓         │
+└─────────────────────────────────────┴────────────┴───────────┴────────────┴───────────┘
+```
+
+Names are `namespace/name`. A name with a slash that is not a catalog model is a bundle, and `tt
+serve` routes it to tt-model-manager. `tt model ps` lists both kinds side by side, with a
+`backend` column (`inference-server` or `model-manager`) and the port each is on.
+
+How to choose:
+
+| If you want | Use |
+|---|---|
+| The most tested path, a model Tenstorrent supports | A catalog model: `tt serve Qwen3.8-27B` |
+| A newer or different model, and you accept less testing | A community bundle: `tt serve namespace/name` |
+| To publish your own bring-up for others | `tt-model package` and `tt-model push`, described in the [community models guide](https://github.com/tenstorrent/tt-cli/blob/main/docs/community-models.md) |
+
+Compatibility is **checked, not guaranteed**: pulling or serving a bundle checks that its
+binaries were built for your chip architecture (a mismatch fails on purpose) and warns if your
+box has fewer chips than the profile needs. Read `tt model info` before a large download.
+
+### "I want to..." and what to search
+
+These are all community bundles, so the warning above applies to every row.
+`tt model search` matches the text of a bundle's name, so search for a model family or a task
+word that models usually carry in their name. These all returned bundles on a QB2 on 2026-10-28.
+Bundles are published often, so your results will differ.
+
+| I want to... | Try | What came back |
+|---|---|---|
+| Write code with a local model | `tt model search coder` | `raahemnabeel/qwen3-coder-next`, `raahemnabeel/qwen3-coder-30b-a3b` |
+| Try the newest Qwen on my box | `tt model search qwen3.8` | `episod/qwen3.8-27b-dflash2-p300`, `episod/qwen3.8-27b-pi-p300` |
+| Chat with a Gemma or Llama model | `tt model search gemma`, `tt model search llama` | `stisiTT/gemma-4-12b-it-p150`, `stisiTT/llama-3.2-3b-blackhole-v51` |
+| Generate or edit images | `tt model search image`, `tt model search flux` | `sunandbean/qwen-image-edit-2511-p100a`, `stisiTT/flux2-dev-qb2` |
+| Turn text into speech | `tt model search tts` | `tt-hous/qwen3-tts-1.7b-base`, `tt-hous/qwen3-tts-1.7b-voicedesign` |
+| Make music | `tt model search music` | `jashansinghTT/minimax-music3-blackhole` |
+| Embed text for search | `tt model search embed` | `tt-hous/embeddinggemma-2` |
+| Detect objects or segment images | `tt model search yolo`, `tt model search sam` | `changh95/yolox-p150`, `changh95/sam3-p150` |
+| Estimate depth or reconstruct 3D | `tt model search depth`, `tt model search mast3r` | `changh95/depth-anything-3-p150`, `changh95/mast3r-p150` |
+| Work on self-driving perception | `tt model search bev` | `changh95/bevdet-p150`, `changh95/bevformer-p150`, `changh95/bevfusion-p150` |
+| Run a robot policy | `tt model search pi05` | `changh95/pi05-base-p300x2` |
+
+Some searches found nothing (`whisper`, `video`, `robot`, `pose`, `rerank`). Two reasons:
+speech-to-text and video models such as `whisper-large-v3` and `Wan2.2-T2V-A14B-Diffusers` are
+**catalog** models, not bundles, so look for them with `tt model list --type audio` or
+`tt model list --type video`. The other terms are just not in any bundle's name yet. Empty
+results mean nobody has published one, not that the hardware cannot do it.
+
+The suffix on a bundle name is the hardware it was built for. `-p150` is one chip, `-p300` is
+one board of two chips, and `-p300x2` is the whole QB2, so a `-p150` bundle fits on a QB2 and a
+`-p300x2` bundle needs all four chips. `tt model list --community --hw p300x2` shows only the
+bundles that fit your machine, and `tt model search <query> --catalog` keeps just the ones in
+the community catalog.
 
 ## Picking a Starting Point
 
@@ -77,6 +177,11 @@ prompts; not the model to hand an autonomous coding agent.
 :::
 
 ## Downloading Models
+
+For catalog models, `tt` downloads for you: `tt serve <name>` fetches the weights on first use,
+and `tt model pull <name>` fetches them ahead of time (`tt model pull Llama-3.1-8B-Instruct`
+fetches into the Hugging Face cache and reports where). The `hf` commands below are for
+downloading a repository you will use outside `tt`, such as the TTNN examples.
 
 Downloads go through the `hf` CLI — not `huggingface-cli`, not Python API calls. It's faster and it handles partial downloads and resumption correctly.
 
