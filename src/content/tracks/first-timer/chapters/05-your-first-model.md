@@ -161,6 +161,15 @@ the weights are downloaded, then the model is compiled for your chips and warmed
 downloading weights. The shipped Qwen3-32B skips the download and the compile.
 :::
 
+:::callout type="warn"
+**The endpoint has no password.** In `tt` 1.2.1 and later, `tt serve` starts the server with
+authentication off, and the server's default bind address is `0.0.0.0` (every network
+interface). Anyone who can reach port 20000 can use your model. Serve only on a network you
+trust or behind a firewall, and do not forward the port to the internet. To keep a server
+local-only, or to turn authentication on, run `tt-inference-server` yourself as shown in
+[Serving Models on QB2](/ml-practitioner/03-vllm-on-qb2/).
+:::
+
 ## Ask It a Question
 
 ```bash

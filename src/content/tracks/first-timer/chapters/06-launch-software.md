@@ -79,9 +79,13 @@ When you are done:
 tt launch stop openwebui      # stops the container, keeps your chats and settings
 ```
 
-:::callout type="tip"
-Chatting from a laptop? Browse to `http://<your-QB2-address>:3000`, or tunnel the port with
-`ssh -L 3000:localhost:3000 <you>@<your-QB2-address>`.
+:::callout type="warn"
+**Open WebUI starts with sign-in turned off** (`WEBUI_AUTH=False`), and anyone who can reach
+port 3000 can read your chats and use the model. To chat from a laptop, tunnel the port and
+keep it private:
+`ssh -L 3000:localhost:3000 <you>@<your-QB2-address>`, then browse to `http://localhost:3000`.
+A tunnel does not close the port on the QB2 itself, so use this only on a network you trust
+or behind a firewall.
 :::
 
 ## A Coding Agent in Your Terminal
