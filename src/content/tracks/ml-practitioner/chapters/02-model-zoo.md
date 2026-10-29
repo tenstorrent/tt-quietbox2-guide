@@ -81,6 +81,38 @@ Compatibility is **checked, not guaranteed**: pulling or serving a bundle checks
 binaries were built for your chip architecture (a mismatch fails on purpose) and warns if your
 box has fewer chips than the profile needs. Read `tt model info` before a large download.
 
+### "I want to..." and what to search
+
+`tt model search` matches the text of a bundle's name, so search for a model family or a task
+word that models usually carry in their name. These all returned bundles on a QB2 on 2026-10-28.
+Bundles are published often, so your results will differ.
+
+| I want to... | Try | What came back |
+|---|---|---|
+| Write code with a local model | `tt model search coder` | `raahemnabeel/qwen3-coder-next`, `raahemnabeel/qwen3-coder-30b-a3b` |
+| Try the newest Qwen on my box | `tt model search qwen3.8` | `episod/qwen3.8-27b-dflash2-p300`, `episod/qwen3.8-27b-pi-p300` |
+| Chat with a Gemma or Llama model | `tt model search gemma`, `tt model search llama` | `stisiTT/gemma-4-12b-it-p150`, `stisiTT/llama-3.2-3b-blackhole-v51` |
+| Generate or edit images | `tt model search image`, `tt model search flux` | `sunandbean/qwen-image-edit-2511-p100a`, `stisiTT/flux2-dev-qb2` |
+| Turn text into speech | `tt model search tts` | `tt-hous/qwen3-tts-1.7b-base`, `tt-hous/qwen3-tts-1.7b-voicedesign` |
+| Make music | `tt model search music` | `jashansinghTT/minimax-music3-blackhole` |
+| Embed text for search | `tt model search embed` | `tt-hous/embeddinggemma-2` |
+| Detect objects or segment images | `tt model search yolo`, `tt model search sam` | `changh95/yolox-p150`, `changh95/sam3-p150` |
+| Estimate depth or reconstruct 3D | `tt model search depth`, `tt model search mast3r` | `changh95/depth-anything-3-p150`, `changh95/mast3r-p150` |
+| Work on self-driving perception | `tt model search bev` | `changh95/bevdet-p150`, `changh95/bevformer-p150`, `changh95/bevfusion-p150` |
+| Run a robot policy | `tt model search pi05` | `changh95/pi05-base-p300x2` |
+
+Some searches found nothing (`whisper`, `video`, `robot`, `pose`, `rerank`). Two reasons:
+speech-to-text and video models such as `whisper-large-v3` and `Wan2.2-T2V-A14B-Diffusers` are
+**catalog** models, not bundles, so look for them with `tt model list --type audio` or
+`tt model list --type video`. The other terms are just not in any bundle's name yet. Empty
+results mean nobody has published one, not that the hardware cannot do it.
+
+The suffix on a bundle name is the hardware it was built for. `-p150` is one chip, `-p300` is
+one board of two chips, and `-p300x2` is the whole QB2, so a `-p150` bundle fits on a QB2 and a
+`-p300x2` bundle needs all four chips. `tt model list --community --hw p300x2` shows only the
+bundles that fit your machine, and `tt model search <query> --catalog` keeps just the ones in
+the community catalog.
+
 ## Picking a Starting Point
 
 **Qwen3-0.6B** is the fastest way to confirm the stack is working. It downloads in seconds, loads in under a minute, and produces real answers. Think of it as the "hello world" of this hardware — with one caveat worth knowing before you build a plan around it: it is **absent from `tt-inference-server`'s model list**, so `run.py --model Qwen3-0.6B` has nothing to select. It's a smoke test for direct TTNN work and for a hand-rolled `vllm serve`, not a model you can deploy down the managed path.
