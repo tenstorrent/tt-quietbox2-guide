@@ -125,8 +125,9 @@ ln -s ~/data/tt-cache/volume_id_tt_transformers-Qwen3-32B-vqb2_launch \
 ```
 
 Re-run the dry run after every `tt update`; if it falls back to the Hugging Face cache, the
-version changed. Two more links are handy: `ln -s ~/.cache/huggingface/hub ~/models` for a short
-path to downloaded weights, and `ln -s code/tt-metal ~/tt-metal` so older instructions work.
+version changed. Two more links are handy: `ln -s .cache/huggingface/hub ~/models` (run from your home
+directory, so the target is relative) for a short path to the Hugging Face cache (skip this one if you use the
+`hf download --local-dir ~/models/...` steps elsewhere in this guide, which want `~/models` to be a real directory), and `ln -s code/tt-metal ~/tt-metal` so older instructions work.
 **Make links relative and keep targets inside your home directory.** Containers mount home at
 `/home/user`, so absolute links and links that leave home dangle inside them (a Hugging Face
 cache linking to a blob store outside the model directory failed this way).
@@ -205,8 +206,10 @@ curl -s http://localhost:20000/v1/chat/completions \
 ```bash
 tt model ps                    # what is served, on which port, and whether it is healthy
 tt model logs Qwen3-32B        # the newest server log
-tt model stop Qwen3-32B        # stop it
 ```
+
+Keep the model running for the next chapter. When you are finished with it, `tt model stop
+Qwen3-32B` stops it.
 
 `tt model ps` shows every server `tt` started, including ones on other ports:
 

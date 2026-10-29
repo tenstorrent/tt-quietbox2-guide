@@ -136,8 +136,9 @@ You need Ubuntu 22.04 or 24.04, `sudo`, and a network connection. Install `uv`, 
 ```bash
 sudo apt update && sudo apt install -y python3 python3-venv python3-pip git curl ca-certificates
 curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"   # uv and tt install here; this makes them work in this terminal
 uv tool install tenstorrent
-uv tool update-shell        # then open a new terminal
+uv tool update-shell        # puts ~/.local/bin on PATH for future terminals
 tt update
 ```
 

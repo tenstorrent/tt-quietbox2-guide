@@ -95,9 +95,15 @@ export JWT_SECRET=unused            # otherwise it asks for a secret, even with 
 ../venv/bin/python run.py \
   --model Llama-3.1-8B-Instruct --workflow server --docker-server --no-auth \
   --host-hf-cache ~/.cache/huggingface \
-  --device p300 --device-id 2,3 --service-port 20000 \
+  --device p300 --device-id 2,3 --service-port 20000 --bind-host 127.0.0.1 \
   --vllm-override-args '{"enable-auto-tool-choice": true, "tool-call-parser": "llama3_json"}'
 ```
+
+`--no-auth` turns authentication off, and `run.py` publishes the port on every network
+interface by default (`--bind-host 0.0.0.0` in v0.25.0). `--bind-host 127.0.0.1` keeps this server
+reachable from the QB2 itself only; reach it from another machine with an SSH tunnel. Leave auth
+on, and drop `--no-auth`, before you expose a server to a network. (The flag is in v0.25.0's
+`run.py`; we added it to this command after the test run described above.)
 
 Without `MODEL_SOURCE` and `JWT_SECRET`, run from a script or an SSH session, `run.py` stops with
 `EOFError` at a prompt nobody can answer. Without the `--vllm-override-args` line the server

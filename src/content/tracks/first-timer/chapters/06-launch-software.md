@@ -86,7 +86,19 @@ Chatting from a laptop? Browse to `http://<your-QB2-address>:3000`, or tunnel th
 
 ## A Coding Agent in Your Terminal
 
-Terminal agents work on your files, so they need a model that can call tools. Qwen3-32B can.
+Terminal agents work on your files, so they need a model that can call tools. Qwen3-32B can, with
+one caveat:
+
+:::callout type="warn"
+**Qwen3-32B thinks first, and that can drop tool calls.** With thinking on, a reasoning model
+sometimes ends a turn without making the tool call the agent asked for. In a test on the cloud
+Qwen3-32B deployment, 8 of 20 runs did this (tt-inference-server issue
+[#4386](https://github.com/tenstorrent/tt-inference-server/issues/4386), still open when we
+checked). We have not verified how `tt launch` clients behave against a local Qwen3-32B. If an
+agent stalls or answers without acting, send `chat_template_kwargs: {"enable_thinking": false}`
+with the request if your client lets you add request fields, or serve a model without a
+reasoning mode, such as `Llama-3.1-8B-Instruct`.
+:::
 Install one agent, then launch it. Qwen Code and Hermes Agent were `ready` in the listing above:
 
 ```bash
