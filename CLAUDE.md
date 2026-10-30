@@ -659,3 +659,17 @@ Gen5 → Gen4 x4, bandwidth now 2,048 GB/s total, card power 1,100 W (new), cool
 and "Warp400" replaced by the page's "800 Gbps between any two chips / Samtec ARP6". Also fixed the
 "Warp cables" sentence in ml-practitioner/01. Price ($9,999) comes from Kaitlyn Franz's competitive
 brief, not that page. Re-check this table against the spec page whenever it changes.
+
+## Community coder bundles for agents (2026-10-30)
+
+Prompt: the tt-vscode-toolkit QB2 lessons were made aware of the community model list;
+"don't forget the work in the tt-quietbox2-guide itself." Three edits, no new chapters:
+Launch Software (first-timer ch6) gains a paragraph on the community coder bundles as the
+fast tool-calling route and what `tt launch` prints for a bundle; The Model Zoo gets the
+measured speeds and the `-- --refresh` fix for a stale installed bundle; `agents.md` lists
+the bundles beside the catalog models and adds the profile/refresh row to Common Issues.
+Measured on the QB2 on one P300 board under a gozer lease: `raahemnabeel/qwen3-coder-30b-a3b`
+80 tok/s, `00_verify_tools.py` green in 5 s, `01_research_agent.py` 11 steps in 3 min 17 s;
+`raahemnabeel/qwen3-coder-next` 107 tok/s (another agent's server on port 8011). `tt launch
+qwencode --dry-run` and a `tt launch smolagent` prototype (not shipped) both found the bundle
+and ran; the smolagents task finished in one 2 s step.
