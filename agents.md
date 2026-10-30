@@ -80,7 +80,11 @@ gateway on **port 4000** — no cloud, runs on the QB2's own chips.
 - Anthropic surface: `http://localhost:4000` (Claude Code)
 - OpenAI surface: `http://localhost:4000/v1` (OpenCode / any OpenAI client)
 - Eligible models (need native tool-calling): `Qwen3-32B`, `Llama-3.1-8B-Instruct`,
-  `Llama-3.3-70B-Instruct`. Reasoning models also expose a `-thinking` variant; the
+  `Llama-3.3-70B-Instruct`. For speed, the community coder bundles
+  `raahemnabeel/qwen3-coder-30b-a3b` (80 tok/s on one P300 board, measured 2026-10-30)
+  and `raahemnabeel/qwen3-coder-next` (107 tok/s), both `qwen3_coder` parser, no thinking
+  mode; `tt serve <bundle> --profile p300x2 --port 8000`. `tt launch` warns
+  `not in the model catalog` for any bundle; that is expected, the parser is in the bundle. Reasoning models also expose a `-thinking` variant; the
   plain name deploys with `enable_thinking=false` (the gateway injects
   `chat_template_kwargs`), so agents get clean, reliable tool calls (verified 10/10).
 - **Agentic tool calling + thinking don't mix yet.** With thinking ON, Qwen3-32B on the
@@ -141,6 +145,7 @@ installer pins a golden baseline and passes `--allow-downgrades`) is documented 
 | `~/tt-metal` not found | Expected — nothing creates it | Not a fault. TT-Metalium is a container; run `tt-metalium`. Only clone https://github.com/tenstorrent/tt-metal for a from-source build |
 | `import ttnn` fails on the host | Wrong interpreter — TTNN only exists inside the container | Run `tt-metalium` first, then `python3` (`/opt/venv/bin/python3`) |
 | `import vllm` fails in `~/.tenstorrent-venv` | Expected — it was never installed there | That venv holds tt-smi/tt-flash only. Serve via `tt-inference-server`'s `run.py` |
+| `tt serve <bundle>` says `no serve profile named 'p300'` though the card lists it | The installed bundle is an older revision | `tt serve <bundle> --profile p300 -- --refresh` fetches the current one; `--device-id 2,3` also passes through `--` to tt-model |
 | `run.py` re-downloads a model the box already has | `--host-hf-cache` used for the shipped weights, or `--host-volume` hitting the volume-name mismatch | Use `--host-weights-dir ~/models/Qwen3-32B`. For `--host-volume`, `run.py` computes `volume_id_<impl>-<model>-v<model_spec version>` (`v0.17.0` for Qwen3-32B/p300x2) but the box ships `-vqb2_launch`; confirm with `--print-docker-cmd --skip-system-sw-validation` and symlink the expected name to the shipped one |
 | `hf: command not found` | `huggingface_hub` is not part of the stack | Install it outside `~/.tenstorrent-venv` (e.g. `uv tool install huggingface_hub`) |
 | `tt-studio` / `tt-metalium` / `tt-forge`: command not found | `~/.local/bin` not on PATH (zsh never reads `~/.profile`) | `export PATH="$HOME/.local/bin:$PATH"`, and add it to `~/.zshrc`. tt-installer warns about this at install time |

@@ -114,6 +114,14 @@ Bundles are published often, so your results will differ.
 | Work on self-driving perception | `tt model search bev` | `changh95/bevdet-p150`, `changh95/bevformer-p150`, `changh95/bevfusion-p150` |
 | Run a robot policy | `tt model search pi05` | `changh95/pi05-base-p300x2` |
 
+The two coder bundles are the fast ones for agents: 30B and 80B parameters on disk, 3B active
+per token. Measured 2026-10-30 on one P300 board (`--profile p300`), 384 output tokens at
+temperature 0: `qwen3-coder-30b-a3b` 80 tok/s, `qwen3-coder-next` 107 tok/s. Their cards report
+95 and 178 tok/s on all four chips (`--profile p300x2`). Both set the `qwen3_coder` tool parser,
+and both passed the tt-agents tool-calling check (`00_verify_tools.py`). A bundle you pulled
+earlier keeps the revision it was pulled at; if `tt serve` says `no serve profile named
+'p300'` for a profile the card lists, add `-- --refresh` to fetch the current one.
+
 Some searches found nothing (`whisper`, `video`, `robot`, `pose`, `rerank`). Two reasons:
 speech-to-text and video models such as `whisper-large-v3` and `Wan2.2-T2V-A14B-Diffusers` are
 **catalog** models, not bundles, so look for them with `tt model list --type audio` or

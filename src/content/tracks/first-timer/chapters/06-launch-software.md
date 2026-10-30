@@ -103,6 +103,18 @@ agent stalls or answers without acting, send `chat_template_kwargs: {"enable_thi
 with the request if your client lets you add request fields, or serve a model without a
 reasoning mode, such as `Llama-3.1-8B-Instruct`.
 :::
+**Faster agent models come from the community catalog.** The fastest tool-calling models
+on a QB2 are mixture-of-experts coders with 3B parameters active per token, published as
+community bundles: `raahemnabeel/qwen3-coder-30b-a3b` and `raahemnabeel/qwen3-coder-next`,
+both with the `qwen3_coder` tool parser and no thinking mode. Measured on 2026-10-30 on one
+P300 board: 80 tok/s and 107 tok/s on a real prompt, against about 8 seconds a response for
+As an alternative to the model from the last chapter, stop it first (`tt model stop Qwen3-32B`), then serve one with `tt serve raahemnabeel/qwen3-coder-30b-a3b --profile p300x2` (see
+[The Model Zoo](/ml-practitioner/02-model-zoo/) for the warning that applies to every bundle).
+`tt launch` finds it the same way. It prints `not in the model catalog` and shows
+`tool-call parser —` because it has no catalog row to check; the bundle's card and
+`tt serve <bundle> --dry-run` show the parser is set. We ran `tt launch qwencode --dry-run`
+and a smolagents task against Qwen3-Coder-Next this way; the task was answered in one 2 s step.
+
 Install one agent, then launch it. Qwen Code and Hermes Agent were `ready` in the listing above:
 
 ```bash
